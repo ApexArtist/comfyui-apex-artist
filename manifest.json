@@ -1,0 +1,103 @@
+{
+  "manifest_version": "1.0.0",
+  "id": "comfyui-apex-artist",
+  "publisher_id": "apex",
+  "name": "Apex Artist Professional VFX Tools",
+  "description": "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios",
+  "license": "MIT",
+  "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
+  "homepage": "https://github.com/ApexArtist/comfyui-apex-artist",
+  "documentation": "https://github.com/ApexArtist/comfyui-apex-artist#readme",
+  "icon": "https://raw.githubusercontent.com/ApexArtist/comfyui-apex-artist/main/icon.png",
+  "banner": "https://raw.githubusercontent.com/ApexArtist/comfyui-apex-artist/main/banner.png",
+  "tags": [
+    "image-processing",
+    "vfx", 
+    "professional",
+    "blur",
+    "sharpen",
+    "depth-maps",
+    "normal-maps",
+    "color-grading",
+    "layer-blending",
+    "ai-tools"
+  ],
+  "python_version": ">=3.8",
+  "comfyui_version": ">=0.1.0",
+  "dependencies": [
+    "scikit-image>=0.19.0"
+  ],
+  "install_type": "git",
+  "author": {
+    "name": "Apex Artist",
+    "email": "apex@artist.dev",
+    "github": "ApexArtist"
+  },
+  "nodes": [
+    {
+      "id": "ApexSmartResize",
+      "display_name": "🚀 Apex Smart Resize",
+      "description": "Intelligent image resizing with AI-optimized resolution presets",
+      "category": "image/transform",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexUpscaleBy",
+      "display_name": "🚀 Apex Upscale By Ratio",
+      "description": "Upscale image by a user-defined float ratio (high precision)",
+      "category": "image/transform",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexPromptPreset",
+      "display_name": "📝 Apex Prompt Preset Selector",
+      "description": "Professional prompt preset system with hierarchical categories, search, and dynamic management",
+      "category": "text/prompt",
+      "input_types": ["STRING"],
+      "output_types": ["STRING", "STRING", "STRING"]
+    },
+    {
+      "id": "ApexDepthToNormal",
+      "display_name": "🎯 Apex Depth to Normal",
+      "description": "Convert depth maps to normal maps for advanced lighting workflows",
+      "category": "image/transform",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexStableNormal",
+      "display_name": "🌟 Apex Stable Normal",
+      "description": "State-of-the-art normal map generation using SIGGRAPH Asia 2024 StableNormal",
+      "category": "image/transform",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexLayerBlend",
+      "display_name": "✨ Apex Layer Blend",
+      "description": "Photoshop-style blending modes for advanced compositing",
+      "category": "image/composite",
+      "input_types": ["IMAGE", "IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexBlur",
+      "display_name": "🌀 Apex Blur",
+      "description": "Advanced blur effects with multiple algorithms",
+      "category": "image/filter",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexSharpen",
+      "display_name": "🔍 Apex Sharpen",
+      "description": "Professional sharpening with multiple algorithms",
+      "category": "image/filter",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE", "STRING"]
+    }
+  ],
+  "version": "1.6.7"
+}

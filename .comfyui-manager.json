@@ -1,0 +1,18 @@
+{
+    "name": "Apex Artist Professional VFX Tools",
+    "description": "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios",
+    "version": "1.5.0",
+    "author": "Apex Artist",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
+    "reference": "https://github.com/ApexArtist/comfyui-apex-artist",
+    "install_type": "git-clone",
+    "nodelist": [
+        "ApexSmartResize",
+        "ApexConvertToNormal",
+        "ApexColorReference",
+        "ApexLayerBlend",
+        "ApexBlur",
+        "ApexFilmGrading"
+    ]
+}

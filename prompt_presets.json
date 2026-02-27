@@ -1,0 +1,691 @@
+{
+  "General": {
+    "High Quality": {
+      "prompt": "masterpiece, best quality, ultra-detailed, 8k resolution, professional photography",
+      "description": "General high-quality enhancement prompt",
+      "tags": [
+        "quality",
+        "detail",
+        "professional"
+      ],
+      "weight": 1.2
+    },
+    "Cinematic": {
+      "prompt": "cinematic lighting, dramatic composition, film grain, depth of field, bokeh",
+      "description": "Cinematic movie-like aesthetic",
+      "tags": [
+        "cinematic",
+        "dramatic",
+        "film"
+      ],
+      "weight": 1.1
+    },
+    "Artistic": {
+      "prompt": "artistic, stylized, creative composition, vibrant colors, expressive",
+      "description": "General artistic enhancement",
+      "tags": [
+        "artistic",
+        "creative",
+        "vibrant"
+      ],
+      "weight": 1.0
+    }
+  },
+  "Photography": {
+    "Portrait Professional": {
+      "prompt": "professional portrait, studio lighting, sharp focus, 85mm lens, natural skin texture, high resolution",
+      "description": "Professional portrait photography setup",
+      "tags": [
+        "portrait",
+        "professional",
+        "studio"
+      ],
+      "weight": 1.2
+    },
+    "Landscape Epic": {
+      "prompt": "epic landscape, golden hour lighting, wide angle, HDR, dramatic sky, natural colors",
+      "description": "Epic landscape photography",
+      "tags": [
+        "landscape",
+        "nature",
+        "epic"
+      ],
+      "weight": 1.1
+    },
+    "Street Photography": {
+      "prompt": "street photography, candid moment, urban environment, natural lighting, documentary style",
+      "description": "Authentic street photography aesthetic",
+      "tags": [
+        "street",
+        "urban",
+        "documentary"
+      ],
+      "weight": 1.0
+    }
+  },
+  "Art Styles": {
+    "Oil Painting": {
+      "prompt": "oil painting, thick brushstrokes, rich textures, classical technique, fine art",
+      "description": "Traditional oil painting style",
+      "tags": [
+        "oil",
+        "painting",
+        "classical"
+      ],
+      "weight": 1.3
+    },
+    "Watercolor": {
+      "prompt": "watercolor painting, soft washes, flowing colors, paper texture, delicate details",
+      "description": "Watercolor painting technique",
+      "tags": [
+        "watercolor",
+        "soft",
+        "flowing"
+      ],
+      "weight": 1.2
+    },
+    "Digital Art": {
+      "prompt": "digital art, clean lines, vibrant colors, modern aesthetic, detailed rendering",
+      "description": "Modern digital artwork style",
+      "tags": [
+        "digital",
+        "modern",
+        "clean"
+      ],
+      "weight": 1.1
+    }
+  },
+  "Atmosphere": {
+    "Moody Dark": {
+      "prompt": "moody atmosphere, dark lighting, shadows, mysterious, atmospheric depth",
+      "description": "Dark and mysterious mood",
+      "tags": [
+        "dark",
+        "moody",
+        "mysterious"
+      ],
+      "weight": 1.2
+    },
+    "Bright Cheerful": {
+      "prompt": "bright lighting, cheerful atmosphere, vibrant colors, positive mood, sunny",
+      "description": "Bright and positive atmosphere",
+      "tags": [
+        "bright",
+        "cheerful",
+        "positive"
+      ],
+      "weight": 1.1
+    },
+    "Dreamy Ethereal": {
+      "prompt": "dreamy atmosphere, soft lighting, ethereal mood, gentle colors, fantasy-like",
+      "description": "Dreamy and ethereal feeling",
+      "tags": [
+        "dreamy",
+        "ethereal",
+        "fantasy"
+      ],
+      "weight": 1.0
+    }
+  },
+  "Technical": {
+    "Ultra High Detail": {
+      "prompt": "ultra high resolution, extreme detail, sharp focus, crystal clear, pixel perfect",
+      "description": "Maximum technical quality",
+      "tags": [
+        "detail",
+        "sharp",
+        "technical"
+      ],
+      "weight": 1.4
+    },
+    "HDR Enhanced": {
+      "prompt": "HDR, high dynamic range, enhanced contrast, rich colors, balanced exposure",
+      "description": "HDR processing enhancement",
+      "tags": [
+        "HDR",
+        "contrast",
+        "enhanced"
+      ],
+      "weight": 1.2
+    },
+    "Film Grain": {
+      "prompt": "film grain, analog aesthetic, vintage feel, natural texture, organic look",
+      "description": "Film grain and analog feeling",
+      "tags": [
+        "film",
+        "analog",
+        "vintage"
+      ],
+      "weight": 1.1
+    }
+  },
+  "Apex Lighting": {
+    "Cinematic Key Light": {
+      "prompt": "cinematic key lighting, dramatic shadows, professional film lighting, three-point lighting setup, Hollywood style",
+      "description": "Professional cinematic lighting setup",
+      "tags": [
+        "cinematic",
+        "dramatic",
+        "professional"
+      ],
+      "weight": 1.3
+    },
+    "Soft Portrait Light": {
+      "prompt": "soft portrait lighting, gentle shadows, flattering illumination, beauty lighting, diffused light source",
+      "description": "Flattering portrait lighting",
+      "tags": [
+        "portrait",
+        "soft",
+        "flattering"
+      ],
+      "weight": 1.2
+    },
+    "Moody Rim Light": {
+      "prompt": "rim lighting, edge lighting, dramatic silhouette, moody backlighting, atmospheric glow",
+      "description": "Dramatic rim and edge lighting",
+      "tags": [
+        "rim",
+        "dramatic",
+        "moody"
+      ],
+      "weight": 1.2
+    },
+    "Natural Window Light": {
+      "prompt": "natural window lighting, soft daylight, gentle shadows, organic illumination, realistic lighting",
+      "description": "Natural window light aesthetic",
+      "tags": [
+        "natural",
+        "window",
+        "realistic"
+      ],
+      "weight": 1.1
+    },
+    "Neon Glow Effect": {
+      "prompt": "neon lighting, glowing effects, vibrant colors, cyberpunk lighting, electric atmosphere",
+      "description": "Neon and glow lighting effects",
+      "tags": [
+        "neon",
+        "glow",
+        "cyberpunk"
+      ],
+      "weight": 1.2
+    },
+    "Apex Studio": {
+      "prompt": "studio lighting, white neutral keylight, soft fill light, orange rim lights on subject, white studio environment",
+      "description": "Professional studio lighting setup with neutral key, soft fill, and orange rim",
+      "tags": [
+        "studio",
+        "professional",
+        "neutral",
+        "rim"
+      ],
+      "weight": 1.3
+    },
+    "Golden Portrait": {
+      "prompt": "golden hour sunlight seeping through hair and clothing, warm gentle light and shadow effects, bright colors with rich details, classical beauty, delicate artistic atmosphere",
+      "description": "Warm sunlight creating golden portrait with classical beauty and artistic atmosphere",
+      "tags": [
+        "golden",
+        "portrait",
+        "sunlight",
+        "classical",
+        "warm"
+      ],
+      "weight": 1.4
+    }
+  },
+  "Apex Environment": {
+    "Urban Cityscape": {
+      "prompt": "urban cityscape, modern architecture, city streets, metropolitan environment, bustling atmosphere",
+      "description": "Modern urban city environment",
+      "tags": [
+        "urban",
+        "city",
+        "modern"
+      ],
+      "weight": 1.1
+    },
+    "Natural Landscape": {
+      "prompt": "natural landscape, scenic environment, outdoor setting, organic textures, environmental depth",
+      "description": "Natural outdoor landscape setting",
+      "tags": [
+        "natural",
+        "landscape",
+        "outdoor"
+      ],
+      "weight": 1.1
+    },
+    "Industrial Setting": {
+      "prompt": "industrial environment, mechanical elements, steel structures, factory aesthetic, raw materials",
+      "description": "Industrial and mechanical environment",
+      "tags": [
+        "industrial",
+        "mechanical",
+        "raw"
+      ],
+      "weight": 1.2
+    },
+    "Minimalist Space": {
+      "prompt": "minimalist environment, clean space, simple background, neutral tones, uncluttered setting",
+      "description": "Clean minimalist environment",
+      "tags": [
+        "minimalist",
+        "clean",
+        "simple"
+      ],
+      "weight": 1.0
+    },
+    "Fantasy Realm": {
+      "prompt": "fantasy environment, magical setting, otherworldly landscape, mystical atmosphere, enchanted realm",
+      "description": "Fantasy and magical environment",
+      "tags": [
+        "fantasy",
+        "magical",
+        "mystical"
+      ],
+      "weight": 1.3
+    },
+    "Vintage Interior": {
+      "prompt": "vintage interior, classic decor, retro environment, antique furnishings, nostalgic atmosphere",
+      "description": "Vintage and retro interior setting",
+      "tags": [
+        "vintage",
+        "retro",
+        "classic"
+      ],
+      "weight": 1.1
+    },
+    "Temple Jungle Stage": {
+      "prompt": "concert stage rising from ancient temple submerged in misty jungle ruins, glowing vines wrapping around speakers, beams of light cutting through fog",
+      "description": "Ancient temple concert stage in misty jungle ruins",
+      "tags": [
+        "temple",
+        "jungle",
+        "ancient",
+        "mystical",
+        "concert"
+      ],
+      "weight": 1.4
+    },
+    "Ocean Rooftop Stage": {
+      "prompt": "neon-lit rooftop stage floating above moonlit ocean, bioluminescent waves reflecting lights of distant futuristic towers",
+      "description": "Futuristic floating rooftop stage over bioluminescent ocean",
+      "tags": [
+        "ocean",
+        "rooftop",
+        "neon",
+        "futuristic",
+        "bioluminescent"
+      ],
+      "weight": 1.4
+    },
+    "Desert Dome Stage": {
+      "prompt": "outdoor concert inside massive glass dome in desert, dunes glowing under aurora skies and ancient ruins half-buried in sand",
+      "description": "Glass dome concert venue in aurora-lit desert with ruins",
+      "tags": [
+        "desert",
+        "dome",
+        "aurora",
+        "ruins",
+        "glass"
+      ],
+      "weight": 1.4
+    },
+    "Waterfall Cliff Stage": {
+      "prompt": "stage built into colossal waterfall cliff, water mist sparkling under magenta spotlights, clouds drifting below audience platforms",
+      "description": "Concert stage carved into waterfall cliff with misty lighting",
+      "tags": [
+        "waterfall",
+        "cliff",
+        "mist",
+        "magenta",
+        "dramatic"
+      ],
+      "weight": 1.4
+    },
+    "Mushroom Forest Stage": {
+      "prompt": "forest clearing stage surrounded by giant glowing mushrooms and hovering drones projecting light beams into night sky",
+      "description": "Magical forest stage with glowing mushrooms and light drones",
+      "tags": [
+        "forest",
+        "mushrooms",
+        "glowing",
+        "drones",
+        "magical"
+      ],
+      "weight": 1.4
+    },
+    "Volcano Crater Arena": {
+      "prompt": "concert arena built within crater of dormant volcano, lava veins glowing beneath transparent flooring, smoke mixing with fog lights",
+      "description": "Volcanic crater concert arena with glowing lava and transparent floors",
+      "tags": [
+        "volcano",
+        "crater",
+        "lava",
+        "transparent",
+        "dramatic"
+      ],
+      "weight": 1.4
+    },
+    "Frozen Lake Stage": {
+      "prompt": "stage on frozen lake surrounded by crystal mountains, aurora reflecting on ice, subtle snow drifting through colored beams",
+      "description": "Arctic concert stage with aurora reflections and crystal mountains",
+      "tags": [
+        "frozen",
+        "lake",
+        "crystal",
+        "aurora",
+        "snow"
+      ],
+      "weight": 1.4
+    },
+    "Floating Islands Stage": {
+      "prompt": "performance stage carved into floating rock islands, vines and roots suspended in air, light orbs hovering around",
+      "description": "Mystical floating island stage with suspended vegetation and light orbs",
+      "tags": [
+        "floating",
+        "islands",
+        "suspended",
+        "orbs",
+        "mystical"
+      ],
+      "weight": 1.4
+    },
+    "Greenhouse Tech Stage": {
+      "prompt": "concert in futuristic greenhouse where metallic trees emit soft light, robotic birds flying across holographic skies",
+      "description": "High-tech greenhouse concert with metallic trees and holographic elements",
+      "tags": [
+        "greenhouse",
+        "futuristic",
+        "metallic",
+        "holographic",
+        "tech"
+      ],
+      "weight": 1.4
+    },
+    "Canyon Edge Stage": {
+      "prompt": "stage at edge of canyon where clouds swirl below, sunlight piercing through gaps, giant statues watching from afar",
+      "description": "Epic canyon edge stage with swirling clouds and ancient statues",
+      "tags": [
+        "canyon",
+        "clouds",
+        "sunlight",
+        "statues",
+        "epic"
+      ],
+      "weight": 1.4
+    },
+    "Split Bedroom City": {
+      "prompt": "cozy bedroom split open at wall, revealing futuristic city cliff below, neon fog seeping in through torn wallpaper",
+      "description": "Bedroom interior split open to futuristic city with neon fog",
+      "tags": [
+        "bedroom",
+        "split",
+        "futuristic",
+        "city",
+        "neon"
+      ],
+      "weight": 1.5
+    },
+    "Space Window Study": {
+      "prompt": "study desk beside window that fades into outer space, stars flickering against reflection of glowing lamp",
+      "description": "Study room with window fading into outer space and stars",
+      "tags": [
+        "study",
+        "space",
+        "window",
+        "stars",
+        "lamp"
+      ],
+      "weight": 1.5
+    },
+    "Canyon Library": {
+      "prompt": "old library where floor ends abruptly into waterfall canyon, floating books drifting over abyss",
+      "description": "Ancient library with floor ending at waterfall canyon abyss",
+      "tags": [
+        "library",
+        "canyon",
+        "waterfall",
+        "books",
+        "floating"
+      ],
+      "weight": 1.5
+    },
+    "Desert Mirror Bathroom": {
+      "prompt": "bathroom with mirrors showing different world, desert dunes stretching infinitely instead of reflection",
+      "description": "Bathroom mirrors reflecting desert dunes instead of room",
+      "tags": [
+        "bathroom",
+        "mirrors",
+        "desert",
+        "dunes",
+        "infinite"
+      ],
+      "weight": 1.5
+    },
+    "Cyberpunk Living Room": {
+      "prompt": "living room softly merging into cyberpunk alley, rain falling halfway across carpet, one side domestic one side chaos",
+      "description": "Living room transitioning into cyberpunk alley with rain",
+      "tags": [
+        "living",
+        "cyberpunk",
+        "alley",
+        "rain",
+        "domestic"
+      ],
+      "weight": 1.5
+    },
+    "Underwater Bedroom": {
+      "prompt": "bedroom blending into underwater realm, fish gliding through curtains, light refracted on bedsheets like liquid glass",
+      "description": "Bedroom merging with underwater world and swimming fish",
+      "tags": [
+        "bedroom",
+        "underwater",
+        "fish",
+        "curtains",
+        "glass"
+      ],
+      "weight": 1.5
+    },
+    "Space Station Cabin": {
+      "prompt": "mountain cabin interior opening into space station corridor, snow outside turning to stars midair",
+      "description": "Mountain cabin transitioning into space station with snow-to-stars",
+      "tags": [
+        "cabin",
+        "space",
+        "station",
+        "snow",
+        "stars"
+      ],
+      "weight": 1.5
+    },
+    "Forest Canopy Cafe": {
+      "prompt": "cafe interior cut open to reveal forest canopy below, tree roots tangled with furniture, mist rolling through doorway",
+      "description": "Cafe opening to forest canopy with tangled roots and mist",
+      "tags": [
+        "cafe",
+        "forest",
+        "canopy",
+        "roots",
+        "mist"
+      ],
+      "weight": 1.5
+    },
+    "Burning City Hallway": {
+      "prompt": "hallway turning into cliffside overlooking burning city, floor tiles dissolving into crumbling rock",
+      "description": "Hallway becoming cliff overlooking burning city with dissolving floor",
+      "tags": [
+        "hallway",
+        "cliff",
+        "burning",
+        "city",
+        "dissolving"
+      ],
+      "weight": 1.5
+    },
+    "Cloud Child Room": {
+      "prompt": "child's room suspended in clouds, toys floating weightlessly as giant moon looms just outside broken ceiling",
+      "description": "Child's room floating in clouds with weightless toys and giant moon",
+      "tags": [
+        "child",
+        "room",
+        "clouds",
+        "floating",
+        "moon"
+      ],
+      "weight": 1.5
+    },
+    "Twin Moon Rainforest": {
+      "prompt": "bioluminescent rainforest glowing under twin moons, waterfalls cascading from floating cliffs, mist drifting through violet foliage",
+      "description": "Glowing rainforest under twin moons with floating cliff waterfalls",
+      "tags": [
+        "bioluminescent",
+        "rainforest",
+        "twin",
+        "moons",
+        "floating"
+      ],
+      "weight": 1.6
+    },
+    "Canopy Bridge Network": {
+      "prompt": "massive tree canopies linked by suspended bridges, glowing pollen swirling in air like fireflies",
+      "description": "Connected tree canopies with suspended bridges and glowing pollen",
+      "tags": [
+        "canopy",
+        "bridges",
+        "suspended",
+        "pollen",
+        "fireflies"
+      ],
+      "weight": 1.6
+    },
+    "Crystal Lake Islands": {
+      "prompt": "crystal-clear lake reflecting floating islands above, roots and vines hanging down into shimmering water",
+      "description": "Clear lake with floating islands and hanging vines",
+      "tags": [
+        "crystal",
+        "lake",
+        "floating",
+        "islands",
+        "vines"
+      ],
+      "weight": 1.6
+    },
+    "Alien Pulse Jungle": {
+      "prompt": "ancient alien jungle with bioluminescent plants pulsing to unseen rhythms, luminous creatures moving silently among roots",
+      "description": "Ancient alien jungle with pulsing bioluminescent plants",
+      "tags": [
+        "alien",
+        "jungle",
+        "pulsing",
+        "bioluminescent",
+        "creatures"
+      ],
+      "weight": 1.6
+    },
+    "Sky Whale Mountains": {
+      "prompt": "floating mountain range connected by energy bridges, sky whales gliding through clouds glowing from within",
+      "description": "Floating mountains with energy bridges and glowing sky whales",
+      "tags": [
+        "floating",
+        "mountains",
+        "energy",
+        "whales",
+        "clouds"
+      ],
+      "weight": 1.6
+    },
+    "Crystal Cavern Living": {
+      "prompt": "cavern of living crystals, glowing tendrils growing along walls, water reflecting turquoise light from deep below",
+      "description": "Living crystal cavern with glowing tendrils and turquoise water",
+      "tags": [
+        "cavern",
+        "crystals",
+        "living",
+        "tendrils",
+        "turquoise"
+      ],
+      "weight": 1.6
+    },
+    "Neon Flora Valley": {
+      "prompt": "lush alien valley illuminated by neon flora, ancient ruins overtaken by vines emitting faint bioluminescent trails",
+      "description": "Alien valley with neon flora and bioluminescent ruins",
+      "tags": [
+        "alien",
+        "valley",
+        "neon",
+        "flora",
+        "ruins"
+      ],
+      "weight": 1.6
+    },
+    "Orbital Waterfall": {
+      "prompt": "massive waterfall plunging from floating island, suspended stones orbiting slowly in glowing fog",
+      "description": "Massive waterfall from floating island with orbiting stones",
+      "tags": [
+        "waterfall",
+        "floating",
+        "island",
+        "orbiting",
+        "stones"
+      ],
+      "weight": 1.6
+    },
+    "Temple Root Network": {
+      "prompt": "jungle temple intertwined with glowing roots, ancient markings illuminated by hovering firefly-like orbs",
+      "description": "Ancient temple with glowing roots and firefly orbs",
+      "tags": [
+        "temple",
+        "roots",
+        "glowing",
+        "markings",
+        "fireflies"
+      ],
+      "weight": 1.6
+    },
+    "Breathing Light Forest": {
+      "prompt": "endless night forest where plants breathe light, rivers shimmer like liquid starlight, air hums with unseen life",
+      "description": "Night forest with breathing light plants and starlight rivers",
+      "tags": [
+        "forest",
+        "breathing",
+        "light",
+        "starlight",
+        "rivers"
+      ],
+      "weight": 1.6
+    }
+  },
+  "Negative": {
+    "Quality Issues": {
+      "prompt": "worst quality, low quality, blurry, out of focus, pixelated, low resolution, jpeg artifacts",
+      "description": "Common quality issues to avoid",
+      "tags": [
+        "negative",
+        "quality",
+        "avoid"
+      ],
+      "weight": 1.0
+    },
+    "Anatomical Issues": {
+      "prompt": "bad anatomy, malformed, distorted, extra limbs, missing limbs, deformed hands, bad proportions",
+      "description": "Anatomical problems to avoid",
+      "tags": [
+        "negative",
+        "anatomy",
+        "avoid"
+      ],
+      "weight": 1.0
+    },
+    "Artistic Issues": {
+      "prompt": "bad art, amateur, poorly drawn, ugly, disfigured, gross proportions, bad composition",
+      "description": "Artistic problems to avoid",
+      "tags": [
+        "negative",
+        "artistic",
+        "avoid"
+      ],
+      "weight": 1.0
+    }
+  }
+}

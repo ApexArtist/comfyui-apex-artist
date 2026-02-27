@@ -1,0 +1,54 @@
+[project]
+name = "comfyui-apex-artist"
+version = "1.6.7"
+description = "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
+license = { file = "license.md" }
+requires-python = ">=3.8"
+dependencies = [
+    "scikit-image>=0.19.0"
+]
+dynamic = ["dependencies"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "Environment :: GPU :: NVIDIA CUDA",
+    "Environment :: GPU :: AMD ROCm"
+]
+keywords = ["comfyui", "image-processing", "ai", "nodes", "vfx", "film-grading", "normal-maps", "stablenormal", "professional", "blur", "sharpen", "depth", "color"]
+authors = [
+    {name = "Apex Artist", email = "apex@artist.dev"}
+]
+readme = "README.md"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.urls]
+Repository = "https://github.com/ApexArtist/comfyui-apex-artist"
+Homepage = "https://github.com/ApexArtist/comfyui-apex-artist"
+Documentation = "https://github.com/ApexArtist/comfyui-apex-artist#readme"
+"Bug Tracker" = "https://github.com/ApexArtist/comfyui-apex-artist/issues"
+
+[tool.comfy]
+PublisherId = "apex"
+DisplayName = "Apex Artist Professional VFX Tools"
+Icon = "https://raw.githubusercontent.com/ApexArtist/comfyui-apex-artist/main/icon.png"
+Banner = "https://raw.githubusercontent.com/ApexArtist/comfyui-apex-artist/main/banner.png"
+requires-comfyui = ">=0.1.0"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
