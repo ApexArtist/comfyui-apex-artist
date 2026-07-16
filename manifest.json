@@ -18,7 +18,6 @@
     "sharpen",
     "depth-maps",
     "normal-maps",
-    "color-grading",
     "layer-blending",
     "ai-tools"
   ],
@@ -36,47 +35,23 @@
   "nodes": [
     {
       "id": "ApexSmartResize",
-      "display_name": "🚀 Apex Smart Resize",
+      "display_name": "Apex Smart Resize",
       "description": "Intelligent image resizing with AI-optimized resolution presets",
       "category": "image/transform",
       "input_types": ["IMAGE"],
       "output_types": ["IMAGE", "STRING"]
     },
     {
-      "id": "ApexUpscaleBy",
-      "display_name": "🚀 Apex Upscale By Ratio",
-      "description": "Upscale image by a user-defined float ratio (high precision)",
-      "category": "image/transform",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
-    },
-    {
-      "id": "ApexPromptPreset",
-      "display_name": "📝 Apex Prompt Preset Selector",
-      "description": "Professional prompt preset system with hierarchical categories, search, and dynamic management",
-      "category": "text/prompt",
-      "input_types": ["STRING"],
-      "output_types": ["STRING", "STRING", "STRING"]
-    },
-    {
       "id": "ApexDepthToNormal",
-      "display_name": "🎯 Apex Depth to Normal",
+      "display_name": "Apex Depth to Normal",
       "description": "Convert depth maps to normal maps for advanced lighting workflows",
       "category": "image/transform",
       "input_types": ["IMAGE"],
       "output_types": ["IMAGE", "STRING"]
     },
     {
-      "id": "ApexStableNormal",
-      "display_name": "🌟 Apex Stable Normal",
-      "description": "State-of-the-art normal map generation using SIGGRAPH Asia 2024 StableNormal",
-      "category": "image/transform",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
-    },
-    {
       "id": "ApexLayerBlend",
-      "display_name": "✨ Apex Layer Blend",
+      "display_name": "Apex Layer Blend",
       "description": "Photoshop-style blending modes for advanced compositing",
       "category": "image/composite",
       "input_types": ["IMAGE", "IMAGE"],
@@ -84,7 +59,7 @@
     },
     {
       "id": "ApexBlur",
-      "display_name": "🌀 Apex Blur",
+      "display_name": "Apex Blur",
       "description": "Advanced blur effects with multiple algorithms",
       "category": "image/filter",
       "input_types": ["IMAGE"],
@@ -92,12 +67,28 @@
     },
     {
       "id": "ApexSharpen",
-      "display_name": "🔍 Apex Sharpen",
+      "display_name": "Apex Sharpen",
       "description": "Professional sharpening with multiple algorithms",
       "category": "image/filter",
       "input_types": ["IMAGE"],
       "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexPromptPreset",
+      "display_name": "Apex Prompt Preset Selector",
+      "description": "Professional prompt preset system with hierarchical categories, search, and dynamic management",
+      "category": "text/prompt",
+      "input_types": ["STRING"],
+      "output_types": ["STRING", "STRING", "STRING"]
+    },
+    {
+      "id": "ApexLoraLoader",
+      "display_name": "Apex LoRA Loader",
+      "description": "Professional LoRA loader with interactive browser and thumbnail preview support",
+      "category": "models/loras",
+      "input_types": ["MODEL"],
+      "output_types": ["MODEL"]
     }
   ],
-  "version": "2.0.0"
+  "version": "1.7.1"
 }

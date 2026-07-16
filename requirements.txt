@@ -1,6 +1,4 @@
 # Only list extra dependencies not provided by ComfyUI core
 scikit-image>=0.19.0
-transformers>=4.36.0
-accelerate>=0.25.0
 # numpy, scipy, Pillow, torch, torchvision, torchaudio are provided by ComfyUI
  

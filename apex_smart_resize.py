@@ -51,6 +51,45 @@ class ApexSmartResize:
             "Square": [
                 (512, 512), (640, 640), (768, 768), (832, 832), (896, 896),
                 (1024, 1024), (1152, 1152), (1216, 1216), (1280, 1280), (1344, 1344)
+            ],
+            # 2026 Model-Specific Presets
+            "ZImage": [
+                # Z-Image Turbo - photorealistic + bilingual text rendering
+                (1024, 1024), (1280, 1280), (1536, 1536),
+                (1024, 768), (768, 1024), (1280, 720), (720, 1280),
+                (1536, 864), (864, 1536), (1280, 960), (960, 1280),
+                (1152, 896), (896, 1152), (1536, 640), (640, 1536)
+            ],
+            "QwenEdit": [
+                # Qwen Image Edit 2511 - semantic image editing
+                (768, 768), (1024, 1024), (512, 512),
+                (768, 1024), (1024, 768), (896, 896),
+                (640, 896), (896, 640), (1024, 1280), (1280, 1024)
+            ],
+            "Krea2": [
+                # Krea 2 RAW/Turbo - excellent at wide/cinematic formats
+                (1024, 1024), (1152, 896), (896, 1152),
+                (1280, 832), (832, 1280), (1536, 640), (640, 1536),
+                (1920, 832), (832, 1920), (2048, 1024), (1024, 2048),
+                (1728, 896), (896, 1728)
+            ],
+            "Ideogram4": [
+                # Ideogram 4.0 - text rendering specialist
+                (1024, 1024), (896, 1152), (1152, 896),
+                (768, 1344), (1344, 768), (1080, 1920), (1920, 1080),
+                (1280, 720), (720, 1280), (1536, 864), (864, 1536)
+            ],
+            "FLUX.2": [
+                # FLUX.2 with bucket resolution training
+                (1024, 1024), (768, 1280), (1280, 768),
+                (896, 1152), (1152, 896), (832, 1216), (1216, 832),
+                (704, 1408), (1408, 704), (640, 1536), (1536, 640)
+            ],
+            "SD3.5": [
+                # Stable Diffusion 3.5 Large/Medium/Turbo
+                (1024, 1024), (896, 1152), (1152, 896),
+                (768, 1344), (1344, 768), (832, 1216), (1216, 832),
+                (640, 1536), (1536, 640), (960, 1280), (1280, 960)
             ]
         }
     
@@ -60,12 +99,18 @@ class ApexSmartResize:
             "required": {
                 "image": ("IMAGE",),
                 "resolution_set": ([
-                    "Standard",      # Core SDXL/Flux resolutions
-                    "Extended",      # Extra experimental sizes  
-                    "Flux",          # Flux-optimized
+                    "Standard",      # Core SDXL resolutions
+                    "Extended",      # Extended SDXL
+                    "Flux",          # Flux.1 (original)
                     "Portrait",      # Tall formats
                     "Landscape",     # Wide formats
-                    "Square"         # Square only
+                    "Square",        # Square only
+                    "ZImage",        # Z-Image Turbo (photorealistic + text)
+                    "QwenEdit",      # Qwen Image Edit 2511 (semantic editing)
+                    "Krea2",         # Krea 2 (cinematic specialist)
+                    "Ideogram4",     # Ideogram 4.0 (text rendering)
+                    "FLUX.2",        # FLUX.2 (bucket training)
+                    "SD3.5",         # Stable Diffusion 3.5
                 ], {"default": "Standard"}),
                 "snap_method": ([
                     "keep_proportion",   # Scale largest side first, maintain aspect ratio
@@ -91,6 +136,15 @@ class ApexSmartResize:
                     "default": False,
                     "tooltip": "Show resolution candidates in console"
                 })
+            },
+            "optional": {
+                "enforce_divisibility": ("INT", {
+                    "default": 64,
+                    "min": 8,
+                    "max": 128,
+                    "step": 8,
+                    "tooltip": "Ensure dimensions are divisible by this number (8=VAE, 16=ControlNet, 32=upscalers, 64=max compatibility)"
+                })
             }
         }
 
@@ -99,7 +153,7 @@ class ApexSmartResize:
     FUNCTION = "smart_resize"
     CATEGORY = "Apex Artist/Image"
 
-    def smart_resize(self, image, resolution_set, snap_method, resize_mode, interpolation, show_candidates):
+    def smart_resize(self, image, resolution_set, snap_method, resize_mode, interpolation, show_candidates, enforce_divisibility=64):
         
         start_time = datetime.now()
         
@@ -119,13 +173,24 @@ class ApexSmartResize:
                 orig_w, orig_h, resolution_set, snap_method, show_candidates
             )
             
+            # Apply divisibility enforcement
+            adjustment_made = False
+            if enforce_divisibility > 1:
+                original_w, original_h = target_w, target_h
+                target_w = round(target_w / enforce_divisibility) * enforce_divisibility
+                target_h = round(target_h / enforce_divisibility) * enforce_divisibility
+                if target_w != original_w or target_h != original_h:
+                    adjustment_made = True
+                    info += f" → adjusted to {target_w}x{target_h} (divisible by {enforce_divisibility})"
+            
             target_area = target_w * target_h
             scale_factor = math.sqrt(target_area / orig_area)
             
             # Generate console data
             console_data = self._create_console_data(
                 orig_w, orig_h, target_w, target_h, scale_factor, resize_mode, 
-                resolution_set, snap_method, candidates_info, start_time
+                resolution_set, snap_method, candidates_info, start_time, 
+                enforce_divisibility, adjustment_made
             )
             
             # Resize the image
@@ -151,14 +216,15 @@ class ApexSmartResize:
             return (image, orig_w, orig_h, 1.0, f"Error: {str(e)}", error_console)
     
     def _create_console_data(self, orig_w, orig_h, target_w, target_h, scale_factor, resize_mode, 
-                           resolution_set, snap_method, candidates_info, start_time):
+                           resolution_set, snap_method, candidates_info, start_time,
+                           enforce_divisibility, adjustment_made):
         """Create structured data for Apex Console"""
         
         orig_area = orig_w * orig_h
         target_area = target_w * target_h
         memory_change_mb = ((target_area - orig_area) * 4 * 3) / (1024 * 1024)  # Assume RGB float32
         
-        return {
+        console_data = {
             "action": "Smart Resize Complete",
             "status": "success",
             "timestamp": start_time.isoformat(),
@@ -180,10 +246,14 @@ class ApexSmartResize:
                 "resize_mode": resize_mode,
                 "scale_factor": round(scale_factor, 3),
                 "size_change_percent": round(((scale_factor * scale_factor - 1) * 100), 1),
-                "memory_change_mb": round(memory_change_mb, 1)
+                "memory_change_mb": round(memory_change_mb, 1),
+                "enforce_divisibility": enforce_divisibility,
+                "divisibility_adjusted": adjustment_made
             },
             "candidates": candidates_info
         }
+        
+        return console_data
     
     def _find_best_resolution(self, orig_w, orig_h, resolution_set, snap_method, show_candidates):
         """Find the best target resolution based on method"""

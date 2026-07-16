@@ -7,6 +7,7 @@ Specialized for converting depth maps (DepthAnything, MiDaS, etc.) to high-quali
 import torch
 import torch.nn.functional as F
 import numpy as np
+from .apex_utils import gaussian_blur, validate_image_tensor
 
 class ApexDepthToNormal:
     """
@@ -51,7 +52,7 @@ class ApexDepthToNormal:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("normal_map", "info")
     FUNCTION = "depth_to_normal"
-    CATEGORY = "Apex Artist/Compositing"
+    CATEGORY = "Apex Artist/Image/Composite"
     
     def depth_to_normal(self, depth_map, strength=12.0, invert=False, auto_invert_depth=False, blur=0.0, enhance_details=0.0):
         print("ApexDepthToNormal: Processing depth map")
@@ -139,31 +140,8 @@ class ApexDepthToNormal:
         return enhanced
     
     def _apply_blur(self, image, blur_amount):
-        """Apply Gaussian blur"""
-        device = image.device
-        batch, height, width, channels = image.shape
-        
-        # Create Gaussian kernel
-        kernel_size = int(blur_amount * 4) * 2 + 1
-        sigma = blur_amount
-        
-        x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        kernel = torch.exp(-(x**2) / (2 * sigma**2))
-        kernel = kernel / kernel.sum()
-        
-        # Create 2D kernels for separable convolution
-        kernel_h = kernel.view(1, 1, 1, kernel_size)  # Horizontal kernel
-        kernel_v = kernel.view(1, 1, kernel_size, 1)  # Vertical kernel
-        
-        # Reshape for convolution
-        img_reshaped = image.permute(0, 3, 1, 2).reshape(-1, 1, height, width)
-        
-        # Apply separable convolution (horizontal then vertical)
-        padding = kernel_size // 2
-        blurred = F.conv2d(img_reshaped, kernel_h, padding=(0, padding))
-        blurred = F.conv2d(blurred, kernel_v, padding=(padding, 0))
-        
-        return blurred.reshape(batch, channels, height, width).permute(0, 2, 3, 1)
+        """Apply Gaussian blur using shared utility"""
+        return gaussian_blur(image, blur_amount)
     
     def _calculate_gradients(self, image, strength):
         """Calculate gradients optimized for depth maps"""

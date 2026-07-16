@@ -5,6 +5,7 @@ Features unsharp mask, structure-aware sharpening, and edge enhancement
 """
 import torch
 import torch.nn.functional as F
+from .apex_utils import gaussian_blur, validate_image_tensor, validate_radius, apply_mask as utils_apply_mask
 
 class ApexSharpen:
     """
@@ -68,11 +69,15 @@ class ApexSharpen:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("sharpened_image", "sharpen_info")
     FUNCTION = "apply_sharpening"
-    CATEGORY = "Apex Artist/Enhancement"
+    CATEGORY = "Apex Artist/Image/Filters"
     
     def apply_sharpening(self, image, algorithm="Unsharp Mask", strength=1.0, radius=1.0, 
                         threshold=0.0, preserve_highlights=True, preserve_shadows=True,
                         edge_protection=0.0, fine_detail=1.0, mask=None):
+        
+        # Validate inputs
+        validate_image_tensor(image, "image")
+        radius = validate_radius(radius, min_val=0.1, max_val=10.0)
         
         device = image.device
         batch_size = image.shape[0]
@@ -103,7 +108,7 @@ class ApexSharpen:
         
         # Apply mask if provided
         if mask is not None:
-            result = self._apply_mask(image, result, mask)
+            result = utils_apply_mask(image, result, mask)
         
         # Generate info
         info = f"{algorithm} | Strength: {strength:.1f} | Radius: {radius:.1f}"
@@ -117,8 +122,8 @@ class ApexSharpen:
         device = image.device
         batch, height, width, channels = image.shape
         
-        # Create Gaussian blur for the mask
-        blurred = self._gaussian_blur(image, radius)
+        # Create Gaussian blur for the mask using shared utility
+        blurred = gaussian_blur(image, radius)
         
         # Create unsharp mask
         mask = image - blurred
@@ -136,8 +141,8 @@ class ApexSharpen:
     
     def _high_pass_filter(self, image, strength, radius):
         """High-pass filter sharpening"""
-        # Create high-pass filter by subtracting low-pass (blur)
-        blurred = self._gaussian_blur(image, radius)
+        # Create high-pass filter by subtracting low-pass (blur) using shared utility
+        blurred = gaussian_blur(image, radius)
         high_pass = image - blurred
         
         # Apply with overlay blend mode for natural look
@@ -210,8 +215,8 @@ class ApexSharpen:
         if edge_protection > 0:
             structure_mask = structure_mask * (1 - edge_protection) + edge_protection
         
-        # Apply unsharp mask only in textured areas
-        blurred = self._gaussian_blur(image, radius)
+        # Apply unsharp mask only in textured areas using shared utility
+        blurred = gaussian_blur(image, radius)
         mask = image - blurred
         result = image + mask * strength * structure_mask
         
@@ -241,8 +246,6 @@ class ApexSharpen:
     
     def _multi_scale_sharpen(self, image, strength, fine_detail):
         """Multi-scale sharpening for different detail levels"""
-        device = image.device
-        
         # Create multiple scales
         scale1 = self._unsharp_mask(image, strength * 0.4, 0.5, 0.0)  # Fine details
         scale2 = self._unsharp_mask(image, strength * 0.4, 1.5, 0.0)  # Medium details
@@ -276,11 +279,9 @@ class ApexSharpen:
     
     def _detail_enhancement(self, image, strength, radius, fine_detail):
         """Advanced detail enhancement with frequency separation"""
-        device = image.device
-        
-        # Create different frequency layers
-        blur_low = self._gaussian_blur(image, radius * 2)      # Low frequency
-        blur_mid = self._gaussian_blur(image, radius)          # Mid frequency
+        # Create different frequency layers using shared utility
+        blur_low = gaussian_blur(image, radius * 2)      # Low frequency
+        blur_mid = gaussian_blur(image, radius)          # Mid frequency
         
         # Extract frequency bands
         high_freq = image - blur_mid                           # High frequency details
@@ -295,35 +296,6 @@ class ApexSharpen:
         
         return result
     
-    def _gaussian_blur(self, image, radius):
-        """Apply Gaussian blur"""
-        if radius <= 0:
-            return image
-            
-        device = image.device
-        batch, height, width, channels = image.shape
-        
-        # Create Gaussian kernel
-        kernel_size = max(3, int(radius * 4) * 2 + 1)
-        sigma = radius
-        
-        x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        kernel_1d = torch.exp(-(x**2) / (2 * sigma**2))
-        kernel_1d = kernel_1d / kernel_1d.sum()
-        
-        # Create 2D Gaussian kernel
-        kernel_2d = kernel_1d.unsqueeze(0) * kernel_1d.unsqueeze(1)
-        kernel_2d = kernel_2d.unsqueeze(0).unsqueeze(0)
-        
-        # Apply convolution
-        img_reshaped = image.permute(0, 3, 1, 2).reshape(-1, 1, height, width)
-        blurred = F.conv2d(img_reshaped, kernel_2d, padding=kernel_size//2)
-        
-        # Ensure output matches input size
-        if blurred.shape[2:] != (height, width):
-            blurred = F.interpolate(blurred, size=(height, width), mode='bilinear', align_corners=False)
-        
-        return blurred.reshape(batch, channels, height, width).permute(0, 2, 3, 1)
     
     def _apply_tone_protection(self, original, sharpened, preserve_highlights, preserve_shadows):
         """Protect highlights and/or shadows from over-sharpening"""
@@ -348,24 +320,3 @@ class ApexSharpen:
 
         return result
     
-    def _apply_mask(self, original, processed, mask):
-        """Apply mask to blend original and processed images"""
-        device = original.device
-        batch, height, width, channels = original.shape
-        
-        # Ensure mask has correct dimensions
-        if len(mask.shape) == 2:
-            mask = mask.unsqueeze(0).unsqueeze(-1)
-        elif len(mask.shape) == 3:
-            mask = mask.unsqueeze(-1)
-        
-        # Resize mask if needed
-        if mask.shape[1:3] != (height, width):
-            mask = F.interpolate(mask.permute(0, 3, 1, 2), size=(height, width), 
-                               mode='bilinear', align_corners=False).permute(0, 2, 3, 1)
-        
-        # Ensure mask is in range [0, 1]
-        mask = torch.clamp(mask, 0, 1)
-        
-        # Apply mask: masked areas get processed image, unmasked areas keep original
-        return original * (1 - mask) + processed * mask

@@ -1,0 +1,929 @@
+"""
+Apex Prompt Preset Selector Node - Enhanced
+Professional prompt preset system with hierarchical categories for Environment, Lighting, and Style.
+
+This module provides:
+- 30+ environment presets (urban, natural, fantasy, sci-fi, etc.)
+- 30+ lighting presets (natural, dramatic, cinematic, artistic, etc.)
+- 15+ style presets (photorealistic, anime, storybook, editorial, etc.)
+- Weighted random selection for variety
+- Dynamic preset combination with seed-based deterministic randomization
+"""
+
+import os
+import json
+import random
+import re
+from typing import Dict, List, Optional, Any
+
+class ApexPromptPreset:
+    """
+    Advanced prompt preset selector with Environment, Lighting, and Style categories.
+    """
+    
+    def __init__(self):
+        self.presets_file = os.path.join(os.path.dirname(__file__), "prompt_presets.json")
+        self.presets = self.load_presets()
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "input_text": ("STRING", {"multiline": True, "default": ""}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                    "environment_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Environment"), {"default": "Disabled"}),
+                    "lighting_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Lighting"), {"default": "Disabled"}),
+                    "style_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Style"), {"default": "Disabled"}),
+                    "camera_lens_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Camera Lens"), {"default": "Disabled"}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("combined_prompt", "environment_text", "lighting_text", "style_text", "camera_lens_text")
+    FUNCTION = "combine_prompts"
+    CATEGORY = "Apex Artist/Text"
+
+    def load_presets(self) -> Dict[str, Any]:
+        """Load presets from JSON file, create default if not exists."""
+        if os.path.exists(self.presets_file):
+            try:
+                with open(self.presets_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error loading presets: {e}")
+                return self.get_default_presets()
+        else:
+            presets = self.get_default_presets()
+            self.save_presets(presets)
+            return presets
+
+    def save_presets(self, presets: Dict[str, Any]) -> None:
+        """Save presets to JSON file."""
+        try:
+            with open(self.presets_file, 'w', encoding='utf-8') as f:
+                json.dump(presets, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Error saving presets: {e}")
+
+    @staticmethod
+    def get_default_presets() -> Dict[str, Any]:
+        """Get comprehensive default preset collection with expanded variety."""
+        return {
+            "Apex Environment": {
+                # --- Original ---
+                "Modern Subway Train": {
+                    "prompt": "Modern subway train interior, stainless steel poles, clean white walls, large windows showing passing city skyline, softly blurred seated passengers in background, realistic subway environment.",
+                    "description": "Contemporary subway interior with urban views",
+                    "tags": ["subway", "urban", "interior", "modern"],
+                    "weight": 1.0
+                },
+                "Ocean Sunrise": {
+                    "prompt": "Endless ocean at sunrise, towering crystal-blue waves, dramatic clouds, soft sea mist, atmospheric haze, teal and turquoise ocean water, subtle warm orange sunrise tones.",
+                    "description": "Seascape with dramatic waves and sunrise lighting",
+                    "tags": ["ocean", "sunrise", "seascape", "dramatic"],
+                    "weight": 1.0
+                },
+                "Rice Paddy Night": {
+                    "prompt": "Lush glowing rice paddies at night, picnic setting beside reflective water canal, distant village with warm yellow lights, colorful green paddy fields stretching into distance, vibrant blue night sky with stars and fluffy cinematic clouds.",
+                    "description": "Nighttime rural rice paddy landscape with village",
+                    "tags": ["rice field", "rural", "night", "peaceful"],
+                    "weight": 1.0
+                },
+                "Urban Street": {
+                    "prompt": "Nighttime urban street scene with sleek sports cars positioned on wet asphalt, glowing neon signs, colorful city lights reflecting on street surface, tall buildings creating an urban canyon, moody cinematic atmosphere.",
+                    "description": "Urban night street with neon and city lights",
+                    "tags": ["urban", "street", "night", "neon"],
+                    "weight": 1.0
+                },
+                "Studio Collage": {
+                    "prompt": "Studio setting with dark charcoal-gray background, soft studio depth, clean premium backdrop, no competing environmental details, focus entirely on subject and lighting.",
+                    "description": "Clean studio environment with minimal backdrop",
+                    "tags": ["studio", "clean", "minimal", "professional"],
+                    "weight": 1.0
+                },
+                "Garage Workshop": {
+                    "prompt": "Roadside workshop shelter during heavy rain at night, wet reflective asphalt road, storm clouds, distant car headlights through fog and rain, steaming coffee cups, scattered mechanic tools, telephone poles fading into distance.",
+                    "description": "Rainy workshop garage with intimate working space",
+                    "tags": ["garage", "workshop", "rain", "industrial"],
+                    "weight": 1.0
+                },
+                "Countryside Village": {
+                    "prompt": "Rural countryside landscape with distant village houses, long passenger train moving across horizon, lush vegetation, natural trees, peaceful pastoral setting extending into the distance.",
+                    "description": "Peaceful rural village and countryside vista",
+                    "tags": ["countryside", "village", "rural", "pastoral"],
+                    "weight": 1.0
+                },
+                # --- New Environments ---
+                "Alpine Mountain Vista": {
+                    "prompt": "Majestic alpine mountain landscape, snow-capped peaks piercing through clouds, pine forest covering lower slopes, crystal clear alpine lake reflecting the sky, wildflower meadow in foreground, dramatic rocky terrain, fresh mountain atmosphere.",
+                    "description": "Dramatic alpine mountain scenery with lake and forest",
+                    "tags": ["mountain", "alpine", "snow", "nature", "majestic"],
+                    "weight": 1.0
+                },
+                "Tropical Beach Paradise": {
+                    "prompt": "Pristine tropical beach with powdery white sand, crystal clear turquoise water gently lapping shore, swaying palm trees with green fronds, colorful coral reef visible offshore, bright blue sky with puffy white clouds, warm sunny tropical atmosphere.",
+                    "description": "Tropical beach paradise with white sand and palm trees",
+                    "tags": ["beach", "tropical", "ocean", "paradise", "summer"],
+                    "weight": 1.0
+                },
+                "Desert Oasis": {
+                    "prompt": "Vast golden desert landscape with towering sand dunes, a lush green oasis with palm trees surrounding a sparkling water pool, ancient ruins partially buried in sand, dramatic heat haze on horizon, warm golden sand stretching to horizon.",
+                    "description": "Golden desert landscape with lush oasis",
+                    "tags": ["desert", "oasis", "sand", "arid", "ancient"],
+                    "weight": 1.0
+                },
+                "Misty Forest Path": {
+                    "prompt": "Enchanted forest path winding through ancient trees, thick morning mist floating between trunks, soft moss-covered ground, shafts of light penetrating through canopy, ferns and wildflowers lining the path, mysterious ethereal woodland atmosphere.",
+                    "description": "Mysterious misty forest with ancient trees",
+                    "tags": ["forest", "misty", "enchanted", "nature", "moody"],
+                    "weight": 1.0
+                },
+                "Medieval Castle Interior": {
+                    "prompt": "Grand medieval castle interior, towering stone walls adorned with tapestries, massive arched windows casting colored light, iron chandeliers with flickering candles, stone floor polished by centuries of footsteps, heavy wooden doors with iron hinges.",
+                    "description": "Grand medieval castle interior with stone architecture",
+                    "tags": ["castle", "medieval", "stone", "interior", "historic"],
+                    "weight": 1.0
+                },
+                "Space Station Hub": {
+                    "prompt": "Futuristic space station hub with sweeping curved corridors, holographic displays showing star charts, large observation windows revealing earth and stars, floating indicator panels, sleek metallic surfaces with soft blue ambient lighting, zero-gravity environment details.",
+                    "description": "Futuristic space station interior with star views",
+                    "tags": ["space", "futuristic", "sci-fi", "space station", "interior"],
+                    "weight": 1.0
+                },
+                "Underwater Coral Reef": {
+                    "prompt": "Vibrant underwater coral reef ecosystem, colorful coral formations in orange and purple, schools of tropical fish swimming through sun rays piercing the water surface, floating plankton particles catching light, deep blue water fading into darkness below.",
+                    "description": "Colorful underwater coral reef with marine life",
+                    "tags": ["underwater", "coral", "reef", "ocean", "marine"],
+                    "weight": 1.0
+                },
+                "Rooftop Cityscape": {
+                    "prompt": "Urban rooftop overlooking a sprawling cityscape, AC units and water towers nearby, string lights draped across the roof, comfortable seating area with potted plants, panoramic view of skyscrapers and city lights, sunset sky painted in orange and purple hues.",
+                    "description": "Rooftop terrace with panoramic city views",
+                    "tags": ["rooftop", "cityscape", "urban", "sunset", "panoramic"],
+                    "weight": 1.0
+                },
+                "Snowy Winter Cabin": {
+                    "prompt": "Cozy wooden cabin nestled in snowy mountains, snow accumulating on roof and pine trees, warm golden light spilling from windows, chimney smoke rising into crisp winter air, snow-covered pathway leading to the front door, serene winter landscape surrounding the cabin.",
+                    "description": "Cozy cabin in snowy winter landscape",
+                    "tags": ["cabin", "snow", "winter", "cozy", "mountain"],
+                    "weight": 1.0
+                },
+                "Cyberpunk Alley": {
+                    "prompt": "Narrow cyberpunk alley in a rain-soaked megacity, vibrant neon signs in pink and cyan illuminating wet pavement, steam rising from street vents, exposed pipes and cables along building walls, flickering holographic advertisements, distant flying vehicles between towering skyscrapers.",
+                    "description": "Rainy cyberpunk alley with neon lights",
+                    "tags": ["cyberpunk", "alley", "neon", "rain", "futuristic"],
+                    "weight": 1.0
+                },
+                "Ancient Temple Ruins": {
+                    "prompt": "Ancient temple ruins overtaken by jungle vegetation, massive stone columns and crumbling walls covered in moss and vines, intricate carvings partially eroded by time, large stone altar at center, shafts of light breaking through the jungle canopy above.",
+                    "description": "Ancient temple ruins reclaimed by jungle",
+                    "tags": ["temple", "ruins", "ancient", "jungle", "mysterious"],
+                    "weight": 1.0
+                },
+                "Futuristic Laboratory": {
+                    "prompt": "Sleek futuristic laboratory with white glossy surfaces, holographic data displays floating above workstations, rows of glowing cylindrical chambers filled with liquid, advanced scientific equipment with blinking LEDs, clean minimalist design with blue accent lighting.",
+                    "description": "Advanced futuristic scientific laboratory",
+                    "tags": ["laboratory", "futuristic", "sci-fi", "clean", "minimalist"],
+                    "weight": 1.0
+                },
+                "Cozy Library Interior": {
+                    "prompt": "Grand cozy library with floor to ceiling bookshelves filled with leather-bound books, warm reading lamps on oak tables, tall arched windows with stained glass, comfortable armchairs arranged for reading, spiral staircase leading to upper galleries, peaceful studious atmosphere.",
+                    "description": "Grand traditional library with warm intimate atmosphere",
+                    "tags": ["library", "cozy", "books", "interior", "academic"],
+                    "weight": 1.0
+                },
+                "Rainforest Canopy": {
+                    "prompt": "Lush tropical rainforest canopy viewed from above, dense green foliage spreading in all directions, exotic flowers in bright colors dotting the greenery, morning mist rising from the jungle floor, vibrant parrot and butterfly species visible, sunlight filtering through multiple leaf layers.",
+                    "description": "Lush tropical rainforest canopy from above",
+                    "tags": ["rainforest", "canopy", "jungle", "tropical", "lush"],
+                    "weight": 1.0
+                },
+                "Volcanic Wasteland": {
+                    "prompt": "Dark volcanic landscape with jagged black rock formations, active lava flows glowing orange cutting through the terrain, plumes of smoke rising from volcanic vents, ash-covered ground with occasional hardy plants, ominous red glow illuminating the scene from below.",
+                    "description": "Dark volcanic landscape with flowing lava",
+                    "tags": ["volcano", "lava", "wasteland", "dramatic", "dark"],
+                    "weight": 1.0
+                },
+                "Zen Garden": {
+                    "prompt": "Peaceful Japanese zen garden with carefully raked sand patterns, smooth rounded stones of varying sizes, carefully pruned bonsai trees, bamboo water feature trickling into a stone basin, moss-covered stone lantern, cherry blossom petals scattered on the sand.",
+                    "description": "Serene Japanese zen garden with raked sand",
+                    "tags": ["garden", "zen", "japanese", "peaceful", "minimalist"],
+                    "weight": 1.0
+                },
+                "Steampunk Airship Deck": {
+                    "prompt": "Steampunk airship observation deck with brass fittings and copper pipes, large glass panels offering views of clouds below, leather-bound control panels with pressure gauges and steam vents, intricate gear mechanisms visible through glass floor panels, warm orange glow from gas lamps.",
+                    "description": "Steampunk airship deck with brass and copper details",
+                    "tags": ["steampunk", "airship", "deck", "brass", "vintage"],
+                    "weight": 1.0
+                },
+                "Abandoned Hospital": {
+                    "prompt": "Abandoned hospital corridor with peeling paint and cracked tiles, dim fluorescent lights flickering overhead, gurneys overturned and medical equipment scattered, broken windows covered by dusty blinds, strange shadows cast by unknown sources, decaying institutional atmosphere.",
+                    "description": "Decaying abandoned hospital corridor",
+                    "tags": ["abandoned", "hospital", "horror", "decay", "creepy"],
+                    "weight": 1.0
+                },
+                "Lavender Field Sunset": {
+                    "prompt": "Endless lavender fields stretching to the horizon, rows of purple blooms creating sweeping color patterns, warm golden sunset light casting long shadows across the fields, distant farmhouse and cypress trees, bees buzzing among the flowers, peaceful rural evening atmosphere.",
+                    "description": "Purple lavender fields at golden sunset",
+                    "tags": ["lavender", "field", "sunset", "provence", "nature"],
+                    "weight": 1.0
+                },
+                # --- Storybook Environments (from reference images) ---
+                "Wildflower Meadow": {
+                    "prompt": "Peaceful wildflower meadow, soft grass, small winding stream, diverse botanical plants and flowers including daisies wildflowers and tall grass, rocks along the water, natural landscape with depth, gentle rolling terrain.",
+                    "description": "Serene wildflower meadow with stream and diverse botanicals",
+                    "tags": ["meadow", "wildflower", "pastoral", "nature", "peaceful"],
+                    "weight": 1.0
+                },
+                "Pastoral Hillside Stream": {
+                    "prompt": "Grassy rolling hill with vibrant green grass, small stream with blue water, tall grass tufts, colorful wildflowers including pink daisies white flowers and yellow blooms, blue sky with soft white clouds, rounded hill landscape stretching into distance.",
+                    "description": "Rolling grassy hillside with stream and colorful flowers",
+                    "tags": ["hillside", "pastoral", "stream", "flowers", "rolling hills"],
+                    "weight": 1.0
+                },
+                "Enchanted Storybook Garden": {
+                    "prompt": "Gentle sloped hillside with vibrant green grass, stream with flowing water ripples, rounded white and gray stones, tall golden grass tufts, colorful flower clusters forming pink clouds yellow blooms and white petals, blue sky background, peaceful pastoral fairy-tale setting.",
+                    "description": "Enchanted storybook garden with flower clusters and stream",
+                    "tags": ["storybook", "garden", "enchanted", "flowers", "fairy tale"],
+                    "weight": 1.0
+                },
+                "Peaceful Countryside Pasture": {
+                    "prompt": "Open wildflower meadow with diverse botanical flowers scattered throughout including orange coral daisies yellow flowers blue flowers and white blooms, natural grass field, light clouds in sky, pastoral landscape stretching into distance, peaceful countryside setting with gentle rolling terrain.",
+                    "description": "Peaceful countryside pasture with diverse wildflowers",
+                    "tags": ["countryside", "pasture", "wildflowers", "peaceful", "natural"],
+                    "weight": 1.0
+                },
+                # --- Fashion Collage Portrait (from user request) ---
+                "Fashion Collage Portrait": {
+                    "prompt": "Studio setting, dark charcoal-gray background with soft studio depth, elegant portrait separation, moody dark backdrop contrast.",
+                    "description": "Studio fashion collage layout with dark backdrop and multi-panel composition",
+                    "tags": ["studio", "fashion", "collage", "portrait", "multi-panel"],
+                    "weight": 1.0
+                },
+                # --- Subway Fashion Portrait (from user request) ---
+                "Subway Fashion Portrait": {
+                    "prompt": "Modern subway train interior, standing beside large window, stainless steel poles, overhead fluorescent lighting, clean white walls, large train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment. Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, soft color grading, HDR, global illumination, volumetric lighting, ray tracing, masterpiece, best quality, photorealistic, hyperrealistic, 8K, DSLR photography quality. Ultra-detailed clothing textures (realistic leather, ribbed knit fabric, fluffy faux fur, intricate silver accessories), highly detailed facial features, realistic eyes, natural skin pores, subtle skin texture, shallow depth of field, creamy bokeh, ultra sharp focus. Camera specs: Canon EOS R5, 85mm lens, f/1.8, ISO 100.",
+                    "description": "Subway fashion portrait with Korean street style and camera specs",
+                    "tags": ["subway", "fashion", "portrait", "Korean street style", "camera"],
+                    "weight": 1.3
+                }
+            },
+            "Apex Lighting": {
+                # --- Original ---
+                "Natural Daylight Window": {
+                    "prompt": "Natural daylight streams through large window, soft diffused key light on subject, gentle shadows, bright and open illumination, soft color grading, high dynamic range appearance, controlled highlights, detail-rich shadows.",
+                    "description": "Soft natural window light with diffused illumination",
+                    "tags": ["daylight", "natural", "window", "soft"],
+                    "weight": 1.2
+                },
+                "Volumetric Moonlight": {
+                    "prompt": "Bright full moon illuminating landscape, moonlight reflecting beautifully on water and wet grass, volumetric moonlight, atmospheric fog, gentle fill light, cool-neutral color temperature, dreamy ethereal quality.",
+                    "description": "Dramatic moonlit scene with volumetric effects",
+                    "tags": ["moonlight", "night", "volumetric", "dreamy"],
+                    "weight": 1.3
+                },
+                "Golden Cinematic Rays": {
+                    "prompt": "Golden rays of light breaking through dramatic clouds, intense golden backlight, heavenly volumetric rays, bright rim light, warm orange glow, cinematic color grading, high dynamic range, unclipped highlights.",
+                    "description": "Dramatic golden light with volumetric rays",
+                    "tags": ["cinematic", "golden", "dramatic", "rays"],
+                    "weight": 1.3
+                },
+                "Studio Professional": {
+                    "prompt": "Professional studio lighting with carefully positioned key light and fill light, even illumination across face and body, subtle rim lighting highlighting edges, soft flattering light without harsh shadows, neutral white balance, perfect exposure.",
+                    "description": "Professional studio setup with even balanced light",
+                    "tags": ["studio", "professional", "even", "balanced"],
+                    "weight": 1.3
+                },
+                "Warm Lantern Mix": {
+                    "prompt": "Cozy warm lantern glow mixed with cool moonlight, soft ambient fill from interior sources, warm tungsten bulb quality contrasting cool night atmosphere, intimate localized lighting, realistic material reflections.",
+                    "description": "Warm intimate light mixed with cool night tones",
+                    "tags": ["warm", "lantern", "cozy", "atmospheric"],
+                    "weight": 1.2
+                },
+                "Neon Urban Night": {
+                    "prompt": "Neon signs and colorful city lights, teal-blue shadows contrasting warm orange highlights, light reflecting on wet surfaces, bright dynamic color palette, harsh clean urban lighting, high contrast dramatic illumination.",
+                    "description": "Vibrant neon urban night lighting",
+                    "tags": ["neon", "urban", "night", "colorful"],
+                    "weight": 1.3
+                },
+                "HDR Balanced": {
+                    "prompt": "Cinematic color grading, high dynamic range, low-contrast balanced exposure, teal and orange color grading, soft bloom, realistic skin rendering, smooth tonal transitions, no blown highlights, preserved shadow detail.",
+                    "description": "Modern HDR color grading with balanced exposure",
+                    "tags": ["HDR", "cinematic", "balanced", "modern"],
+                    "weight": 1.2
+                },
+                # --- New Lighting ---
+                "Moody Rembrandt Lighting": {
+                    "prompt": "Rembrandt lighting with strong key light from above and to the side, characteristic triangle of light on the shadow side of the face, deep dramatic shadows, rich chiaroscuro contrast, warm amber tones in highlights, painterly shadow quality.",
+                    "description": "Classic Rembrandt portrait lighting with deep shadows",
+                    "tags": ["rembrandt", "chiaroscuro", "dramatic", "classic", "painterly"],
+                    "weight": 1.3
+                },
+                "Sunrise Golden Hour": {
+                    "prompt": "Early morning golden hour light, warm golden-orange sunlight at low angle, long soft shadows stretching across the scene, gentle warm glow on everything, subtle morning haze, dewdrops catching light, fresh vibrant color temperature.",
+                    "description": "Warm golden hour sunrise lighting",
+                    "tags": ["sunrise", "golden hour", "warm", "morning", "soft"],
+                    "weight": 1.2
+                },
+                "Sunset Purple Dusk": {
+                    "prompt": "Twilight sunset lighting with rich purple and magenta sky tones, warm orange horizon fading to cool purple overhead, soft ambient fill from scattered sky light, silhouettes against the colorful sky, romantic and nostalgic atmosphere.",
+                    "description": "Rich purple dusk twilight lighting",
+                    "tags": ["sunset", "dusk", "purple", "twilight", "romantic"],
+                    "weight": 1.2
+                },
+                "Bioluminescent Glow": {
+                    "prompt": "Ethereal bioluminescent lighting with glowing blue and green particles floating in the air, soft cool-colored illumination from natural sources, magical luminous quality, organic light patterns resembling fireflies or deep-sea creatures, dreamlike atmosphere.",
+                    "description": "Ethereal bioluminescent glowing light",
+                    "tags": ["bioluminescent", "glowing", "magical", "ethereal", "blue"],
+                    "weight": 1.3
+                },
+                "Candlelit Warmth": {
+                    "prompt": "Intimate candlelit scene with warm flickering orange light, soft golden glow on faces and surfaces, deep warm shadows, dramatic contrast between light and dark, cozy romantic atmosphere, subtle smoke trails catching light above flames.",
+                    "description": "Warm intimate candlelight illumination",
+                    "tags": ["candle", "warm", "intimate", "romantic", "cozy"],
+                    "weight": 1.2
+                },
+                "Overcast Diffuse Skylight": {
+                    "prompt": "Soft overcast sky providing even diffuse lighting, no harsh shadows, completely uniform illumination, soft cloud-filtered daylight, muted natural colors, ideal for product photography, smooth gradients across all surfaces, gently wrapped light.",
+                    "description": "Soft even overcast skylight with no shadows",
+                    "tags": ["overcast", "diffuse", "soft", "even", "cloudy"],
+                    "weight": 1.1
+                },
+                "Midnight Starlight": {
+                    "prompt": "Deep midnight scene illuminated only by starlight, very low light levels with subtle blue ambient glow, scattered stars visible in the sky, faint Milky Way band, organic dark shadows, visible constellations, peaceful vastness of the night sky.",
+                    "description": "Minimal starlight illumination in deep night",
+                    "tags": ["starlight", "midnight", "dark", "stars", "peaceful"],
+                    "weight": 1.1
+                },
+                "Fluorescent Office Cool": {
+                    "prompt": "Cool fluorescent overhead lighting, even flat illumination with slight greenish-blue cast, harsh shadows under desks and equipment, clinical institutional feel, bright ceiling panels creating multiple light sources, sterile workplace atmosphere.",
+                    "description": "Cool fluorescent office lighting",
+                    "tags": ["fluorescent", "office", "cool", "clinical", "industrial"],
+                    "weight": 1.0
+                },
+                "Fireworks Explosive Color": {
+                    "prompt": "Dynamic colored light from fireworks and sparklers, explosive bursts of red gold blue and green light, rapidly changing colorful highlights, dramatic contrast between dark sky and brilliant explosions, festive celebratory atmosphere, sparkling particles trailing through air.",
+                    "description": "Explosive colorful fireworks illumination",
+                    "tags": ["fireworks", "colorful", "explosive", "festive", "dynamic"],
+                    "weight": 1.3
+                },
+                "Lightning Storm Flash": {
+                    "prompt": "Brief intense lightning flash illumination, stark white-blue light revealing landscape in sharp detail, deep crushing shadows immediately following the flash, dramatic storm clouds backlit by electrical discharge, high contrast monochromatic moment, rain visible in frozen light.",
+                    "description": "Stark lightning flash illumination during storm",
+                    "tags": ["lightning", "storm", "flash", "dramatic", "intense"],
+                    "weight": 1.3
+                },
+                "Underwater Caustic Light": {
+                    "prompt": "Underwater lighting with dancing caustic light patterns on surfaces, sunlight filtering through water creating moving rippled light, blue-green color cast, soft volumetric water haze, light rays scattering through particles, organic flowing illumination patterns.",
+                    "description": "Dancing underwater caustic light patterns",
+                    "tags": ["underwater", "caustic", "ripple", "aquatic", "pattern"],
+                    "weight": 1.2
+                },
+                "Dappled Forest Sunlight": {
+                    "prompt": "Dappled sunlight filtering through a forest canopy, small bright spots of light scattered across the forest floor, long shafts of light between tree trunks, warm yellow-green color palette, organic light patterns dancing on leaves, magical woodland atmosphere.",
+                    "description": "Dappled sunlight through forest canopy",
+                    "tags": ["dappled", "forest", "sunlight", "magical", "nature"],
+                    "weight": 1.2
+                },
+                "Silhouette Backlight": {
+                    "prompt": "Strong dramatic backlight creating clean silhouettes, bright light source behind subject with minimal or no fill light, dark shadow details with bright rim light on edges, high contrast scene, atmospheric haze catching the backlight, moody and cinematic.",
+                    "description": "Dramatic backlight creating silhouettes",
+                    "tags": ["silhouette", "backlight", "dramatic", "contrast", "rim light"],
+                    "weight": 1.3
+                },
+                "Ring Light Beauty": {
+                    "prompt": "Professional ring light beauty lighting, soft even illumination with characteristic circular catchlights in the eyes, minimal shadows behind the subject, flattering wraparound light on the face, clean bright beauty photography look, smooth skin rendering.",
+                    "description": "Flattering ring light beauty photography lighting",
+                    "tags": ["ring light", "beauty", "flattering", "soft", "portrait"],
+                    "weight": 1.2
+                },
+                "LED Strip Color Wash": {
+                    "prompt": "Modern LED strip lighting creating colored accent washes on walls and subjects, vibrant saturated color in pink blue and purple, gradient transitions between colors, contemporary studio aesthetic, creative mixed color temperatures, artistic RGB illumination.",
+                    "description": "Modern colored LED strip accent lighting",
+                    "tags": ["LED", "colorful", "modern", "RGB", "artistic"],
+                    "weight": 1.1
+                },
+                "Twilight Blue Hour": {
+                    "prompt": "Blue hour twilight lighting with deep blue sky fading to warm horizon, soft cool ambient light with subtle warm accents from distant city lights, calm serene atmosphere, rich blue tones dominating the scene, peaceful transition between day and night.",
+                    "description": "Twilight blue hour with cool blue tones",
+                    "tags": ["twilight", "blue hour", "cool", "serene", "evening"],
+                    "weight": 1.2
+                },
+                "Dramatic Side Light": {
+                    "prompt": "Strong side lighting creating bold contrast, light raking across the subject from one side, deep shadows on the opposite side, pronounced texture enhancement, sculptural quality revealing every surface detail, intense dramatic mood.",
+                    "description": "Strong side light creating texture and contrast",
+                    "tags": ["side light", "dramatic", "texture", "contrast", "sculptural"],
+                    "weight": 1.3
+                },
+                "Soft Porch Light": {
+                    "prompt": "Warm welcoming porch light illumination, soft golden glow spreading across doorway and steps, gentle light pooling on the ground, inviting warm atmosphere, subtle insect shadows in the light cone, cozy domestic evening setting, nostalgic homely feeling.",
+                    "description": "Warm welcoming porch light at evening",
+                    "tags": ["porch light", "warm", "cozy", "home", "evening"],
+                    "weight": 1.1
+                },
+                # --- Storybook Lighting (from reference images) ---
+                "Soft Watercolor Wash": {
+                    "prompt": "Soft watercolor wash background in pale mint and cream tones, diffused gentle light throughout the scene, muted natural colors including greens golds corals and soft blues, low contrast, peaceful dreamy atmosphere, watercolor bloom effects, gentle ethereal quality.",
+                    "description": "Soft watercolor wash with muted pastel tones",
+                    "tags": ["watercolor", "wash", "soft", "pastel", "dreamy"],
+                    "weight": 1.1
+                },
+                "Pastel Dream Light": {
+                    "prompt": "Bright cheerful even studio lighting, soft pastel colors with soft orange white gray and pink accents, saturated but gentle color palette, clear blue sky light, no harsh shadows, warm inviting atmosphere, diffused wraparound illumination.",
+                    "description": "Bright cheerful pastel lighting with soft tones",
+                    "tags": ["pastel", "bright", "cheerful", "soft", "even"],
+                    "weight": 1.1
+                },
+                "Gentle Storybook Diffuse": {
+                    "prompt": "Bright cheerful lighting with soft pastel palette dominated by mint green grass tones sky blue coral pink and soft golden tones, even illumination throughout, warm inviting mood, clear visibility, no harsh shadows, gentle dreamy quality, soft rounded light.",
+                    "description": "Gentle even diffuse light with storybook warmth",
+                    "tags": ["diffuse", "storybook", "gentle", "warm", "soft"],
+                    "weight": 1.1
+                },
+                "Warm Pastoral Glow": {
+                    "prompt": "Soft warm natural light with golden-hour quality, warm natural tones, muted earth tones mixed with gentle flower colors, diffused gentle light, warm spiritual mood, calm peaceful atmosphere, soft amber and cream highlights.",
+                    "description": "Warm pastoral glow with golden-hour quality",
+                    "tags": ["warm", "pastoral", "golden hour", "peaceful", "natural"],
+                    "weight": 1.2
+                }
+            },
+            "Apex Style": {
+                "Fashion Editorial": {
+                    "prompt": "Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, ultra-detailed clothing textures, realistic skin detail, soft color grading, photorealistic, hyperrealistic, masterpiece, best quality, DSLR photography, 85mm lens, f/1.8, shallow depth of field, creamy bokeh.",
+                    "description": "Premium fashion editorial with detailed textures",
+                    "tags": ["fashion", "editorial", "cinematic", "urban"],
+                    "weight": 1.3
+                },
+                "Cinematic Elegance": {
+                    "prompt": "Ultra-realistic cinematic, premium movie-poster quality, photorealistic, 8K, HDR, low-contrast cinematic color grading, dramatic but peaceful mood, emotionally powerful, elegant, minimalist composition, Hollywood poster aesthetic.",
+                    "description": "Cinematic elegant aesthetic with dramatic mood",
+                    "tags": ["cinematic", "elegant", "emotional", "dramatic"],
+                    "weight": 1.3
+                },
+                "Anime Painterly": {
+                    "prompt": "Semi-realistic anime painting with subtle 3D depth, painterly anime realism, soft realistic shading, handcrafted digital painting look, Makoto Shinkai + Studio Ghibli inspired, semi-3D anime render, visual novel CG style, ultra detailed environment art.",
+                    "description": "Anime painterly style with Studio Ghibli influence",
+                    "tags": ["anime", "painterly", "ghibli", "3D"],
+                    "weight": 1.2
+                },
+                "Premium Commercial": {
+                    "prompt": "Premium social media aesthetic, clean premium look, commercial fashion photography, soft minimalist polished style, naturally captured instead of heavily staged, emphasizing realism and subtle elegance, high-end digital finish, fine textures preserved.",
+                    "description": "Commercial premium polished aesthetic",
+                    "tags": ["commercial", "premium", "clean", "polished"],
+                    "weight": 1.2
+                },
+                "Photorealistic": {
+                    "prompt": "Photorealistic, hyperrealistic, ultra-detailed, realistic textures, physically based rendering, ray-traced lighting, photorealistic rendering, film-quality realism, 8K resolution, ultra sharp focus, masterpiece, best quality.",
+                    "description": "Ultra-realistic photographic render",
+                    "tags": ["photorealistic", "hyperrealistic", "detailed", "8K"],
+                    "weight": 1.3
+                },
+                "Luxury Album Cover": {
+                    "prompt": "Ultra-realistic cinematic album cover, premium movie-poster quality, photorealistic, 8K, HDR, premium Future Bass aesthetic, emotional and uplifting, luxury music album artwork, professional Spotify and Apple Music promotional artwork, minimalist elegant composition.",
+                    "description": "Luxury music album artwork aesthetic",
+                    "tags": ["album", "luxury", "music", "professional"],
+                    "weight": 1.3
+                },
+                "Visual Novel CG": {
+                    "prompt": "Visual novel CG style, detailed anime background, anime matte painting, soft rendered anime, cozy rural aesthetic, emotional anime scene, dreamy atmosphere, atmospheric perspective, immersive environmental storytelling, high detail environment art.",
+                    "description": "Visual novel game CG aesthetic",
+                    "tags": ["visual novel", "game", "CG", "atmospheric"],
+                    "weight": 1.2
+                },
+                # --- Storybook Styles (from reference images) ---
+                "Watercolor Storybook": {
+                    "prompt": "Watercolor illustration, soft botanical aesthetic, whimsical children's book illustration, gentle and contemplative mood, hand-painted quality, delicate linework, subtle texture, artistic storybook aesthetic, soft watercolor washes, creative artistic style.",
+                    "description": "Watercolor storybook illustration with soft botanical feel",
+                    "tags": ["watercolor", "storybook", "illustration", "botanical", "artistic"],
+                    "weight": 1.2
+                },
+                "3D Clay Render": {
+                    "prompt": "3D rendered illustration, clay felt aesthetic, soft rounded forms, chibi cute character design, pastel color palette, toy-like quality, digital 3D art with soft shading, children's illustration style, playful and charming mood, soft surface texture quality.",
+                    "description": "3D clay/felt rendered illustration with soft rounded forms",
+                    "tags": ["3D", "clay", "render", "chibi", "toy-like", "cute"],
+                    "weight": 1.2
+                },
+                "Children's Book Illustration": {
+                    "prompt": "Children's book illustration style, soft narrative storytelling quality, gentle and compassionate mood, traditional storybook aesthetic, warm inviting visual language, whimsical playful charm, soft composition, delicate hand-painted look, charming storybook design.",
+                    "description": "Classic children's book illustration with narrative warmth",
+                    "tags": ["children's book", "illustration", "storybook", "whimsical", "narrative"],
+                    "weight": 1.2
+                },
+                "Whimsical Pastel Art": {
+                    "prompt": "Soft rounded volumetric forms, cute character aesthetic, digital 3D art with soft shading, children's book illustration style, playful whimsical mood, soft surface texture quality, charming storybook design, pastel color palette, dreamy storybook atmosphere.",
+                    "description": "Whimsical pastel art with soft volumetric forms",
+                    "tags": ["whimsical", "pastel", "volumetric", "cute", "playful"],
+                    "weight": 1.2
+                },
+                "Fashion Collage Portrait": {
+                    "prompt": "Ultra-realistic IMAX-level Netflix-style cinematic elegant collage portrait, premium five-panel fashion collage layout, premium luxury fashion editorial collage aesthetic, ultra-rich color grading with deep saturated fabric tones, sophisticated color palette, warm cinematic highlights against moody dark backdrop. Creamy bokeh, elegant portrait separation, HDR lighting, global illumination, photorealistic rendering, shallow depth of field, masterpiece quality, ultra-sharp details, 8K production detail.",
+                    "description": "Premium fashion collage portrait with ultra-realistic cinematic rendering",
+                    "tags": ["fashion", "collage", "portrait", "cinematic", "ultra-realistic", "editorial"],
+                    "weight": 1.3
+                }
+            },
+            "Apex Camera Lens": {
+                # === ULTRA WIDE ANGLE LENSES ===
+                "14mm Fisheye": {
+                    "prompt": "Extreme wide environmental shot with 14mm fisheye lens, entire scene captured with dramatic spherical distortion, full environment visible from edge to edge, subject small within vast context, creative barrel distortion, f/2.8 aperture, artistic warped perspective, immersive environmental storytelling.",
+                    "description": "Fisheye lens - entire scene with extreme distortion",
+                    "tags": ["14mm", "fisheye", "extreme wide", "distortion", "environmental"],
+                    "weight": 1.0
+                },
+                "16mm Ultra Wide": {
+                    "prompt": "Expansive wide environmental shot with 16mm ultra wide lens, sweeping vista with subject in full context, dramatic perspective and depth, complete scene from foreground to horizon, slight barrel distortion, f/2.8 aperture, architectural and landscape cinematography, environmental storytelling composition.",
+                    "description": "Ultra wide lens - expansive environmental framing",
+                    "tags": ["16mm", "ultra wide", "expansive", "environmental", "vista"],
+                    "weight": 1.1
+                },
+                "18mm Wide": {
+                    "prompt": "Wide environmental shot with 18mm lens, broad contextual framing showing subject within full surroundings, dramatic perspective with natural proportions, architectural quality, f/3.5 aperture, landscape and environmental portraiture, subject occupies 1/3 of frame with rich context.",
+                    "description": "Wide lens - subject in rich environmental context",
+                    "tags": ["18mm", "wide", "architectural", "environmental", "context"],
+                    "weight": 1.1
+                },
+                
+                # === WIDE ANGLE LENSES ===
+                "24mm Wide Angle": {
+                    "prompt": "Wide contextual shot with 24mm lens, environmental storytelling composition with subject in natural setting, moderate wide perspective showing surroundings, slight barrel distortion, f/2.8 aperture, documentary and architectural photography, subject and environment equally important in frame.",
+                    "description": "Wide angle - balanced environmental storytelling",
+                    "tags": ["24mm", "wide angle", "storytelling", "documentary", "balanced"],
+                    "weight": 1.2
+                },
+                "28mm Documentary": {
+                    "prompt": "Environmental documentary shot with 28mm lens, subject in authentic context showing meaningful surroundings, natural wide perspective, minimal distortion, f/2.0 aperture, photojournalism and street photography style, candid contextual framing with environmental detail.",
+                    "description": "Documentary lens - authentic contextual framing",
+                    "tags": ["28mm", "documentary", "photojournalism", "street", "authentic"],
+                    "weight": 1.2
+                },
+                "35mm Street": {
+                    "prompt": "Natural wide shot with 35mm lens, subject framed with environmental context, comfortable viewing distance, minimal distortion, f/1.8 aperture, street photography and environmental portraits, medium-wide composition showing subject and immediate surroundings, natural human perspective.",
+                    "description": "Street lens - natural wide perspective with context",
+                    "tags": ["35mm", "street", "natural", "environmental", "comfortable"],
+                    "weight": 1.3
+                },
+                
+                # === STANDARD/NORMAL LENSES ===
+                "40mm Standard": {
+                    "prompt": "Medium shot with 40mm standard lens, subject and upper environment in frame, slightly compressed natural perspective, f/2.0 aperture, versatile framing showing subject waist-up with background context, balanced composition between intimacy and environment.",
+                    "description": "Standard lens - balanced medium shot composition",
+                    "tags": ["40mm", "standard", "medium shot", "balanced", "versatile"],
+                    "weight": 1.2
+                },
+                "50mm Classic": {
+                    "prompt": "Medium shot with 50mm classic standard lens, natural perspective matching human eye, subject from waist or chest up, moderate depth of field, f/1.8 aperture, balanced environmental presence, classic photography composition, neutral compression and distortion.",
+                    "description": "Classic 50mm - natural eye perspective medium shot",
+                    "tags": ["50mm", "classic", "natural", "medium shot", "standard"],
+                    "weight": 1.3
+                },
+                "55mm Normal": {
+                    "prompt": "Medium close-up with 55mm normal lens, subject from chest up filling frame, light perspective compression, f/1.8 aperture, portrait-ready framing, moderate background separation, transitional focal length between standard and portrait.",
+                    "description": "Normal lens - medium close-up chest framing",
+                    "tags": ["55mm", "normal", "medium closeup", "portrait-ready", "transitional"],
+                    "weight": 1.2
+                },
+                
+                # === PORTRAIT TELEPHOTO LENSES ===
+                "75mm Portrait": {
+                    "prompt": "Close-up portrait with 75mm lens, tight framing on upper body and face, subject's head and shoulders filling frame, light flattering compression, f/1.8 aperture, shallow depth of field, creamy background separation, three-quarter portrait distance, natural facial proportions.",
+                    "description": "Portrait lens - close-up head and shoulders",
+                    "tags": ["75mm", "portrait", "close-up", "flattering", "upper body"],
+                    "weight": 1.3
+                },
+                "85mm Portrait Classic": {
+                    "prompt": "Close-up portrait with 85mm classic portrait lens, tight framing on face and upper torso filling majority of frame, flattering facial compression, f/1.4 aperture, shallow depth of field isolating subject, creamy circular bokeh, professional portrait rendering, background melts into soft blur, subject separated from environment.",
+                    "description": "Classic 85mm portrait - tight face framing",
+                    "tags": ["85mm", "portrait", "close-up", "flattering", "bokeh"],
+                    "weight": 1.4
+                },
+                "100mm Portrait": {
+                    "prompt": "Tight portrait with 100mm lens, face and upper chest filling frame, strong background separation, f/2.0 aperture, pronounced compression creating flattering facial features, shallow focus isolating subject from surroundings, smooth bokeh, headshot framing with minimal environmental distraction.",
+                    "description": "100mm portrait - tight facial close-up",
+                    "tags": ["100mm", "portrait", "tight", "headshot", "compression"],
+                    "weight": 1.3
+                },
+                "105mm Headshot": {
+                    "prompt": "Tight headshot with 105mm lens, face filling majority of frame from forehead to shoulders, strong flattering compression, f/2.0 aperture, very shallow depth of field, background completely defocused, professional headshot composition, facial features in intimate detail, subject dominates frame.",
+                    "description": "Headshot lens - face-dominant tight framing",
+                    "tags": ["105mm", "headshot", "tight", "facial", "intimate"],
+                    "weight": 1.3
+                },
+                
+                # === TELEPHOTO LENSES ===
+                "135mm Fashion": {
+                    "prompt": "Extreme close-up with 135mm telephoto lens, face and expression filling frame, very strong compression flattening perspective, f/2.0 aperture, extremely shallow depth of field, background compressed into abstract color wash, fashion and beauty close-up, facial details in sharp focus while everything else melts away, subject isolation.",
+                    "description": "Fashion telephoto - extreme facial close-up",
+                    "tags": ["135mm", "fashion", "extreme closeup", "compression", "beauty"],
+                    "weight": 1.3
+                },
+                "150mm Telephoto": {
+                    "prompt": "Very tight close-up with 150mm telephoto lens, subject's face dominates frame, extreme compression and perspective flattening, f/2.8 aperture, razor-thin depth of field, background completely abstracted, distant camera position creating intimate frame, isolated subject rendering with compressed spatial relationships.",
+                    "description": "Telephoto - very tight compressed framing",
+                    "tags": ["150mm", "telephoto", "tight", "compression", "isolated"],
+                    "weight": 1.2
+                },
+                "200mm Long Telephoto": {
+                    "prompt": "Extreme tight close-up with 200mm long telephoto lens, face filling entire frame from distant vantage point, maximum compression flattening all perspective, f/2.8 aperture, paper-thin depth of field, background reduced to pure bokeh abstractions, voyeuristic distant perspective creating intimate framing, wildlife and sports photography compression, subject completely isolated.",
+                    "description": "Long telephoto - maximum compression close-up",
+                    "tags": ["200mm", "long telephoto", "extreme compression", "isolated", "distant"],
+                    "weight": 1.2
+                },
+                "300mm Super Telephoto": {
+                    "prompt": "Ultra-tight extreme close-up with 300mm super telephoto lens, minute details filling frame from very far distance, extreme perspective compression collapsing depth, f/4.0 aperture, minimal depth of field, background utterly defocused into color fields, maximum subject isolation, wildlife and sports photography aesthetic, compressed spatial relationships.",
+                    "description": "Super telephoto - ultra-tight maximum isolation",
+                    "tags": ["300mm", "super telephoto", "ultra tight", "wildlife", "maximum compression"],
+                    "weight": 1.1
+                },
+                
+                # === MACRO LENSES ===
+                "60mm Macro": {
+                    "prompt": "Macro close-up detail shot with 60mm macro lens, intricate details filling frame at close working distance, f/2.8 aperture, shallow depth of field revealing texture, 1:2 magnification, intimate detail rendering, close-up photography of small subjects, moderate working distance for flexibility.",
+                    "description": "Macro lens - close-up detail work",
+                    "tags": ["60mm", "macro", "close-up", "detail", "texture"],
+                    "weight": 1.1
+                },
+                "100mm Macro": {
+                    "prompt": "Extreme macro detail shot with 100mm macro lens, 1:1 life-size magnification, microscopic details filling entire frame, f/2.8 aperture, razor-thin depth of field, intricate texture rendering in ultra-sharp focus, tiny subjects magnified to frame-filling size, working distance allows natural lighting, professional macro photography.",
+                    "description": "Macro 100mm - 1:1 magnification extreme detail",
+                    "tags": ["100mm", "macro", "magnification", "detail", "texture"],
+                    "weight": 1.2
+                },
+                "180mm Macro": {
+                    "prompt": "Distant macro shot with 180mm macro lens, extreme detail captured from comfortable working distance, 1:1 magnification with telephoto reach, f/3.5 aperture, compressed perspective with macro detail, subject isolation through distance and magnification, professional nature macro photography, intricate details with smooth bokeh.",
+                    "description": "Telephoto macro - detail from distance",
+                    "tags": ["180mm", "macro", "telephoto", "detail", "distant"],
+                    "weight": 1.1
+                },
+                
+                # === SPECIALTY LENSES ===
+                "45mm Tilt-Shift": {
+                    "prompt": "Selective focus with 45mm tilt-shift lens, creative focus plane manipulation, miniature effect with blurred edges, architectural perspective correction, f/2.8 aperture, technical photography quality, artistic selective sharpness, unique depth of field control, architectural and creative composition.",
+                    "description": "Tilt-shift - selective focus and perspective control",
+                    "tags": ["45mm", "tilt-shift", "selective focus", "miniature", "architectural"],
+                    "weight": 1.0
+                },
+                "Lensbaby Composer": {
+                    "prompt": "Dreamy selective focus with Lensbaby lens, sweet spot of sharpness surrounded by artistic blur, swirling bokeh and soft focus edges, f/2.0 aperture, creative focus control, whimsical ethereal rendering, artistic portrait and fine art photography, painterly quality with sharp center.",
+                    "description": "Lensbaby - dreamy artistic selective focus",
+                    "tags": ["lensbaby", "dreamy", "selective focus", "artistic", "whimsical"],
+                    "weight": 1.0
+                },
+                "Petzval 85mm": {
+                    "prompt": "Vintage portrait with 85mm Petzval lens, swirling bokeh character, dreamy vintage optical quality, sharp center with artistic blur swirls, f/2.2 aperture, warm nostalgic color cast, soft glow in highlights, classic portrait with unique bokeh personality, artistic fine-art portrait rendering.",
+                    "description": "Petzval - vintage swirly bokeh portraits",
+                    "tags": ["85mm", "petzval", "vintage", "swirly bokeh", "artistic"],
+                    "weight": 1.1
+                },
+                
+                # === ZOOM LENSES ===
+                "24-70mm Standard Zoom": {
+                    "prompt": "Versatile shot with 24-70mm f/2.8 standard zoom lens, flexible framing from environmental wide to portrait close-up, professional optics, consistent rendering throughout zoom range, f/2.8 constant aperture, workhorse lens quality, balanced perspective and compression, adaptable composition.",
+                    "description": "Standard zoom - versatile wide to portrait range",
+                    "tags": ["24-70mm", "zoom", "versatile", "standard", "professional"],
+                    "weight": 1.2
+                },
+                "70-200mm Telephoto Zoom": {
+                    "prompt": "Compressed telephoto shot with 70-200mm f/2.8 zoom lens, professional telephoto range from medium to tight close-up, versatile compression and subject isolation, f/2.8 constant aperture, consistent creamy bokeh throughout range, pro sports and portrait photography, flexible framing with telephoto character.",
+                    "description": "Telephoto zoom - professional portrait to closeup range",
+                    "tags": ["70-200mm", "telephoto zoom", "compression", "professional", "portrait"],
+                    "weight": 1.3
+                },
+                "100-400mm Super Zoom": {
+                    "prompt": "Long-range telephoto shot with 100-400mm super zoom lens, extreme compression and reach from distant position, f/4.5-5.6 aperture, wildlife and sports photography versatility, powerful magnification bringing distant subjects close, compressed perspective throughout range, maximum subject isolation.",
+                    "description": "Super zoom - extreme telephoto reach and compression",
+                    "tags": ["100-400mm", "super zoom", "telephoto", "wildlife", "sports"],
+                    "weight": 1.1
+                },
+                
+                # === CINEMA PRIME LENSES ===
+                "Zeiss Master Prime 25mm": {
+                    "prompt": "Cinematic wide shot with Zeiss Master Prime 25mm cinema lens, environmental storytelling composition for film production, T1.3 aperture, clinical sharpness with subtle organic character, wide contextual framing, minimal breathing, professional cinema rendering, subject in rich environmental context, Hollywood production quality.",
+                    "description": "Cinema wide prime - cinematic environmental framing",
+                    "tags": ["25mm", "cinema", "zeiss", "master prime", "film production"],
+                    "weight": 1.2
+                },
+                "Zeiss Master Prime 50mm": {
+                    "prompt": "Cinematic medium shot with Zeiss Master Prime 50mm cinema lens, natural film perspective with subtle compression, T1.3 aperture, clinical precision with organic falloff, medium composition from waist up, minimal focus breathing, professional cinema production, Netflix and IMAX quality, classic cinema framing.",
+                    "description": "Cinema standard prime - cinematic medium shot",
+                    "tags": ["50mm", "cinema", "zeiss", "master prime", "netflix"],
+                    "weight": 1.3
+                },
+                "Zeiss Master Prime 85mm": {
+                    "prompt": "Cinematic portrait close-up with Zeiss Master Prime 85mm cinema lens, tight face and upper body framing for film, T1.3 aperture, clinical sharpness with smooth bokeh falloff, professional portrait compression, minimal breathing, Hollywood portrait cinematography, facial features beautifully rendered, cinema production standard.",
+                    "description": "Cinema portrait prime - cinematic close-up framing",
+                    "tags": ["85mm", "cinema", "zeiss", "portrait", "hollywood"],
+                    "weight": 1.3
+                },
+                "Cooke S4 35mm": {
+                    "prompt": "Cinematic medium-wide shot with Cooke S4 35mm cinema lens, organic 'Cooke Look' with warm character, T2.0 aperture, gentle falloff and smooth bokeh, environmental portrait framing for film, classic cinema rendering, subject in meaningful context, soft organic quality, professional film production, warm cinematic color.",
+                    "description": "Cooke cinema lens - organic medium-wide framing",
+                    "tags": ["35mm", "cinema", "cooke", "organic", "film"],
+                    "weight": 1.3
+                },
+                "Cooke S4 65mm": {
+                    "prompt": "Cinematic medium close-up with Cooke S4 65mm cinema lens, intimate 'Cooke Look' portrait framing, T2.0 aperture, warm organic character with smooth falloff, chest and head composition for film, gentle compression and beautiful skin tones, classic cinema portrait rendering, professional production quality.",
+                    "description": "Cooke cinema portrait - warm intimate framing",
+                    "tags": ["65mm", "cinema", "cooke", "portrait", "intimate"],
+                    "weight": 1.3
+                },
+                "Arri Signature Prime 40mm": {
+                    "prompt": "Modern cinema shot with Arri Signature Prime 40mm lens, medium framing with contemporary cinema look, T1.8 aperture, large format coverage, smooth natural bokeh with modern optical design, subject from waist up, minimal aberrations, Netflix and IMAX production standard, modern digital cinema aesthetic.",
+                    "description": "Arri cinema prime - modern medium framing",
+                    "tags": ["40mm", "cinema", "arri", "signature", "modern"],
+                    "weight": 1.2
+                },
+                
+                # === ANAMORPHIC CINEMA LENSES ===
+                "Anamorphic 35mm": {
+                    "prompt": "Widescreen cinematic shot with 35mm anamorphic cinema lens, 2.39:1 scope aspect ratio, environmental composition with anamorphic character, T2.0 aperture, characteristic horizontal blue lens flares, oval bokeh, wide contextual framing for scope format, cinematic widescreen storytelling, Hollywood blockbuster aesthetic, subject in epic widescreen context.",
+                    "description": "Anamorphic wide - widescreen environmental scope",
+                    "tags": ["35mm", "anamorphic", "widescreen", "scope", "flares"],
+                    "weight": 1.3
+                },
+                "Anamorphic 50mm": {
+                    "prompt": "Cinematic medium shot with 50mm anamorphic lens, 2.39:1 widescreen scope format, medium framing with anamorphic characteristics, T2.0 aperture, horizontal lens flares and oval bokeh, natural perspective in scope aspect, classic cinema widescreen composition, Hollywood scope aesthetic, subject in widescreen medium frame.",
+                    "description": "Anamorphic standard - widescreen medium shot",
+                    "tags": ["50mm", "anamorphic", "medium shot", "scope", "cinema"],
+                    "weight": 1.3
+                },
+                "Anamorphic 75mm": {
+                    "prompt": "Widescreen close-up with 75mm anamorphic lens, tight portrait in 2.39:1 scope format, T2.0 aperture, characteristic horizontal streaking flares, oval bokeh patterns, face and upper body filling widescreen frame, cinematic portrait compression with anamorphic character, Hollywood scope close-up, epic cinematic intimacy.",
+                    "description": "Anamorphic portrait - widescreen close-up scope",
+                    "tags": ["75mm", "anamorphic", "portrait", "scope", "closeup"],
+                    "weight": 1.3
+                },
+                "Panavision Anamorphic": {
+                    "prompt": "Epic widescreen shot with Panavision anamorphic cinema lens, 2.39:1 Hollywood scope format, legendary Panavision rendering, T2.3 aperture, iconic horizontal blue lens flares, smooth oval bokeh, classic Hollywood blockbuster aesthetic, cinematic scope composition, premium film production quality, epic widescreen framing with anamorphic magic.",
+                    "description": "Panavision anamorphic - legendary Hollywood scope",
+                    "tags": ["panavision", "anamorphic", "hollywood", "epic", "legendary"],
+                    "weight": 1.4
+                },
+                "Atlas Orion Anamorphic": {
+                    "prompt": "Vintage widescreen with Atlas Orion anamorphic lens, 2.39:1 scope with vintage character, T2.0 aperture, blue horizontal flares with vintage warmth, organic oval bokeh, classic anamorphic rendering with modern sharpness, retro-futuristic cinema aesthetic, vintage Hollywood scope character meets modern optical quality.",
+                    "description": "Atlas Orion - vintage character anamorphic scope",
+                    "tags": ["atlas orion", "anamorphic", "vintage", "scope", "character"],
+                    "weight": 1.2
+                },
+                
+                # === CINEMA ZOOM LENSES ===
+                "Angenieux 25-250mm": {
+                    "prompt": "Classic cinema zoom with Angenieux 25-250mm lens, versatile cinematic framing from wide to telephoto, T3.5 aperture, legendary Hollywood zoom lens, consistent rendering throughout range, vintage cinema character with modern sharpness, professional film production, flexible composition with classic cinema quality.",
+                    "description": "Cinema zoom - legendary versatile range",
+                    "tags": ["25-250mm", "cinema zoom", "angenieux", "classic", "versatile"],
+                    "weight": 1.2
+                },
+                "Fujinon Premier 18-85mm": {
+                    "prompt": "Documentary cinema shot with Fujinon Premier 18-85mm zoom, T2.0 constant aperture, flexible framing from wide environmental to portrait close-up, professional documentary cinema quality, consistent color and contrast throughout range, modern cinema zoom for Netflix and documentary production, natural rendering with cinema character.",
+                    "description": "Cinema zoom - documentary production range",
+                    "tags": ["18-85mm", "cinema zoom", "fujinon", "documentary", "netflix"],
+                    "weight": 1.2
+                },
+                "Canon CN-E 30-300mm": {
+                    "prompt": "Telephoto cinema shot with Canon CN-E 30-300mm zoom, professional cinematic compression throughout range, T2.95-3.7 aperture, powerful zoom reach from medium to extreme close-up, consistent bokeh and rendering, professional cinema production, sports and wildlife cinematography quality, flexible telephoto cinema framing.",
+                    "description": "Cinema telephoto zoom - professional cinema reach",
+                    "tags": ["30-300mm", "cinema zoom", "canon", "telephoto", "professional"],
+                    "weight": 1.1
+                },
+                
+                # === VINTAGE CINEMA CHARACTER LENSES ===
+                "Vintage Cooke Panchro": {
+                    "prompt": "Classic film look with vintage Cooke Panchro cinema lens, warm organic 'Cooke Look' with vintage character, T2.3 aperture, soft film-era glow in highlights, gentle falloff and warm skin tones, classic Hollywood golden age rendering, romantic vintage cinema quality, nostalgic film aesthetic with authentic vintage optics.",
+                    "description": "Vintage Cooke - classic Hollywood film look",
+                    "tags": ["vintage", "cooke", "panchro", "classic", "hollywood"],
+                    "weight": 1.2
+                },
+                "Vintage Helios 44-2": {
+                    "prompt": "Swirly vintage portrait with Helios 44-2 58mm lens, characteristic swirling bokeh pattern, vintage Soviet optics, f/2.0 aperture, unique bokeh rendering with swirls and cats-eye effects, warm vintage color cast, soft glow in out-of-focus areas, artistic vintage portrait character, cult classic vintage lens aesthetic.",
+                    "description": "Helios vintage - iconic swirly bokeh character",
+                    "tags": ["helios", "vintage", "swirly bokeh", "soviet", "artistic"],
+                    "weight": 1.1
+                },
+                "Vintage Canon K35": {
+                    "prompt": "Warm vintage cinema with Canon K35 cinema lens, legendary 1970s-80s cinema optics, T1.5 aperture, warm golden vintage rendering, soft dreamy character with sharp center, reduced contrast for film look, nostalgic Hollywood cinema aesthetic, popular for period films and music videos, authentic vintage cinema character.",
+                    "description": "Canon K35 - warm vintage cinema classic",
+                    "tags": ["canon k35", "vintage", "cinema", "warm", "1970s"],
+                    "weight": 1.2
+                }
+            }
+        }
+
+    # Cache for preset names to avoid recreating the entire preset dictionary
+    _preset_cache = {}
+    
+    @classmethod
+    def get_all_presets_in_category(cls, category: str) -> List[str]:
+        """Get ALL preset names in a category (used for dynamic UI population)."""
+        # Use cache to avoid recreating the entire preset dictionary every time
+        if not cls._preset_cache:
+            cls._preset_cache = cls.get_default_presets()
+        
+        if category in cls._preset_cache:
+            return list(cls._preset_cache[category].keys())
+        return []
+
+    def get_categories(self) -> List[str]:
+        """Get list of all categories."""
+        return list(self.presets.keys())
+
+    def get_presets_in_category(self, category: str) -> List[str]:
+        """Get preset names in a specific category (loaded presets)."""
+        if category in self.presets:
+            return list(self.presets[category].keys())
+        return []
+
+    def parse_preset_name(self, preset_name: str) -> tuple:
+        """Parse category/preset format."""
+        if "/" in preset_name:
+            category, name = preset_name.split("/", 1)
+            return category, name
+        return "General", preset_name
+
+    def get_preset_data(self, category: str, preset_name: str) -> Optional[Dict[str, Any]]:
+        """Get specific preset data."""
+        if category in self.presets and preset_name in self.presets[category]:
+            return self.presets[category][preset_name]
+        return None
+
+    def get_random_preset(self, category: str, seed: int) -> Optional[str]:
+        """Randomly select a preset from a category using weighted random selection."""
+        if category not in self.presets or not self.presets[category]:
+            return None
+        
+        # Build weighted lists of preset names and prompts
+        presets = self.presets[category]
+        names = list(presets.keys())
+        weights = [presets[name].get("weight", 1.0) for name in names]
+        
+        # Seed random selection so same seed produces same result
+        import random as rand_module
+        rng = rand_module.Random()
+        rng.seed(seed)
+        
+        selected_name = rng.choices(names, weights=weights, k=1)[0]
+        return presets[selected_name].get("prompt", "")
+
+    def process_random_brackets(self, text: str, seed: int) -> str:
+        """
+        Process brackets with random selection.
+        Example: "woman in a [flower field, alien landscape, new york street]"
+        Will randomly pick one option from the bracketed list.
+        """
+        import random
+        random.seed(seed)
+        pattern = r'\[([^\]]+)\]'
+        
+        def replace_bracket(match):
+            content = match.group(1)
+            options = [opt.strip() for opt in content.split(',') if opt.strip()]
+            if not options:
+                return ""
+            return random.choice(options)
+        
+        return re.sub(pattern, replace_bracket, text)
+
+    def _get_preset_text(self, category: str, preset_name: str, seed_offset: int) -> str:
+        """Helper method to get preset text with random support."""
+        if preset_name == "Random":
+            return self.get_random_preset(category, seed_offset) or ""
+        elif preset_name != "Disabled" and preset_name != "None":
+            preset_data = self.get_preset_data(category, preset_name)
+            return preset_data.get("prompt", "") if preset_data else ""
+        return ""
+    
+    def combine_prompts(self, input_text: str, seed: int = 0, environment_preset: str = "Disabled", 
+                       lighting_preset: str = "Disabled", style_preset: str = "Disabled", 
+                       camera_lens_preset: str = "Disabled") -> tuple:
+        """Combine input text with environment, lighting, style, and camera lens prompts."""
+        seed = seed if seed is not None else 0
+        
+        # Process random brackets in input text (uses deterministic seeding)
+        if input_text.strip():
+            input_text = self.process_random_brackets(input_text, seed)
+        
+        # Get preset texts with weighted random selection support
+        env_text = self._get_preset_text("Apex Environment", environment_preset, seed + 1)
+        light_text = self._get_preset_text("Apex Lighting", lighting_preset, seed + 2)
+        style_text = self._get_preset_text("Apex Style", style_preset, seed + 3)
+        camera_lens_text = self._get_preset_text("Apex Camera Lens", camera_lens_preset, seed + 4)
+        
+        # Combine all parts in order: input → environment → lighting → style → camera lens
+        parts = [p for p in [input_text.strip(), env_text, light_text, style_text, camera_lens_text] if p]
+        combined = self.clean_prompt(", ".join(parts))
+        
+        return (combined, env_text, light_text, style_text, camera_lens_text)
+
+    def clean_prompt(self, prompt: str) -> str:
+        """Clean and format the final prompt."""
+        prompt = ", ".join([part.strip() for part in prompt.split(",") if part.strip()])
+        return prompt
+
+# Node registration
+NODE_CLASS_MAPPINGS = {
+    "ApexPromptPreset": ApexPromptPreset
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "ApexPromptPreset": "Apex Prompt Preset"
+}

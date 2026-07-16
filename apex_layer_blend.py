@@ -79,7 +79,7 @@ class ApexLayerBlend:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("blended_image", "blend_info")
     FUNCTION = "blend_layers"
-    CATEGORY = "Apex Artist/Compositing"
+    CATEGORY = "Apex Artist/Image/Composite"
 
     def blend_layers(self, base_image, overlay_image, blend_mode="normal", opacity=1.0, mask=None):
         try:

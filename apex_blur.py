@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import math
+from .apex_utils import gaussian_blur, validate_image_tensor, validate_radius, apply_mask as utils_apply_mask
 
 class ApexBlur:
     """
@@ -84,14 +85,14 @@ class ApexBlur:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("blurred_image", "blur_info")
     FUNCTION = "apply_blur"
-    CATEGORY = "Apex Artist/Effects"
+    CATEGORY = "Apex Artist/Image/Filters"
 
     def apply_blur(self, image, blur_type="gaussian", radius=5.0, strength=1.0, 
                    angle=0.0, center_x=0.5, center_y=0.5, edge_threshold=0.1, mask=None):
         try:
-            # Validate inputs
-            if image is None:
-                raise ValueError("Image input is required")
+            # Validate inputs using apex_utils
+            validate_image_tensor(image, "image")
+            radius = validate_radius(radius, min_val=0.5, max_val=100.0)
             
             # Set default values for optional parameters
             angle = angle if angle is not None else 0.0
@@ -136,7 +137,7 @@ class ApexBlur:
             
             # Apply mask if provided
             if mask is not None:
-                blurred = self._apply_mask(image, blurred, mask)
+                blurred = utils_apply_mask(image, blurred, mask)
             
             # Generate blur info
             blur_info = f"Blur: {blur_type} | Radius: {radius:.1f} | Strength: {strength:.2f}"
@@ -173,86 +174,12 @@ class ApexBlur:
         return kernel_1d.view(1, 1, kernel_size)
 
     def _gaussian_blur(self, image, radius):
-        """Simple and reliable Gaussian blur"""
-        device = image.device
-        batch_size, height, width, channels = image.shape
-        
-        # Simple sigma calculation
-        sigma = max(radius / 2.0, 0.5)
-        kernel_size = int(2 * math.ceil(2 * sigma) + 1)
-        kernel_size = max(kernel_size, 3)  # Minimum size
-        
-        # Ensure odd kernel size
-        if kernel_size % 2 == 0:
-            kernel_size += 1
-        
-        # Create simple 2D Gaussian kernel (more straightforward)
-        x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        y = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        xx, yy = torch.meshgrid(x, y, indexing='ij')
-        
-        kernel_2d = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
-        kernel_2d = kernel_2d / kernel_2d.sum()
-        kernel_2d = kernel_2d.unsqueeze(0).unsqueeze(0)  # [1, 1, H, W]
-        
-        padding = kernel_size // 2
-        
-        # Apply to each channel separately for reliability
-        result_channels = []
-        for c in range(channels):
-            # Extract single channel [B, 1, H, W]
-            channel = image[:, :, :, c:c+1].permute(0, 3, 1, 2)
-            # Apply blur
-            blurred_channel = F.conv2d(channel, kernel_2d, padding=padding)
-            result_channels.append(blurred_channel)
-        
-        # Combine channels back
-        blurred = torch.cat(result_channels, dim=1)  # [B, C, H, W]
-        blurred = blurred.permute(0, 2, 3, 1)  # [B, H, W, C]
-        
-        print(f"Simple Gaussian: radius={radius}, sigma={sigma:.2f}, kernel_size={kernel_size}")
-        
-        return blurred
+        """Simple and reliable Gaussian blur - now uses shared apex_utils implementation"""
+        return gaussian_blur(image, radius, sigma_multiplier=0.5)
 
     def _strong_gaussian_blur(self, image, radius):
-        """Strong Gaussian blur with enhanced sigma"""
-        device = image.device
-        batch_size, height, width, channels = image.shape
-        
-        # Use much stronger sigma for dramatic effect
-        sigma = max(radius * 0.8, 1.0)  # More aggressive than regular gaussian
-        kernel_size = int(2 * math.ceil(2 * sigma) + 1)
-        kernel_size = max(kernel_size, 7)  # Minimum size for strong blur
-        
-        # Ensure odd kernel size
-        if kernel_size % 2 == 0:
-            kernel_size += 1
-        
-        # Create 2D Gaussian kernel
-        x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        y = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        xx, yy = torch.meshgrid(x, y, indexing='ij')
-        
-        kernel_2d = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
-        kernel_2d = kernel_2d / kernel_2d.sum()
-        kernel_2d = kernel_2d.unsqueeze(0).unsqueeze(0)  # [1, 1, H, W]
-        
-        padding = kernel_size // 2
-        
-        # Apply to each channel separately
-        result_channels = []
-        for c in range(channels):
-            channel = image[:, :, :, c:c+1].permute(0, 3, 1, 2)
-            blurred_channel = F.conv2d(channel, kernel_2d, padding=padding)
-            result_channels.append(blurred_channel)
-        
-        # Combine channels back
-        blurred = torch.cat(result_channels, dim=1)
-        blurred = blurred.permute(0, 2, 3, 1)
-        
-        print(f"Strong Gaussian: radius={radius}, sigma={sigma:.2f}, kernel_size={kernel_size}")
-        
-        return blurred
+        """Strong Gaussian blur with enhanced sigma - now uses shared apex_utils implementation"""
+        return gaussian_blur(image, radius, sigma_multiplier=0.8)
 
     def _box_blur(self, image, radius):
         """Simple box blur using 2D uniform kernel"""
@@ -536,24 +463,3 @@ class ApexBlur:
         
         return result / samples
     
-    def _apply_mask(self, original, processed, mask):
-        """Apply mask to blend original and processed images"""
-        device = original.device
-        batch, height, width, channels = original.shape
-        
-        # Ensure mask has correct dimensions
-        if len(mask.shape) == 2:
-            mask = mask.unsqueeze(0).unsqueeze(-1)
-        elif len(mask.shape) == 3:
-            mask = mask.unsqueeze(-1)
-        
-        # Resize mask if needed
-        if mask.shape[1:3] != (height, width):
-            mask = F.interpolate(mask.permute(0, 3, 1, 2), size=(height, width), 
-                               mode='bilinear', align_corners=False).permute(0, 2, 3, 1)
-        
-        # Ensure mask is in range [0, 1]
-        mask = torch.clamp(mask, 0, 1)
-        
-        # Apply mask: masked areas get processed image, unmasked areas keep original
-        return original * (1 - mask) + processed * mask
