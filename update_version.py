@@ -21,10 +21,20 @@ def update_version(new_version):
             "pattern": r'"version": "[^"]*"',
             "replacement": f'"version": "{new_version}"'
         },
-        "comfyui.yaml": {
-            "pattern": r'version: "[^"]*"',
-            "replacement": f'version: "{new_version}"'
-        },
+        "comfyui.yaml": [
+            {
+                "pattern": r'version: "[^"]*"',
+                "replacement": f'version: "{new_version}"'
+            },
+            {
+                "pattern": r'python_version: "[^"]*"',
+                "replacement": f'python_version: "{new_version}"'
+            },
+            {
+                "pattern": r'comfyui_version: "[^"]*"',
+                "replacement": f'comfyui_version: "{new_version}"'
+            }
+        ],
         "manifest.json": {
             "pattern": r'"version": "[^"]*"',
             "replacement": f'"version": "{new_version}"'
@@ -43,11 +53,17 @@ def update_version(new_version):
         # Read file content
         content = filepath.read_text(encoding='utf-8')
         
-        # Update version
-        updated_content = re.sub(config["pattern"], config["replacement"], content)
+        # Update version - handle both single config dict and list of configs
+        if isinstance(config, list):
+            # Multiple patterns to update in the same file
+            for pattern_config in config:
+                content = re.sub(pattern_config["pattern"], pattern_config["replacement"], content)
+        else:
+            # Single pattern to update
+            content = re.sub(config["pattern"], config["replacement"], content)
         
         # Write back
-        filepath.write_text(updated_content, encoding='utf-8')
+        filepath.write_text(content, encoding='utf-8')
         
         print(f"✅ Updated {filename}")
     
