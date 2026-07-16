@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-apex-artist"
-version = "1.6.7"
+version = "2.0.0"
 description = "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
 license = { file = "license.md" }
 requires-python = ">=3.8"
