@@ -2,7 +2,7 @@ id: comfyui-apex-artist
 publisher_id: apex
 name: "Apex Artist Professional VFX Tools"
 description: "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
-version: "1.7.1"
+version: "1.8.0"
 license: "MIT"
 repository: "https://github.com/ApexArtist/comfyui-apex-artist"
 homepage: "https://github.com/ApexArtist/comfyui-apex-artist"
@@ -18,8 +18,8 @@ tags:
   - "color-grading"
   - "layer-blending"
   - "ai-tools"
-python_version: ">=3.8"
-comfyui_version: ">=0.1.0"
+python_version: "1.8.0"
+comfyui_version: "1.8.0"
 dependencies:
   - "scikit-image>=0.19.0"
 nodes:
