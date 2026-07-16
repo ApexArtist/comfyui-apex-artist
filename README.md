@@ -86,7 +86,12 @@ Optimized for real-time creative work (RTX 3080, 1024×1024):
 - **ApexSmartResize**: 8ms
 - **ApexDepthToNormal**: 12ms
 
-## 🔧 Requirements
+## 🚀 Changelog
+
+**v2.0.1** - 2026-07-16 — Security fixes, performance optimizations, code deduplication (apex_utils.py), ComfyUI Registry version bump
+**v2.0.0** — Previous release
+
+## � Requirements
 
 - ComfyUI (latest stable)
 - Python 3.8+

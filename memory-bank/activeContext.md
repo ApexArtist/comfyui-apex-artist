@@ -1,7 +1,7 @@
 # Active Context: comfyui-apex-artist
 
 ## Current Focus
-**Code Review & Optimization Complete** - Comprehensive review identified 15 issues. Created `apex_utils.py` shared utility module eliminating 5+ code duplications. Documented all findings in CODE_REVIEW_FINDINGS.md with 3-phase optimization roadmap.
+**v1.8.0 Released** - Security fixes, performance optimizations, code deduplication complete. Version 1.8.0 committed and pushed to GitHub (origin/main). All version files updated via `update_version.py`. Commit: 36ee687 🚀 Version 1.8.0 - Security fixes, performance optimizations, code deduplication
 
 Previous: Camera Lens Browser with real photography thumbnails complete (v1.7.1 production-ready).
 
@@ -73,7 +73,7 @@ All detailed feature documentation is now in **`features.md`**. Quick reference:
 - **activeContext.md**: Current focus and quick reference
 
 ## Version Management
-- Current: 1.7.1
+- Current: 1.8.0
 - Version tracked in: `pyproject.toml`, `custom_nodes.json`, `comfyui.yaml`, `manifest.json`
 - Update script: `update_version.py` (now uses correct Python venv path)
 - Script improvements:
