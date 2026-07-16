@@ -1,44 +1,37 @@
-# ComfyUI Apex Artist
+# ComfyUI Apex Artist — Efficient Nodes to Make ComfyUI Convenient
 
-Professional VFX and post-production nodes for ComfyUI with advanced image processing, LoRA management, and AI model optimization.
+A collection of efficient, easy-to-use nodes for ComfyUI that streamline image processing and prompt management.
 
-## 🎨 Nodes Overview
+## 🎨 Available Nodes
 
 ### Image Processing
-- **ApexSmartResize** — AI-model-optimized resizing with 12 presets (SDXL, Flux, 2026 models: ZImage, QwenEdit, Krea2, Ideogram4, FLUX.2, SD3.5)
-- **ApexBlur** — 9 professional blur algorithms (Gaussian, Motion, Radial, Lens, Spin, Zoom, etc.)
-- **ApexSharpen** — 8 edge-aware sharpening methods (Unsharp Mask, High Pass, Clarity, etc.)
-- **ApexLayerBlend** — 25+ Photoshop-style blend modes (Multiply, Screen, Overlay, Color, etc.)
-- **ApexDepthToNormal** — Convert depth maps to normal maps with adaptive processing
+- **ApexSmartResize** — AI-model-optimized resizing with presets (SDXL, Flux, ZImage, QwenEdit, Krea2, Ideogram4, FLUX.2, SD3.5)
+- **ApexBlur** — 9 blur algorithms (Gaussian, Motion, Radial, Lens, Spin, Zoom, etc.)
+- **ApexSharpen** — 8 sharpening methods (Unsharp Mask, High Pass, Clarity, etc.)
+- **ApexLayerBlend** — 25+ blend modes for layer compositing
+- **ApexDepthToNormal** — Convert depth maps to normal maps
 
 ### LoRA & Workflow
-- **ApexLoraLoader** — Interactive browser with folder navigation and optimized thumbnails (100-500x smaller file sizes!)
-- **ApexPromptPreset** — 55 professional presets across Environment, Lighting, and Style categories
+- **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
+- **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, and Style categories
 
 ## ✨ Key Features
 
-### ApexLoraLoader
-- **Interactive Modal Browser**: Navigate folders, view thumbnails in responsive grid
-- **Optimized Thumbnails**: Automatic 256px/512px caching reduces load times 100-200x
-- **Smart Detection**: Automatically finds preview images with multiple naming patterns
-- **Pagination**: Handles 1000+ LoRA collections smoothly
+### Smart Resize
+- Presets for 2026 models (Z-Image Turbo, Qwen Edit, Krea2, Ideogram4, FLUX.2, SD3.5)
+- Divisibility control (8/16/32/64) for VAE/ControlNet compatibility
+- Multiple snap methods: keep_proportion, closest_area, closest_ratio, prefer_larger, prefer_smaller
 
-### ApexSmartResize
-- **2026 Model Support**: Presets for Z-Image Turbo, Qwen Edit, Krea2, Ideogram4, FLUX.2, SD3.5
-- **Divisibility Control**: Ensure dimensions compatible with VAE/ControlNet/Upscalers (8/16/32/64)
-- **5 Snap Methods**: keep_proportion, closest_area, closest_ratio, prefer_larger, prefer_smaller
-- **Console Analytics**: Detailed JSON output with memory estimates and processing stats
-
-### Professional VFX
-- **GPU Accelerated**: All image operations use PyTorch GPU tensors
-- **Batch Processing**: Process multiple images efficiently
-- **Error Resilient**: Graceful fallbacks with placeholder returns
-- **Mask Support**: Selective processing with mask inputs
+### LoRA Loader
+- Interactive modal browser with folder navigation
+- Optimized thumbnails reduce load times 100-200x
+- Smart preview detection (multiple naming patterns)
+- Handles large collections (1000+ LoRAs)
 
 ## 📦 Installation
 
 1. Navigate to ComfyUI custom_nodes directory
-2. Clone this repository:
+2. Clone the repository:
    ```bash
    git clone https://github.com/ApexArtist/comfyui-apex-artist.git
    ```
@@ -47,13 +40,11 @@ Professional VFX and post-production nodes for ComfyUI with advanced image proce
 
 ## 📚 Documentation
 
-For detailed feature documentation, architecture patterns, and technical implementation:
-- See `memory-bank/features.md` for comprehensive node documentation
-- See `memory-bank/` for project architecture and patterns
+For detailed documentation, see `memory-bank/features.md`.
 
 ## 🚀 Quick Start
 
-### Smart Resize for 2026 Models
+### Smart Resize
 ```
 Add Node → Apex Artist → Image → Apex Smart Resize
 - Preset: ZImage (or QwenEdit, Krea2, etc.)
@@ -61,7 +52,7 @@ Add Node → Apex Artist → Image → Apex Smart Resize
 - Enforce Divisibility: 64
 ```
 
-### LoRA with Visual Browser
+### LoRA Loader
 ```
 Add Node → Apex Artist → Models → Apex LoRA Loader
 - Click "Click to browse LoRAs" button
@@ -69,17 +60,8 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 - Click thumbnail to select
 ```
 
-### Professional Blur Effects
-```
-Add Node → Apex Artist → Image → Filters → Apex Blur
-- Blur Type: Motion, Radial, Lens, etc.
-- Radius: 5-50 (adjust to taste)
-- Optional: Connect mask for selective blur
-```
+## 📊 Performance (RTX 3080, 1024×1024)
 
-## 📊 Performance
-
-Optimized for real-time creative work (RTX 3080, 1024×1024):
 - **ApexBlur**: 15-80ms depending on type
 - **ApexSharpen**: 18-25ms
 - **ApexLayerBlend**: 2-25ms depending on mode
@@ -88,10 +70,11 @@ Optimized for real-time creative work (RTX 3080, 1024×1024):
 
 ## 🚀 Changelog
 
-**v2.0.1** - 2026-07-16 — Security fixes, performance optimizations, code deduplication (apex_utils.py), ComfyUI Registry version bump
+**v2.0.2** - 2026-07-16 — Brand refresh: repositioned as efficient nodes to make ComfyUI convenient, removed VFX branding
+**v2.0.1** - 2026-07-16 — Security fixes, performance optimizations, code deduplication (apex_utils.py)
 **v2.0.0** — Previous release
 
-## � Requirements
+## 📦 Requirements
 
 - ComfyUI (latest stable)
 - Python 3.8+
