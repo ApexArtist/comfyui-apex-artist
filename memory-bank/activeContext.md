@@ -14,7 +14,7 @@ Previous: v2.0.2 - Removed ApexSmartResize node (redundant functionality). Updat
 | ApexLayerBlend | Image/Composite | 25+ Photoshop-style layer blending modes |
 | ApexPromptPreset | Text | 55 presets across 3 categories |
 | ApexLoraLoader | Models | LoRA loader with interactive browser |
-| ApexLoRAStack | Models | Apex LoRA Merge with DARE-TIES and Wan 2.2 tower detection |
+| ApexLoRAMerge | Models | Apex LoRA Merge with DARE-TIES and Wan 2.2 tower detection |
 | ApexModelQuantizer | Models | Quantize models to FP8/INT8/NVFP4/MXFP8 |
 
 ## Key Features Summary
@@ -22,7 +22,7 @@ Previous: v2.0.2 - Removed ApexSmartResize node (redundant functionality). Updat
 All detailed feature documentation is now in **`features.md`**. Quick reference:
 
 - **ApexLoraLoader**: Interactive browser with optimized thumbnails (100-500x smaller files)
-- **ApexLoRAStack**: LoRA merge with DARE-TIES, TIES, DARE, Add, SVD algorithms
+- **ApexLoRAMerge**: LoRA merge with DARE-TIES, TIES, DARE, Add, SVD algorithms
 - **ApexModelQuantizer**: FP8/INT8/NVFP4/MXFP8 quantization with learned rounding
 - **ApexPromptPreset**: 55 presets across 3 categories
 - **ApexBlur**: 9 blur algorithms, GPU-accelerated

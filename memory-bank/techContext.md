@@ -88,7 +88,7 @@ comfyui-apex-artist/
 ├── web/                    # Frontend extensions
 │   ├── apex_prompt.js
 │   ├── apex_lora_loader.js
-│   ├── apex_lora_stack.js
+│   ├── apex_lora_merge.js
 │   └── apex_prompt_lens.js
 ├── lens/                   # Lens preset source images
 ├── lens_previews/          # Processed lens thumbnails

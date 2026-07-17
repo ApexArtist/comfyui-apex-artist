@@ -47,8 +47,8 @@ nodes:
     display_name: "🔍 Apex Sharpen"
     description: "Professional sharpening with multiple algorithms"
     category: "image/filter"
-  - id: "ApexLoRAStack"
-    display_name: "📚 Apex LoRA Stack"
+  - id: "ApexLoRAMerge"
+    display_name: "📚 Apex LoRA Merge"
     description: "Advanced LoRA stack with dual-mode operation (stack/merge), Wan 2.2 tower awareness, and 5 merge algorithms"
     category: "models/loras"
 author:

@@ -103,7 +103,7 @@ app.registerExtension({
      * near-zero height and causes the node to appear auto-collapsed.
      */
     nodeCreated(node) {
-        if (node.comfyClass !== "ApexLoRAStack") return;
+        if (node.comfyClass !== "ApexLoRAMerge") return;
 
         const loraCountWidget = node.widgets?.find(w => w.name === "lora_count");
         const initialCount = loraCountWidget?.value ?? 3;
@@ -144,7 +144,7 @@ app.registerExtension({
      * Return an empty array (not null/undefined) for nodes we don't own.
      */
     getNodeMenuItems(node) {
-        if (node.type !== "ApexLoRAStack") return [];
+        if (node.type !== "ApexLoRAMerge") return [];
 
         return [
             {
@@ -194,7 +194,7 @@ app.registerExtension({
      * Re-apply visibility based on restored widget values, then deferred resize.
      */
     loadedGraphNode(node) {
-        if (node.type !== "ApexLoRAStack") return;
+        if (node.type !== "ApexLoRAMerge") return;
 
         const loraCountWidget = node.widgets?.find(w => w.name === "lora_count");
         const count = loraCountWidget?.value ?? 3;

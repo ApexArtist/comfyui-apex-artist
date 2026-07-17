@@ -4,7 +4,7 @@ from .apex_blur import ApexBlur
 from .apex_sharpen import ApexSharpen
 from .apex_prompt import ApexPromptPreset
 from .apex_lora_loader import ApexLoraLoader
-from .apex_lora_stack import ApexLoRAStack
+from .apex_lora_merge import ApexLoRAMerge
 
 # Import quantizer nodes (optional dependency)
 try:
@@ -39,7 +39,7 @@ NODE_CLASS_MAPPINGS = {
     "ApexSharpen": ApexSharpen,
     "ApexPromptPreset": ApexPromptPreset,
     "ApexLoraLoader": ApexLoraLoader,
-    "ApexLoRAStack": ApexLoRAStack,
+    "ApexLoRAMerge": ApexLoRAMerge,
 }
 NODE_CLASS_MAPPINGS.update(QUANT_NODE_CLASS_MAPPINGS)
 
@@ -50,7 +50,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexSharpen": "Apex Sharpen",
     "ApexPromptPreset": "Apex Prompt Preset Selector",
     "ApexLoraLoader": "Apex LoRA Loader",
-    "ApexLoRAStack": "Apex LoRA Merge",
+    "ApexLoRAMerge": "Apex LoRA Merge",
 }
 NODE_DISPLAY_NAME_MAPPINGS.update(QUANT_NODE_DISPLAY_NAME_MAPPINGS)
 

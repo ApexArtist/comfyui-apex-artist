@@ -8,7 +8,7 @@ Merges multiple LoRA files into a single new `.safetensors` file on disk. Suppor
 
 **Category**: Apex Artist/Models  
 **Node Type**: Output Node  
-**ComfyUI Class**: `ApexLoRAStack`
+**ComfyUI Class**: `ApexLoRAMerge`
 
 ## Features
 

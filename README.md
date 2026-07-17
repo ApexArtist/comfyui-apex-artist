@@ -12,7 +12,7 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 
 ### Models & Workflow
 - **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
-- **ApexLoRAStack** — **Apex LoRA Merge** node for exporting merged LoRA files with Wan 2.2 tower detection and algorithms including DARE-TIES
+- **ApexLoRAMerge** — **Apex LoRA Merge** node for exporting merged LoRA files with Wan 2.2 tower detection and algorithms including DARE-TIES
 - **ApexModelQuantizer** — Quantize models to FP8, INT8, NVFP4, or MXFP8 with optional learned rounding optimization
 - **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, and Style categories
 

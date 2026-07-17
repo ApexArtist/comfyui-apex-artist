@@ -17,7 +17,7 @@ import comfy.sd
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
 
-class ApexLoRAStack:
+class ApexLoRAMerge:
     """
     Advanced LoRA merge node with Wan 2.2 tower detection.
 
@@ -391,7 +391,7 @@ class ApexLoRAStack:
         elif algorithm == "svd":
             return self._merge_svd(lora_tensors, rank, threshold)
         else:
-            self._log(f"[Apex LoRA Stack] Unknown algorithm '{algorithm}', using 'add'")
+            self._log(f"[Apex LoRA Merge] Unknown algorithm '{algorithm}', using 'add'")
             return self._merge_add(lora_tensors)
 
     def _pad_tensors_to_common_shape(self, tensors: List[torch.Tensor],
@@ -462,14 +462,14 @@ class ApexLoRAStack:
                 padded = torch.nn.functional.pad(t, pad_dims, mode='constant', value=0.0)
                 padded_tensors.append(padded)
 
-                self._log(f"[Apex LoRA Stack] Padded tensor {i} for key '{key}': "
+                self._log(f"[Apex LoRA Merge] Padded tensor {i} for key '{key}': "
                           f"{t.shape} -> {padded.shape}")
 
         return padded_tensors
 
     def _merge_add(self, lora_tensors: List[Dict]) -> Dict[str, torch.Tensor]:
         """Simple weighted addition merge."""
-        self._log("[Apex LoRA Stack] Merging with ADD algorithm")
+        self._log("[Apex LoRA Merge] Merging with ADD algorithm")
 
         merged = {}
         original_dtypes = {}
@@ -512,7 +512,7 @@ class ApexLoRAStack:
         TIES merge algorithm (Trim, Elect Sign, Merge).
         Reference: "TIES-Merging: Resolving Interference When Merging Models"
         """
-        self._log(f"[Apex LoRA Stack] Merging with TIES algorithm (density={density})")
+        self._log(f"[Apex LoRA Merge] Merging with TIES algorithm (density={density})")
 
         merged = {}
         original_dtypes = {}
@@ -568,7 +568,7 @@ class ApexLoRAStack:
         DARE (Drop And REscale) merge with linear drop rate.
         Reference: "Language Models are Super Mario: Absorbing Abilities from Homologous Models"
         """
-        self._log(f"[Apex LoRA Stack] Merging with DARE-Linear algorithm (density={density})")
+        self._log(f"[Apex LoRA Merge] Merging with DARE-Linear algorithm (density={density})")
 
         merged = {}
         original_dtypes = {}
@@ -612,7 +612,7 @@ class ApexLoRAStack:
         Combined DARE + TIES algorithm.
         Applies DARE dropout first, then TIES sign election and merging.
         """
-        self._log(f"[Apex LoRA Stack] Merging with DARE-TIES algorithm (density={density})")
+        self._log(f"[Apex LoRA Merge] Merging with DARE-TIES algorithm (density={density})")
 
         merged = {}
         original_dtypes = {}
@@ -670,7 +670,7 @@ class ApexLoRAStack:
         SVD-based merge with rank reduction.
         Decomposes each LoRA, combines in latent space, reconstructs.
         """
-        self._log(f"[Apex LoRA Stack] Merging with SVD algorithm (rank={rank}, threshold={threshold})")
+        self._log(f"[Apex LoRA Merge] Merging with SVD algorithm (rank={rank}, threshold={threshold})")
 
         merged = {}
         original_dtypes = {}
@@ -726,7 +726,7 @@ class ApexLoRAStack:
                 merged[key] = reconstructed.to(original_dtypes[key])
 
             except Exception as e:
-                self._log(f"[Apex LoRA Stack] SVD failed for key '{key}': {e}, using average")
+                self._log(f"[Apex LoRA Merge] SVD failed for key '{key}': {e}, using average")
                 merged[key] = avg_tensor.reshape(original_shape).to(original_dtypes[key])
 
         return merged
@@ -762,19 +762,19 @@ class ApexLoRAStack:
         try:
             from safetensors.torch import save_file
             save_file(state_dict, output_path)
-            self._log(f"[Apex LoRA Stack] Saved merged LoRA: {output_path}")
+            self._log(f"[Apex LoRA Merge] Saved merged LoRA: {output_path}")
         except ImportError:
             torch.save(state_dict, output_path.replace('.safetensors', '.pt'))
             output_path = output_path.replace('.safetensors', '.pt')
-            self._log(f"[Apex LoRA Stack] Saved merged LoRA (torch format): {output_path}")
+            self._log(f"[Apex LoRA Merge] Saved merged LoRA (torch format): {output_path}")
 
         return output_path
 
 # Node registration
 NODE_CLASS_MAPPINGS = {
-    "ApexLoRAStack": ApexLoRAStack
+    "ApexLoRAMerge": ApexLoRAMerge
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ApexLoRAStack": "Apex LoRA Merge"
+    "ApexLoRAMerge": "Apex LoRA Merge"
 }

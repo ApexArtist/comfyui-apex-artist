@@ -11,11 +11,11 @@
 ### Workflow & Models
 - **ApexPromptPreset**: 55 presets across 3 categories
 - **ApexLoraLoader**: Interactive browser with folder navigation and thumbnails
-- **ApexLoRAStack**: Apex LoRA Merge with DARE-TIES and Wan 2.2 tower detection
+- **ApexLoRAMerge**: Apex LoRA Merge with DARE-TIES and Wan 2.2 tower detection
 - **ApexModelQuantizer**: Quantize models to FP8/INT8/NVFP4/MXFP8
 
 ## Infrastructure
-- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`, `apex_lora_stack.js`, `apex_prompt_lens.js`
+- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`, `apex_lora_merge.js`, `apex_prompt_lens.js`
 - API endpoints: `apex_prompt_api.py`, `apex_lora_api.py`, `apex_prompt_lens_api.py`
 - CI/CD: GitHub Actions for ComfyUI Registry
 - Version management: `update_version.py` (enhanced with auto-increment and git integration)
@@ -33,7 +33,7 @@
 - **update_version.py Enhanced**: Auto-increment flags (--patch/--minor/--major), dry-run mode, git integration (--commit/--tag), colored output, current version detection
 
 ### v2.0.1 Release
-- **ApexLoRAStack**: New LoRA merge node with DARE-TIES algorithm and Wan 2.2 tower detection
+- **ApexLoRAMerge**: New LoRA merge node with DARE-TIES algorithm and Wan 2.2 tower detection
 - **Merge Algorithms**: DARE-TIES, TIES, DARE, Add, SVD with configurable parameters
 - **Interactive UI**: Real-time preview of merge parameters
 
@@ -53,7 +53,7 @@
 
 ## Completed Items (July 2026)
 - [x] ApexLoraLoader implementation with browser and thumbnails
-- [x] ApexLoRAStack implementation with DARE-TIES merge
+- [x] ApexLoRAMerge implementation with DARE-TIES merge
 - [x] Documentation consolidation (10 files → features.md)
 - [x] Category standardization across all nodes
 - [x] Node freeze bug fix with deferred collapse
