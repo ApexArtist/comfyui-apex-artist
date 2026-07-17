@@ -6,6 +6,7 @@ Preset data is imported from apex_prompt.py (single source of truth).
 
 import os
 import json
+import aiofiles
 from aiohttp import web
 from server import PromptServer
 from .apex_prompt import ApexPromptPreset
@@ -23,8 +24,9 @@ class ApexPromptPresetAPI:
             """Get all presets"""
             try:
                 if os.path.exists(self.presets_file):
-                    with open(self.presets_file, 'r', encoding='utf-8') as f:
-                        presets = json.load(f)
+                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
+                        content = await f.read()
+                        presets = json.loads(content)
                 else:
                     presets = ApexPromptPreset.get_default_presets()
                 return web.json_response(presets)
@@ -36,8 +38,8 @@ class ApexPromptPresetAPI:
             """Save all presets"""
             try:
                 presets = await request.json()
-                with open(self.presets_file, 'w', encoding='utf-8') as f:
-                    json.dump(presets, f, indent=2, ensure_ascii=False)
+                async with aiofiles.open(self.presets_file, 'w', encoding='utf-8') as f:
+                    await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
                 return web.json_response({"status": "success"})
             except Exception as e:
                 return web.json_response({"error": str(e)}, status=500)
@@ -48,8 +50,9 @@ class ApexPromptPresetAPI:
             try:
                 category = request.match_info['category']
                 if os.path.exists(self.presets_file):
-                    with open(self.presets_file, 'r', encoding='utf-8') as f:
-                        all_presets = json.load(f)
+                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
+                        content = await f.read()
+                        all_presets = json.loads(content)
                         category_presets = all_presets.get(category, {})
                 else:
                     all_presets = ApexPromptPreset.get_default_presets()
@@ -68,8 +71,9 @@ class ApexPromptPresetAPI:
                 
                 # Load existing presets
                 if os.path.exists(self.presets_file):
-                    with open(self.presets_file, 'r', encoding='utf-8') as f:
-                        presets = json.load(f)
+                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
+                        content = await f.read()
+                        presets = json.loads(content)
                 else:
                     presets = {}
                 
@@ -79,8 +83,8 @@ class ApexPromptPresetAPI:
                 presets[category][name] = preset_data
                 
                 # Save
-                with open(self.presets_file, 'w', encoding='utf-8') as f:
-                    json.dump(presets, f, indent=2, ensure_ascii=False)
+                async with aiofiles.open(self.presets_file, 'w', encoding='utf-8') as f:
+                    await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
                 
                 return web.json_response({"status": "success"})
             except Exception as e:
@@ -95,8 +99,9 @@ class ApexPromptPresetAPI:
                 
                 # Load existing presets
                 if os.path.exists(self.presets_file):
-                    with open(self.presets_file, 'r', encoding='utf-8') as f:
-                        presets = json.load(f)
+                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
+                        content = await f.read()
+                        presets = json.loads(content)
                 else:
                     return web.json_response({"error": "Presets file not found"}, status=404)
                 
@@ -109,8 +114,8 @@ class ApexPromptPresetAPI:
                         del presets[category]
                     
                     # Save
-                    with open(self.presets_file, 'w', encoding='utf-8') as f:
-                        json.dump(presets, f, indent=2, ensure_ascii=False)
+                    async with aiofiles.open(self.presets_file, 'w', encoding='utf-8') as f:
+                        await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
                     
                     return web.json_response({"status": "success"})
                 else:

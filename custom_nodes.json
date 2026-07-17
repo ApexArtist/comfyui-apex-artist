@@ -2,7 +2,7 @@
     "apex-artist-nodes": {
         "title": "Apex Artist Professional VFX Tools",
         "description": "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios",
-        "version": "2.0.1",
+        "version": "2.0.2",
         "author": "Apex Artist",
         "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
         "tags": ["image processing", "depth map", "vfx", "professional", "blur", "sharpen"],
@@ -13,7 +13,8 @@
             "Apex Blur",
             "Apex Sharpen",
             "Apex Prompt Preset Selector",
-            "Apex LoRA Loader"
+            "Apex LoRA Loader",
+            "Apex LoRA Stack"
         ],
         "install_type": "git",
         "files": [

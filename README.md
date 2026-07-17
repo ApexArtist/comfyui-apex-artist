@@ -5,22 +5,18 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 ## 🎨 Available Nodes
 
 ### Image Processing
-- **ApexSmartResize** — AI-model-optimized resizing with presets (SDXL, Flux, ZImage, QwenEdit, Krea2, Ideogram4, FLUX.2, SD3.5)
 - **ApexBlur** — 9 blur algorithms (Gaussian, Motion, Radial, Lens, Spin, Zoom, etc.)
 - **ApexSharpen** — 8 sharpening methods (Unsharp Mask, High Pass, Clarity, etc.)
 - **ApexLayerBlend** — 25+ blend modes for layer compositing
 - **ApexDepthToNormal** — Convert depth maps to normal maps
 
-### LoRA & Workflow
+### Models & Workflow
 - **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
+- **ApexLoRAStack** — **Apex LoRA Merge** node for exporting merged LoRA files with Wan 2.2 tower detection and algorithms including DARE-TIES
+- **ApexModelQuantizer** — Quantize models to FP8, INT8, NVFP4, or MXFP8 with optional learned rounding optimization
 - **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, and Style categories
 
 ## ✨ Key Features
-
-### Smart Resize
-- Presets for 2026 models (Z-Image Turbo, Qwen Edit, Krea2, Ideogram4, FLUX.2, SD3.5)
-- Divisibility control (8/16/32/64) for VAE/ControlNet compatibility
-- Multiple snap methods: keep_proportion, closest_area, closest_ratio, prefer_larger, prefer_smaller
 
 ### LoRA Loader
 - Interactive modal browser with folder navigation
@@ -44,14 +40,6 @@ For detailed documentation, see `memory-bank/features.md`.
 
 ## 🚀 Quick Start
 
-### Smart Resize
-```
-Add Node → Apex Artist → Image → Apex Smart Resize
-- Preset: ZImage (or QwenEdit, Krea2, etc.)
-- Snap Method: keep_proportion
-- Enforce Divisibility: 64
-```
-
 ### LoRA Loader
 ```
 Add Node → Apex Artist → Models → Apex LoRA Loader
@@ -60,12 +48,34 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 - Click thumbnail to select
 ```
 
+### LoRA Merge
+**Apex LoRA Merge** merges multiple LoRA files into a single `.safetensors` file with advanced algorithms:
+- **DARE-TIES** (recommended) — Combines dropout/rescale with sign election to reduce interference
+- **TIES** — Trim, elect sign, merge to reduce conflicts
+- **DARE Linear** — Random dropout and rescale for stability
+- **Add** — Simple weighted sum
+- **SVD** — Rank reduction via singular value decomposition
+
+**Features:**
+- Up to 20 LoRA slots with enable/disable per slot
+- Auto-rank handling (zero-pads smaller ranks to match largest)
+- Wan 2.2 tower detection (double_blocks/single_blocks) with auto-detect
+- Debug output STRING with full merge log
+- Context menu: Enable/Disable all, Reset strengths
+
+**Algorithms:**
+- **DARE-TIES**: DARE dropout → TIES sign election (density ~0.5 recommended)
+- **TIES**: [NeurIPS 2023](https://arxiv.org/abs/2306.01708) - Resolves sign conflicts
+- **DARE**: [2023](https://arxiv.org/abs/2311.03099) - Dropout and rescale
+- **SVD**: Target rank + threshold parameters
+
+For detailed documentation, see [APEX_LORA_MERGE.md](APEX_LORA_MERGE.md)
+
 ## 📊 Performance (RTX 3080, 1024×1024)
 
 - **ApexBlur**: 15-80ms depending on type
 - **ApexSharpen**: 18-25ms
 - **ApexLayerBlend**: 2-25ms depending on mode
-- **ApexSmartResize**: 8ms
 - **ApexDepthToNormal**: 12ms
 
 ## 🚀 Changelog

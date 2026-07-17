@@ -5,6 +5,7 @@ Handles LoRA preview image serving via HTTP endpoints with optimized thumbnail g
 
 import os
 import hashlib
+import aiofiles
 from aiohttp import web
 from server import PromptServer
 import folder_paths
@@ -270,15 +271,24 @@ class ApexLoraAPI:
                 # Security check: resolve symlinks and ensure the path is within the loras directory
                 lora_folders = folder_paths.get_folder_paths("loras")
                 
-                # Use realpath to resolve symlinks
-                image_path_real = os.path.realpath(image_path)
+                # Normalize and resolve symlinks
+                try:
+                    image_path_real = os.path.realpath(os.path.abspath(image_path))
+                except (OSError, ValueError):
+                    return web.Response(status=403, text="Invalid path")
+                
                 is_safe = False
                 
                 for lora_folder in lora_folders:
-                    lora_folder_real = os.path.realpath(lora_folder)
-                    if image_path_real.startswith(lora_folder_real):
-                        is_safe = True
-                        break
+                    try:
+                        lora_folder_real = os.path.realpath(os.path.abspath(lora_folder))
+                        # Use startswith with os.sep to prevent path traversal
+                        # Ensure we check for directory boundary (path separator)
+                        if image_path_real.startswith(lora_folder_real + os.sep) or image_path_real == lora_folder_real:
+                            is_safe = True
+                            break
+                    except (OSError, ValueError):
+                        continue
                 
                 if not is_safe:
                     return web.Response(status=403, text="Access denied")
@@ -296,9 +306,9 @@ class ApexLoraAPI:
                     '.jpeg': 'image/jpeg',
                 }.get(ext, 'application/octet-stream')
                 
-                # Read and serve the file
-                with open(image_path, 'rb') as f:
-                    image_data = f.read()
+                # Read and serve the file using aiofiles for async I/O
+                async with aiofiles.open(image_path, 'rb') as f:
+                    image_data = await f.read()
                 
                 return web.Response(
                     body=image_data,

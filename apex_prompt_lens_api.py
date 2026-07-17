@@ -5,6 +5,7 @@ Handles lens preview image serving via HTTP endpoints
 
 import os
 import json
+import aiofiles
 from aiohttp import web
 from server import PromptServer
 
@@ -116,11 +117,14 @@ class ApexLensAPI:
                 if not os.path.exists(image_path):
                     return web.Response(status=404, text="Image not found")
                 
-                # Security check: ensure the path is within the lens_previews directory
-                image_path_normalized = os.path.normpath(os.path.abspath(image_path))
-                lens_previews_normalized = os.path.normpath(os.path.abspath(self.lens_previews_dir))
+                # Security check: resolve symlinks and ensure the path is within the lens_previews directory
+                try:
+                    image_path_real = os.path.realpath(os.path.abspath(image_path))
+                    lens_previews_real = os.path.realpath(os.path.abspath(self.lens_previews_dir))
+                except (OSError, ValueError):
+                    return web.Response(status=403, text="Invalid path")
                 
-                if not image_path_normalized.startswith(lens_previews_normalized):
+                if not (image_path_real.startswith(lens_previews_real + os.sep) or image_path_real == lens_previews_real):
                     return web.Response(status=403, text="Access denied")
                 
                 # Determine content type
@@ -131,9 +135,9 @@ class ApexLensAPI:
                     '.jpeg': 'image/jpeg',
                 }.get(ext, 'application/octet-stream')
                 
-                # Read and serve the file
-                with open(image_path, 'rb') as f:
-                    image_data = f.read()
+                # Read and serve the file using aiofiles for async I/O
+                async with aiofiles.open(image_path, 'rb') as f:
+                    image_data = await f.read()
                 
                 return web.Response(
                     body=image_data,

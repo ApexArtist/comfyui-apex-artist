@@ -44,9 +44,60 @@
 ("INT", {"default": 0, "min": 0, "max": 9999})
 ```
 
-## Tool Usage
-- **Versioning**: `python update_version.py X.Y.Z`
+## Version Management & Publishing
+
+### Tool Usage
+- **Version update**: `python update_version.py [--patch|--minor|--major] [--dry-run] [--commit] [--tag]`
 - **Testing**: Run ComfyUI and test nodes manually
 - **Python verification**: Use `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe` for import checks
 - **JS syntax check**: `node --check web\filename.js`
-- **Publishing**: `update_version.py` → commit → push → GitHub Actions
+- **Publishing workflow**: See `PUBLISH.md` for complete guide
+
+### update_version.py Features
+- **Auto-increment**: `--patch`, `--minor`, `--major` flags for semantic versioning
+- **Preview mode**: `--dry-run` to see changes before applying
+- **Git integration**: `--commit` and `--tag` for automated git workflow
+- **Current version detection**: Reads existing version from files
+- **Multi-file update**: Updates `__init__.py`, `manifest.json`, `pyproject.toml`, `comfyui.yaml`
+- **Colored output**: Visual feedback with emoji indicators (✓, ✗, ⚡)
+
+### Publishing Workflow (Quick Reference)
+```bash
+# One-line version update and commit
+python update_version.py --patch --commit --tag
+
+# Push to remote
+git push origin main --tags
+
+# Or see PUBLISH.md for complete workflow
+```
+
+## File Structure
+```
+comfyui-apex-artist/
+├── __init__.py              # Node registration
+├── apex_*.py                # Node implementations
+├── apex_*_api.py            # API endpoints
+├── requirements.txt         # Python dependencies
+├── manifest.json            # ComfyUI Registry metadata
+├── pyproject.toml          # Python project metadata
+├── comfyui.yaml            # ComfyUI configuration
+├── custom_nodes.json       # Custom nodes metadata
+├── PUBLISH.md              # Publishing workflow guide
+├── update_version.py       # Version management tool
+├── web/                    # Frontend extensions
+│   ├── apex_prompt.js
+│   ├── apex_lora_loader.js
+│   ├── apex_lora_stack.js
+│   └── apex_prompt_lens.js
+├── lens/                   # Lens preset source images
+├── lens_previews/          # Processed lens thumbnails
+└── memory-bank/            # Project documentation
+    ├── projectbrief.md
+    ├── productContext.md
+    ├── activeContext.md
+    ├── systemPatterns.md
+    ├── techContext.md
+    ├── progress.md
+    └── features.md
+```

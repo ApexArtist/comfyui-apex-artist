@@ -1,12 +1,9 @@
 [project]
 name = "comfyui-apex-artist"
-version = "2.0.1"
+version = "2.0.2"
 description = "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
 license = { file = "license.md" }
 requires-python = ">=3.8"
-dependencies = [
-    "scikit-image>=0.19.0"
-]
 dynamic = ["dependencies"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

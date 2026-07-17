@@ -1,27 +1,29 @@
 # Active Context: comfyui-apex-artist
 
 ## Current Focus
-**v1.8.0 Released** - Security fixes, performance optimizations, code deduplication complete. Version 1.8.0 committed and pushed to GitHub (origin/main). All version files updated via `update_version.py`. Commit: 36ee687 🚀 Version 1.8.0 - Security fixes, performance optimizations, code deduplication
+**Documentation & Publishing Workflow** (2026-07-18) - Created PUBLISH.md with comprehensive version management and git workflow instructions. Enhanced update_version.py with auto-increment flags, dry-run mode, and git integration features.
 
-Previous: Camera Lens Browser with real photography thumbnails complete (v1.7.1 production-ready).
+Previous: v2.0.2 - Removed ApexSmartResize node (redundant functionality). Updated README.md to be more concise. Now 8 active nodes.
 
-## Active Nodes (7 registered)
+## Active Nodes (8 registered)
 | Node | Category | Description |
 |------|----------|-------------|
-| ApexSmartResize | Image | AI-optimized aspect-aware resizing with 2026 model support |
 | ApexBlur | Image/Filters | 9 blur algorithms |
 | ApexSharpen | Image/Filters | 8 edge-aware sharpening algorithms |
 | ApexDepthToNormal | Image/Composite | Depth → normal map conversion |
 | ApexLayerBlend | Image/Composite | 25+ Photoshop-style layer blending modes |
 | ApexPromptPreset | Text | 55 presets across 3 categories |
 | ApexLoraLoader | Models | LoRA loader with interactive browser |
+| ApexLoRAStack | Models | Apex LoRA Merge with DARE-TIES and Wan 2.2 tower detection |
+| ApexModelQuantizer | Models | Quantize models to FP8/INT8/NVFP4/MXFP8 |
 
 ## Key Features Summary
 
 All detailed feature documentation is now in **`features.md`**. Quick reference:
 
-- **ApexSmartResize**: 12 presets including 6 new 2026 models (ZImage, QwenEdit, Krea2, Ideogram4, FLUX.2, SD3.5)
 - **ApexLoraLoader**: Interactive browser with optimized thumbnails (100-500x smaller files)
+- **ApexLoRAStack**: LoRA merge with DARE-TIES, TIES, DARE, Add, SVD algorithms
+- **ApexModelQuantizer**: FP8/INT8/NVFP4/MXFP8 quantization with learned rounding
 - **ApexPromptPreset**: 55 presets across 3 categories
 - **ApexBlur**: 9 blur algorithms, GPU-accelerated
 - **ApexSharpen**: 8 sharpening algorithms, edge-aware
@@ -71,12 +73,31 @@ All detailed feature documentation is now in **`features.md`**. Quick reference:
 - **productContext.md**: Product vision and use cases
 - **progress.md**: Project status and milestones
 - **activeContext.md**: Current focus and quick reference
+- **PUBLISH.md**: Publishing workflow and version management guide
 
-## Version Management
-- Current: 1.8.0
-- Version tracked in: `pyproject.toml`, `custom_nodes.json`, `comfyui.yaml`, `manifest.json`
-- Update script: `update_version.py` (now uses correct Python venv path)
-- Script improvements:
+## Version Management & Publishing
+- Current: 2.0.2
+- Version tracked in: `pyproject.toml`, `custom_nodes.json`, `comfyui.yaml`, `manifest.json`, `__init__.py`
+- **Publishing guide**: `PUBLISH.md` - Complete workflow documentation
+- **Update script**: `update_version.py` - Enhanced version management tool
+
+### update_version.py Features (370 lines)
+- **Auto-increment flags**: `--patch`, `--minor`, `--major` for semantic versioning
+- **Dry-run mode**: `--dry-run` to preview changes without applying
+- **Git integration**: `--commit` and `--tag` flags for automated git workflow
+- **Colored output**: Visual feedback with emoji indicators
+- **Current version detection**: Automatically reads current version from files
+- **Verification**: Confirms all files were updated consistently
+- **Script improvements**:
   - Fixed shebang to use `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe`
   - Fixed manifest.json regex to avoid matching "manifest_version" field
   - Uses negative lookbehind pattern: `(?<!"manifest_)"version"`
+
+### PUBLISH.md Contents
+- **Pre-Publish Checklist**: Code quality, testing, documentation, version files
+- **Version Update Process**: Semantic versioning guidelines, script usage examples
+- **Git Workflow**: Staging, commit conventions, tagging, pushing procedures
+- **Post-Push Verification**: GitHub, ComfyUI Registry, user testing steps
+- **Troubleshooting**: Common issues and solutions (version mismatches, push rejections, tag conflicts)
+- **Quick Reference**: Complete command sequences and one-command publishing
+- **Release Notes Template**: Standard changelog format

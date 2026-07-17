@@ -88,6 +88,14 @@
       "category": "models/loras",
       "input_types": ["MODEL"],
       "output_types": ["MODEL"]
+    },
+    {
+      "id": "ApexLoRAStack",
+      "display_name": "Apex LoRA Stack",
+      "description": "Advanced LoRA stack with dual-mode operation (stack/merge), Wan 2.2 tower awareness, and 5 merge algorithms",
+      "category": "models/loras",
+      "input_types": ["MODEL", "CLIP"],
+      "output_types": ["MODEL", "CLIP", "STRING"]
     }
   ],
    "version": "2.0.2"

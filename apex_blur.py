@@ -38,7 +38,8 @@ class ApexBlur:
                     "surface",
                     "lens",
                     "spin",
-                    "zoom"
+                    "zoom",
+                    "depth"
                 ], {"default": "gaussian"}),
                 "radius": ("FLOAT", {
                     "default": 10.0,
@@ -79,6 +80,7 @@ class ApexBlur:
                     "step": 0.01
                 }),
                 "mask": ("MASK",),
+                "depth": ("MASK",),
             }
         }
 
@@ -88,7 +90,7 @@ class ApexBlur:
     CATEGORY = "Apex Artist/Image/Filters"
 
     def apply_blur(self, image, blur_type="gaussian", radius=5.0, strength=1.0, 
-                   angle=0.0, center_x=0.5, center_y=0.5, edge_threshold=0.1, mask=None):
+                   angle=0.0, center_x=0.5, center_y=0.5, edge_threshold=0.1, mask=None, depth=None):
         try:
             # Validate inputs using apex_utils
             validate_image_tensor(image, "image")
@@ -128,6 +130,8 @@ class ApexBlur:
                 blurred = self._spin_blur(image, radius, center_x, center_y)
             elif blur_type == "zoom":
                 blurred = self._zoom_blur(image, radius, center_x, center_y)
+            elif blur_type == "depth":
+                blurred = self._depth_blur(image, radius, depth)
             else:
                 blurred = self._gaussian_blur(image, radius)
             
@@ -299,6 +303,122 @@ class ApexBlur:
             result += sampled
         
         return result / samples
+
+    def _depth_blur(self, image, radius, depth):
+        """
+        Depth-based blur using depth map (e.g., from Depth Anything V3)
+        
+        Args:
+            image: Input image tensor [B, H, W, C]
+            radius: Maximum blur radius
+            depth: Depth map as MASK tensor [B, H, W] or [B, H, W, 1]
+            
+        Returns:
+            Depth-blurred image tensor
+        """
+        if depth is None:
+            print("Depth blur: No depth map provided, falling back to Gaussian blur")
+            return self._gaussian_blur(image, radius)
+        
+        device = image.device
+        batch_size, height, width, channels = image.shape
+        
+        # Ensure depth has correct shape [B, H, W, 1]
+        if len(depth.shape) == 3:
+            depth = depth.unsqueeze(-1)
+        elif len(depth.shape) == 2:
+            depth = depth.unsqueeze(0).unsqueeze(-1)
+        
+        # Resize depth to match image if needed
+        if depth.shape[1:3] != (height, width):
+            depth = F.interpolate(
+                depth.permute(0, 3, 1, 2),
+                size=(height, width),
+                mode='bilinear',
+                align_corners=False
+            ).permute(0, 2, 3, 1)
+        
+        # Normalize depth to [0, 1]
+        depth_min = depth.amin(dim=(1, 2), keepdim=True)
+        depth_max = depth.amax(dim=(1, 2), keepdim=True)
+        depth_normalized = (depth - depth_min) / (depth_max - depth_min + 1e-8)
+        
+        # Depth map typically has: near=white (1), far=black (0) or vice versa
+        # We'll invert so that near objects get less blur, far objects get more blur
+        # Or we can use it directly depending on depth source convention
+        # Let's use it as: white/1 = near (less blur), black/0 = far (more blur)
+        blur_amount = 1.0 - depth_normalized  # Far objects get more blur
+        
+        # Scale by max radius
+        blur_amount = blur_amount * radius
+        
+        # For efficiency, we'll quantize depth into bins and apply different blur levels
+        num_bins = 8  # Number of depth bins for multi-layer blur
+        result = torch.zeros_like(image)
+        
+        # Create Gaussian kernels for different blur levels
+        kernel_cache = {}
+        
+        for i in range(num_bins):
+            bin_min = i / num_bins
+            bin_max = (i + 1) / num_bins
+            
+            # Create mask for this depth bin
+            bin_mask = ((blur_amount >= bin_min) & (blur_amount < bin_max)).float()
+            
+            # For the last bin, include the max value
+            if i == num_bins - 1:
+                bin_mask = ((blur_amount >= bin_min) & (blur_amount <= bin_max)).float()
+            
+            # Check if any pixels fall in this bin
+            if bin_mask.sum() > 0:
+                # Calculate average blur radius for this bin
+                bin_center = (bin_min + bin_max) / 2
+                bin_radius = bin_center * radius
+                
+                if bin_radius < 0.5:
+                    # No blur needed for this bin
+                    blurred_bin = image
+                else:
+                    # Get or create kernel
+                    if bin_radius not in kernel_cache:
+                        sigma = max(bin_radius * 0.5, 0.5)
+                        kernel_size = int(2 * math.ceil(2 * sigma) + 1)
+                        kernel_size = max(kernel_size, 3)
+                        kernel_size = min(kernel_size, 101)
+                        if kernel_size % 2 == 0:
+                            kernel_size += 1
+                        
+                        x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
+                        y = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
+                        xx, yy = torch.meshgrid(x, y, indexing='ij')
+                        kernel_2d = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
+                        kernel_2d = kernel_2d / kernel_2d.sum()
+                        kernel_2d = kernel_2d.unsqueeze(0).unsqueeze(0)
+                        kernel_cache[bin_radius] = (kernel_2d, kernel_size // 2)
+                    
+                    kernel_2d, padding = kernel_cache[bin_radius]
+                    
+                    # Apply blur to this bin
+                    blurred_channels = []
+                    for c in range(channels):
+                        channel = image[:, :, :, c:c+1].permute(0, 3, 1, 2)
+                        blurred_channel = F.conv2d(channel, kernel_2d, padding=padding)
+                        blurred_channels.append(blurred_channel)
+                    blurred_bin = torch.cat(blurred_channels, dim=1).permute(0, 2, 3, 1)
+                
+                # Blend this bin into result
+                bin_mask_expanded = bin_mask.expand(-1, -1, -1, channels)
+                result += blurred_bin * bin_mask_expanded
+        
+        # Handle any remaining pixels (should be minimal)
+        remaining_mask = 1.0 - (blur_amount >= 0).float().sum(dim=0, keepdim=True).clamp(0, 1)
+        if remaining_mask.sum() > 0:
+            result += image * remaining_mask.unsqueeze(-1).expand(-1, -1, -1, channels)
+        
+        print(f"Depth Blur: radius={radius}, depth_bins={num_bins}, depth_range=[{depth_normalized.min():.3f}, {depth_normalized.max():.3f}]")
+        
+        return torch.clamp(result, 0, 1)
 
     def _surface_blur(self, image, radius, edge_threshold):
         """Edge-preserving surface blur"""
