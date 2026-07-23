@@ -20,7 +20,7 @@
 - Publishing guide: `PUBLISH.md` (comprehensive workflow documentation)
 
 ## Current Status
-**Production/Stable v2.1.0** - Professional VFX and image processing with 6 core nodes. Health Score: 9.5/10 ✅
+**Production/Stable v2.1.1** - Professional VFX and image processing with 6 core nodes. Health Score: 9.5/10 ✅
 
 ## Recent Updates (July 2026)
 
@@ -110,6 +110,7 @@
 
 ## Next Milestones
 1. **v2.1.0** ✅ ApexLoadModel native optimization (complete)
+2. **v2.1.1** ✅ Patch release: version bump, cleaned stale ApexLoadModel references from metadata
 2. **v2.2.0** - Testing framework and automated test coverage
 3. **v2.3.0** - Performance optimizations (blur batch operations)
 4. **v3.0.0** - Major feature expansion (TBD based on user feedback)

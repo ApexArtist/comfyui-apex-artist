@@ -1,6 +1,6 @@
 # Active Context: comfyui-apex-artist
 
-## Current Focus (2026-07-23) - v2.1.0 Cleanup & Optimization
+## Current Focus (2026-07-23) - v2.1.1 Patch Release
 
 ### ApexLoadModel Removed ✅
 The `ApexLoadModel` node has been **removed entirely** from the project:
@@ -50,5 +50,5 @@ The `ApexLoadModel` node has been **removed entirely** from the project:
 - **PUBLISH.md**: Publishing workflow guide
 
 ## Version Management
-- **Current**: 2.1.0
+- **Current**: 2.1.1
 - **Script**: `update_version.py` with `--patch`, `--minor`, `--major`, `--commit`, `--tag` flags
