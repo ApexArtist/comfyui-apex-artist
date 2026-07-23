@@ -5,7 +5,7 @@ Features unsharp mask, structure-aware sharpening, and edge enhancement
 """
 import torch
 import torch.nn.functional as F
-from .apex_utils import gaussian_blur, validate_image_tensor, validate_radius, apply_mask as utils_apply_mask
+from .apex_utils import gaussian_blur, validate_image_tensor, validate_radius, apply_mask as utils_apply_mask, calculate_luminance
 
 class ApexSharpen:
     """
@@ -155,7 +155,7 @@ class ApexSharpen:
         device = image.device
         
         # Convert to grayscale for edge detection
-        gray = 0.299 * image[..., 0:1] + 0.587 * image[..., 1:2] + 0.114 * image[..., 2:3]
+        gray = calculate_luminance(image)
         
         # Sobel edge detection
         sobel_x = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], 
@@ -200,7 +200,7 @@ class ApexSharpen:
         kernel = torch.ones(1, 1, kernel_size, kernel_size, device=device) / (kernel_size**2)
         
         # Convert to grayscale for structure analysis
-        gray = 0.299 * image[..., 0:1] + 0.587 * image[..., 1:2] + 0.114 * image[..., 2:3]
+        gray = calculate_luminance(image)
         gray_reshaped = gray.permute(0, 3, 1, 2)
         
         # Calculate local mean and variance
@@ -261,7 +261,7 @@ class ApexSharpen:
         device = image.device
         
         # Convert to YUV color space
-        y = 0.299 * image[..., 0:1] + 0.587 * image[..., 1:2] + 0.114 * image[..., 2:3]
+        y = calculate_luminance(image)
         u = -0.14713 * image[..., 0:1] - 0.28886 * image[..., 1:2] + 0.436 * image[..., 2:3]
         v = 0.615 * image[..., 0:1] - 0.51499 * image[..., 1:2] - 0.10001 * image[..., 2:3]
         
@@ -303,7 +303,7 @@ class ApexSharpen:
             return sharpened
         
         # Calculate luminance
-        luminance = 0.299 * original[..., 0:1] + 0.587 * original[..., 1:2] + 0.114 * original[..., 2:3]
+        luminance = calculate_luminance(original)
         
         # Create protection masks
         result = sharpened

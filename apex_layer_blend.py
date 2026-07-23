@@ -6,6 +6,9 @@ Supports all major blend modes with proper algorithms
 import torch
 import torch.nn.functional as F
 import numpy as np
+from .apex_utils import (
+    rgb_to_hsl, hsl_to_rgb, calculate_luminance
+)
 
 class ApexLayerBlend:
     """
@@ -238,14 +241,14 @@ class ApexLayerBlend:
 
     def _blend_darker_color(self, base, overlay):
         """Darker color blend mode"""
-        base_luma = self._rgb_to_luminance(base)
-        overlay_luma = self._rgb_to_luminance(overlay)
+        base_luma = calculate_luminance(base)
+        overlay_luma = calculate_luminance(overlay)
         return torch.where(base_luma < overlay_luma, base, overlay)
 
     def _blend_lighter_color(self, base, overlay):
         """Lighter color blend mode"""
-        base_luma = self._rgb_to_luminance(base)
-        overlay_luma = self._rgb_to_luminance(overlay)
+        base_luma = calculate_luminance(base)
+        overlay_luma = calculate_luminance(overlay)
         return torch.where(base_luma > overlay_luma, base, overlay)
 
     def _blend_overlay(self, base, overlay):
@@ -308,133 +311,27 @@ class ApexLayerBlend:
         """Divide blend mode"""
         return torch.clamp(base / (overlay + 1e-8), 0, 1)
 
-    # Color blend modes (HSL-based)
+    # Color blend modes (HSL-based) - using shared utilities from apex_utils
     def _blend_hue(self, base, overlay):
         """Hue blend mode"""
-        base_hsl = self._rgb_to_hsl(base)
-        overlay_hsl = self._rgb_to_hsl(overlay)
-        result_hsl = torch.stack([
-            overlay_hsl[..., 0],  # Use overlay hue
-            base_hsl[..., 1],     # Keep base saturation
-            base_hsl[..., 2]      # Keep base lightness
-        ], dim=-1)
-        return self._hsl_to_rgb(result_hsl)
+        base_h, base_s, base_l = rgb_to_hsl(base)
+        overlay_h, _, _ = rgb_to_hsl(overlay)
+        return hsl_to_rgb(overlay_h, base_s, base_l)
 
     def _blend_saturation(self, base, overlay):
         """Saturation blend mode"""
-        base_hsl = self._rgb_to_hsl(base)
-        overlay_hsl = self._rgb_to_hsl(overlay)
-        result_hsl = torch.stack([
-            base_hsl[..., 0],     # Keep base hue
-            overlay_hsl[..., 1],  # Use overlay saturation
-            base_hsl[..., 2]      # Keep base lightness
-        ], dim=-1)
-        return self._hsl_to_rgb(result_hsl)
+        base_h, base_s, base_l = rgb_to_hsl(base)
+        _, overlay_s, _ = rgb_to_hsl(overlay)
+        return hsl_to_rgb(base_h, overlay_s, base_l)
 
     def _blend_color(self, base, overlay):
         """Color blend mode"""
-        base_hsl = self._rgb_to_hsl(base)
-        overlay_hsl = self._rgb_to_hsl(overlay)
-        result_hsl = torch.stack([
-            overlay_hsl[..., 0],  # Use overlay hue
-            overlay_hsl[..., 1],  # Use overlay saturation
-            base_hsl[..., 2]      # Keep base lightness
-        ], dim=-1)
-        return self._hsl_to_rgb(result_hsl)
+        _, base_s, base_l = rgb_to_hsl(base)
+        overlay_h, overlay_s, _ = rgb_to_hsl(overlay)
+        return hsl_to_rgb(overlay_h, overlay_s, base_l)
 
     def _blend_luminosity(self, base, overlay):
         """Luminosity blend mode"""
-        base_hsl = self._rgb_to_hsl(base)
-        overlay_hsl = self._rgb_to_hsl(overlay)
-        result_hsl = torch.stack([
-            base_hsl[..., 0],     # Keep base hue
-            base_hsl[..., 1],     # Keep base saturation
-            overlay_hsl[..., 2]   # Use overlay lightness
-        ], dim=-1)
-        return self._hsl_to_rgb(result_hsl)
-
-    # Color space conversion utilities
-    def _rgb_to_luminance(self, rgb):
-        """Convert RGB to luminance"""
-        weights = torch.tensor([0.2989, 0.5870, 0.1140], device=rgb.device)
-        return torch.sum(rgb * weights, dim=-1, keepdim=True)
-
-    def _rgb_to_hsl(self, rgb):
-        """Convert RGB to HSL color space"""
-        max_vals, max_indices = torch.max(rgb, dim=-1, keepdim=True)
-        min_vals, _ = torch.min(rgb, dim=-1, keepdim=True)
-        
-        diff = max_vals - min_vals
-        sum_vals = max_vals + min_vals
-        
-        # Lightness
-        lightness = sum_vals / 2
-        
-        # Saturation
-        saturation = torch.where(
-            diff == 0,
-            torch.zeros_like(diff),
-            torch.where(
-                lightness < 0.5,
-                diff / sum_vals,
-                diff / (2 - sum_vals)
-            )
-        )
-        
-        # Hue
-        hue = torch.zeros_like(max_vals)
-        
-        # Red is max
-        red_max = (max_indices.squeeze(-1) == 0)
-        hue[red_max] = ((rgb[red_max, 1] - rgb[red_max, 2]) / diff[red_max].squeeze(-1)) % 6
-        
-        # Green is max
-        green_max = (max_indices.squeeze(-1) == 1)
-        hue[green_max] = (rgb[green_max, 2] - rgb[green_max, 0]) / diff[green_max].squeeze(-1) + 2
-        
-        # Blue is max
-        blue_max = (max_indices.squeeze(-1) == 2)
-        hue[blue_max] = (rgb[blue_max, 0] - rgb[blue_max, 1]) / diff[blue_max].squeeze(-1) + 4
-        
-        hue = hue / 6
-        hue = hue.unsqueeze(-1)
-        
-        return torch.cat([hue, saturation, lightness], dim=-1)
-
-    def _hsl_to_rgb(self, hsl):
-        """Convert HSL to RGB color space"""
-        h, s, l = hsl[..., 0], hsl[..., 1], hsl[..., 2]
-        
-        c = (1 - torch.abs(2 * l - 1)) * s
-        x = c * (1 - torch.abs((h * 6) % 2 - 1))
-        m = l - c / 2
-        
-        h_section = (h * 6).long()
-        
-        rgb = torch.zeros_like(hsl)
-        
-        # Section 0: R=c, G=x, B=0
-        mask = (h_section == 0)
-        rgb[mask] = torch.stack([c[mask], x[mask], torch.zeros_like(c[mask])], dim=-1)
-        
-        # Section 1: R=x, G=c, B=0
-        mask = (h_section == 1)
-        rgb[mask] = torch.stack([x[mask], c[mask], torch.zeros_like(c[mask])], dim=-1)
-        
-        # Section 2: R=0, G=c, B=x
-        mask = (h_section == 2)
-        rgb[mask] = torch.stack([torch.zeros_like(c[mask]), c[mask], x[mask]], dim=-1)
-        
-        # Section 3: R=0, G=x, B=c
-        mask = (h_section == 3)
-        rgb[mask] = torch.stack([torch.zeros_like(c[mask]), x[mask], c[mask]], dim=-1)
-        
-        # Section 4: R=x, G=0, B=c
-        mask = (h_section == 4)
-        rgb[mask] = torch.stack([x[mask], torch.zeros_like(c[mask]), c[mask]], dim=-1)
-        
-        # Section 5: R=c, G=0, B=x
-        mask = (h_section == 5)
-        rgb[mask] = torch.stack([c[mask], torch.zeros_like(c[mask]), x[mask]], dim=-1)
-        
-        return rgb + m.unsqueeze(-1)
+        base_h, base_s, _ = rgb_to_hsl(base)
+        _, _, overlay_l = rgb_to_hsl(overlay)
+        return hsl_to_rgb(base_h, base_s, overlay_l)

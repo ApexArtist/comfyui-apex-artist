@@ -34,14 +34,6 @@
   },
   "nodes": [
     {
-      "id": "ApexSmartResize",
-      "display_name": "Apex Smart Resize",
-      "description": "Intelligent image resizing with AI-optimized resolution presets",
-      "category": "image/transform",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
-    },
-    {
       "id": "ApexDepthToNormal",
       "display_name": "Apex Depth to Normal",
       "description": "Convert depth maps to normal maps for advanced lighting workflows",
@@ -90,13 +82,13 @@
       "output_types": ["MODEL"]
     },
     {
-      "id": "ApexLoRAMerge",
-      "display_name": "Apex LoRA Merge",
-      "description": "Advanced LoRA stack with dual-mode operation (stack/merge), Wan 2.2 tower awareness, and 5 merge algorithms",
-      "category": "models/loras",
-      "input_types": ["MODEL", "CLIP"],
-      "output_types": ["MODEL", "CLIP", "STRING"]
+      "id": "ApexLoadModel",
+      "display_name": "Apex Load Model",
+      "description": "Advanced checkpoint loader with weight dtype selection (fp16, bf16, fp8, fp32)",
+      "category": "models/loaders",
+      "input_types": ["STRING"],
+      "output_types": ["MODEL", "CLIP", "VAE"]
     }
   ],
-   "version": "2.0.2"
+   "version": "2.1.0"
 }

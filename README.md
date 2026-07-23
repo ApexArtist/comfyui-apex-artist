@@ -11,9 +11,8 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 - **ApexDepthToNormal** — Convert depth maps to normal maps
 
 ### Models & Workflow
+- **ApexLoadModel** — Advanced checkpoint loader with weight dtype selection (fp16, bf16, fp8, fp32)
 - **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
-- **ApexLoRAMerge** — **Apex LoRA Merge** node for exporting merged LoRA files with Wan 2.2 tower detection and algorithms including DARE-TIES
-- **ApexModelQuantizer** — Quantize models to FP8, INT8, NVFP4, or MXFP8 with optional learned rounding optimization
 - **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, and Style categories
 
 ## ✨ Key Features
@@ -40,6 +39,55 @@ For detailed documentation, see `memory-bank/features.md`.
 
 ## 🚀 Quick Start
 
+### Load Model
+**Apex Load Model** is an advanced checkpoint loader with comprehensive weight dtype control and custom file browser:
+- **default** — ComfyUI's default behavior
+- **fp8_e4m3fn** — FP8 E4M3 format (8-bit, VRAM efficient)
+- **fp8_e4m3fn_fast** — FP8 with optimization flags (faster)
+- **fp8_e5m2** — FP8 E5M2 alternate format
+- **int8** — 8-bit integer quantization (experimental)
+- **fp16** — Half precision (16-bit, balanced)
+- **bf16** — Brain float 16 (better for training)
+- **fp32** — Full precision (32-bit, highest quality)
+
+**Features:**
+- **Custom file browser** — Browse and load models from anywhere on your system
+- **Dual selection modes** — Use custom browser OR native dropdown (custom takes priority)
+- Separate weight storage and compute dtype control
+- Load weights in fp8 but compute in fp16 for quality
+- Based on kijai's DiffusionModelLoaderKJ implementation
+- Full MODEL/CLIP/VAE output compatibility
+
+**Supported formats:** `.safetensors`, `.ckpt`, `.pt`, `.pth`, `.bin`
+
+**Usage:**
+```
+Add Node → Apex Artist → Models → Apex Load Model
+
+Option 1 - Custom Browser (Priority):
+- Click "🗂️ Browse Model..." button
+- Select any model file from your computer
+- Shows selected file name
+- Click "❌ Clear" to remove selection
+
+Option 2 - Native Dropdown (Fallback):
+- Use "Checkpoint Name" dropdown (models in ComfyUI/models/checkpoints)
+- Falls back to this if no custom file selected
+
+Additional Options:
+- Choose weight_dtype (default: default)
+- Optional: Set compute_dtype for computation precision
+- Outputs: MODEL, CLIP, VAE
+```
+
+**Priority logic:** Custom path (top browser) takes priority over native dropdown. Both can be populated, but custom path will be used if present.
+
+**Why use this over native loader?**
+- Native loader: Only "default" and "fp8" options, limited to checkpoints folder
+- Apex Load Model: 7 weight formats + separate compute dtype + load from anywhere
+- More control for VRAM-constrained systems or quality optimization
+- Access models outside standard checkpoints directory
+
 ### LoRA Loader
 ```
 Add Node → Apex Artist → Models → Apex LoRA Loader
@@ -47,29 +95,6 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 - Navigate folders with breadcrumb
 - Click thumbnail to select
 ```
-
-### LoRA Merge
-**Apex LoRA Merge** merges multiple LoRA files into a single `.safetensors` file with advanced algorithms:
-- **DARE-TIES** (recommended) — Combines dropout/rescale with sign election to reduce interference
-- **TIES** — Trim, elect sign, merge to reduce conflicts
-- **DARE Linear** — Random dropout and rescale for stability
-- **Add** — Simple weighted sum
-- **SVD** — Rank reduction via singular value decomposition
-
-**Features:**
-- Up to 20 LoRA slots with enable/disable per slot
-- Auto-rank handling (zero-pads smaller ranks to match largest)
-- Wan 2.2 tower detection (double_blocks/single_blocks) with auto-detect
-- Debug output STRING with full merge log
-- Context menu: Enable/Disable all, Reset strengths
-
-**Algorithms:**
-- **DARE-TIES**: DARE dropout → TIES sign election (density ~0.5 recommended)
-- **TIES**: [NeurIPS 2023](https://arxiv.org/abs/2306.01708) - Resolves sign conflicts
-- **DARE**: [2023](https://arxiv.org/abs/2311.03099) - Dropout and rescale
-- **SVD**: Target rank + threshold parameters
-
-For detailed documentation, see [APEX_LORA_MERGE.md](APEX_LORA_MERGE.md)
 
 ## 📊 Performance (RTX 3080, 1024×1024)
 
@@ -80,9 +105,9 @@ For detailed documentation, see [APEX_LORA_MERGE.md](APEX_LORA_MERGE.md)
 
 ## 🚀 Changelog
 
+**v2.0.3** - 2026-07-19 — Project cleanup: removed ApexLoRAExtract, ApexLoRAMerge, and ApexModelQuantizer to focus on core VFX features
 **v2.0.2** - 2026-07-16 — Brand refresh: repositioned as efficient nodes to make ComfyUI convenient, removed VFX branding
 **v2.0.1** - 2026-07-16 — Security fixes, performance optimizations, code deduplication (apex_utils.py)
-**v2.0.0** — Previous release
 
 ## 📦 Requirements
 

@@ -353,15 +353,14 @@
       ],
       "weight": 1.0
     },
-    "Fashion Collage Portrait": {
+    "Fashion Studio Portrait": {
       "prompt": "Studio setting, dark charcoal-gray background with soft studio depth, elegant portrait separation, moody dark backdrop contrast.",
-      "description": "Studio fashion collage layout with dark backdrop and multi-panel composition",
+      "description": "Studio fashion portrait with dark backdrop",
       "tags": [
         "studio",
         "fashion",
-        "collage",
         "portrait",
-        "multi-panel"
+        "elegant"
       ],
       "weight": 1.0
     },
@@ -376,6 +375,450 @@
         "camera"
       ],
       "weight": 1.3
+    },
+    "Industrial Warehouse": {
+      "prompt": "Vast industrial warehouse interior with exposed steel beams and concrete floors, scattered wooden crates and metal barrels, dramatic shafts of dusty light streaming through high windows, industrial pipes running along ceiling, worn brick walls with graffiti, atmospheric haze and floating dust particles, gritty urban decay aesthetic.",
+      "description": "Gritty industrial warehouse with dramatic lighting",
+      "tags": [
+        "warehouse",
+        "industrial",
+        "urban",
+        "action",
+        "gritty"
+      ],
+      "weight": 1.0
+    },
+    "Underground Parking Garage": {
+      "prompt": "Multi-level underground parking garage with concrete pillars, yellow parking lines on dark asphalt, overhead fluorescent lighting casting harsh shadows, rows of parked vehicles, exit signs glowing in the distance, damp concrete walls with water stains, tense urban thriller atmosphere.",
+      "description": "Underground parking garage with thriller atmosphere",
+      "tags": [
+        "parking garage",
+        "underground",
+        "urban",
+        "thriller",
+        "tense"
+      ],
+      "weight": 1.0
+    },
+    "Subway Tunnel": {
+      "prompt": "Dark subway tunnel with train tracks disappearing into darkness, industrial lighting fixtures creating pools of light, moisture-slicked walls covered in cables and pipes, distant tunnel lights creating atmospheric depth, urban exploration aesthetic, mysterious underground environment.",
+      "description": "Dark atmospheric subway tunnel",
+      "tags": [
+        "subway",
+        "tunnel",
+        "underground",
+        "dark",
+        "urban"
+      ],
+      "weight": 1.0
+    },
+    "Airport Terminal": {
+      "prompt": "Modern airport terminal with soaring glass ceiling allowing natural light, polished floors reflecting overhead lights, rows of check-in counters, departure boards displaying flight information, hurried travelers with luggage, contemporary architectural design, clean professional atmosphere.",
+      "description": "Modern airport terminal with glass architecture",
+      "tags": [
+        "airport",
+        "terminal",
+        "modern",
+        "travel",
+        "architectural"
+      ],
+      "weight": 1.0
+    },
+    "Suspension Bridge": {
+      "prompt": "Dramatic suspension bridge spanning across water or valley, massive steel cables and towers, roadway stretching into distance with city skyline beyond, vehicles crossing the span, cloudy dramatic sky, architectural marvel engineering feat, cinematic scale and perspective.",
+      "description": "Dramatic suspension bridge with architectural scale",
+      "tags": [
+        "bridge",
+        "suspension",
+        "architectural",
+        "dramatic",
+        "engineering"
+      ],
+      "weight": 1.0
+    },
+    "Hospital Emergency Room": {
+      "prompt": "Busy hospital emergency room with medical equipment, examination beds with curtain dividers, bright overhead surgical lighting, medical monitors displaying vital signs, IV stands and crash carts, medical staff moving urgently in background, sterile white walls with blue accents, tense medical drama atmosphere.",
+      "description": "Busy hospital ER with medical drama atmosphere",
+      "tags": [
+        "hospital",
+        "emergency room",
+        "medical",
+        "drama",
+        "urgent"
+      ],
+      "weight": 1.0
+    },
+    "Courtroom Interior": {
+      "prompt": "Grand courtroom interior with judge's bench elevated on platform, wooden jury box and witness stand, rows of gallery seating, American flag and state seal on wall, rich wood paneling throughout, formal legal atmosphere, dramatic lighting highlighting the bench, justice and authority ambiance.",
+      "description": "Formal courtroom with legal drama atmosphere",
+      "tags": [
+        "courtroom",
+        "legal",
+        "formal",
+        "drama",
+        "justice"
+      ],
+      "weight": 1.0
+    },
+    "Victorian Mansion": {
+      "prompt": "Elegant Victorian mansion interior with ornate woodwork and crown molding, crystal chandelier hanging from decorative ceiling, grand staircase with carved banister, antique furniture and Persian rugs, tall windows with heavy velvet drapes, oil paintings in gilt frames, period-authentic atmospheric lighting.",
+      "description": "Elegant Victorian mansion interior with period details",
+      "tags": [
+        "victorian",
+        "mansion",
+        "period",
+        "elegant",
+        "historical"
+      ],
+      "weight": 1.0
+    },
+    "1920s Speakeasy": {
+      "prompt": "Hidden 1920s speakeasy with art deco design elements, intimate jazz club atmosphere, small round tables with red velvet chairs, brass fixtures and mood lighting, brick walls with vintage posters, wooden bar with rows of bottles, cigarette smoke haze catching light, prohibition-era ambiance.",
+      "description": "1920s speakeasy with art deco jazz club atmosphere",
+      "tags": [
+        "speakeasy",
+        "1920s",
+        "jazz",
+        "prohibition",
+        "vintage"
+      ],
+      "weight": 1.0
+    },
+    "Western Saloon": {
+      "prompt": "Old West saloon interior with wooden swinging doors, long bar with brass foot rail, dusty bottles on shelves behind bartender, round card tables scattered throughout, wooden floors with sawdust, kerosene lanterns providing warm light, period-accurate Wild West atmosphere.",
+      "description": "Old West saloon with authentic frontier atmosphere",
+      "tags": [
+        "saloon",
+        "western",
+        "frontier",
+        "period",
+        "wild west"
+      ],
+      "weight": 1.0
+    },
+    "WWII Bunker": {
+      "prompt": "World War II military bunker interior with thick concrete walls, vintage radio equipment and maps on tables, ammunition crates stacked in corners, dim overhead bulbs creating dramatic shadows, period-accurate military furnishings, tense wartime atmosphere, historical authenticity.",
+      "description": "WWII military bunker with period-accurate details",
+      "tags": [
+        "bunker",
+        "WWII",
+        "military",
+        "historical",
+        "wartime"
+      ],
+      "weight": 1.0
+    },
+    "Medieval Tavern": {
+      "prompt": "Medieval tavern interior with rough wooden tables and benches, stone fireplace with crackling fire, wooden barrels serving as storage, iron candle holders providing flickering light, hanging herbs and dried meats, period-authentic medieval atmosphere with rustic charm.",
+      "description": "Rustic medieval tavern with fireplace",
+      "tags": [
+        "tavern",
+        "medieval",
+        "rustic",
+        "period",
+        "cozy"
+      ],
+      "weight": 1.0
+    },
+    "Abandoned Asylum": {
+      "prompt": "Decaying abandoned asylum with peeling wallpaper revealing cracked plaster, rusted metal bed frames, broken windows with shattered glass, dark corridors with flickering lights, disturbing medical equipment left behind, oppressive horror atmosphere, decay and abandonment.",
+      "description": "Creepy abandoned asylum with horror atmosphere",
+      "tags": [
+        "asylum",
+        "abandoned",
+        "horror",
+        "creepy",
+        "decay"
+      ],
+      "weight": 1.0
+    },
+    "Foggy Cemetery": {
+      "prompt": "Misty cemetery at dusk with weathered gravestones and monuments, ancient trees with gnarled branches, thick ground fog rolling between graves, iron fence surrounding the grounds, Gothic statues casting eerie shadows, mysterious supernatural atmosphere.",
+      "description": "Misty cemetery with Gothic atmosphere",
+      "tags": [
+        "cemetery",
+        "foggy",
+        "gothic",
+        "horror",
+        "eerie"
+      ],
+      "weight": 1.0
+    },
+    "Dark Basement": {
+      "prompt": "Creepy basement with exposed stone foundation, old wooden support beams, cobwebs in corners, single bare bulb swinging from ceiling, stacked boxes and covered furniture, water stains on walls, claustrophobic horror atmosphere, shadows concealing unknown threats.",
+      "description": "Claustrophobic basement with horror atmosphere",
+      "tags": [
+        "basement",
+        "dark",
+        "horror",
+        "claustrophobic",
+        "creepy"
+      ],
+      "weight": 1.0
+    },
+    "Haunted Manor": {
+      "prompt": "Grand haunted manor interior with dust-covered antique furniture, cobweb-draped chandeliers, faded portraits on walls seeming to watch, torn velvet curtains, moonlight streaming through broken windows, Victorian Gothic atmosphere, supernatural presence.",
+      "description": "Victorian haunted manor with Gothic atmosphere",
+      "tags": [
+        "manor",
+        "haunted",
+        "gothic",
+        "victorian",
+        "supernatural"
+      ],
+      "weight": 1.0
+    },
+    "Isolated Lighthouse": {
+      "prompt": "Isolated lighthouse perched on rocky cliff overlooking stormy ocean, powerful beam cutting through fog and rain, weathered stone structure, crashing waves below, spiral staircase inside, dramatic coastal atmosphere, solitude and isolation.",
+      "description": "Isolated lighthouse on stormy coast",
+      "tags": [
+        "lighthouse",
+        "isolated",
+        "coastal",
+        "stormy",
+        "dramatic"
+      ],
+      "weight": 1.0
+    },
+    "Cryogenic Laboratory": {
+      "prompt": "Advanced cryogenic laboratory with rows of frozen suspension pods emitting blue light, frost-covered surfaces, holographic displays showing vital signs, sterile white environment with chrome fixtures, futuristic medical equipment, cold sci-fi atmosphere.",
+      "description": "Futuristic cryogenic lab with suspension pods",
+      "tags": [
+        "cryogenic",
+        "laboratory",
+        "sci-fi",
+        "futuristic",
+        "cold"
+      ],
+      "weight": 1.0
+    },
+    "Alien Planet Surface": {
+      "prompt": "Alien planet surface with bizarre rock formations in exotic colors, strange flora with bioluminescent properties, multiple moons visible in alien sky, unfamiliar atmospheric conditions, otherworldly landscape with no Earth-like features, science fiction exploration atmosphere.",
+      "description": "Exotic alien planet with strange landscape",
+      "tags": [
+        "alien",
+        "planet",
+        "sci-fi",
+        "otherworldly",
+        "exotic"
+      ],
+      "weight": 1.0
+    },
+    "Starship Bridge": {
+      "prompt": "Futuristic starship command bridge with captain's chair elevated at center, holographic tactical displays floating in air, crew stations with glowing control panels, large viewport showing star field, sleek sci-fi design with blue ambient lighting, space exploration atmosphere.",
+      "description": "Futuristic starship bridge with holographic displays",
+      "tags": [
+        "starship",
+        "bridge",
+        "sci-fi",
+        "space",
+        "futuristic"
+      ],
+      "weight": 1.0
+    },
+    "Mars Colony": {
+      "prompt": "Futuristic Mars colony with pressurized habitat domes, red desert landscape visible through transparent sections, high-tech life support systems, hydroponic farming areas with green plants contrasting rust-colored terrain, astronauts in background, sci-fi colonization atmosphere.",
+      "description": "Mars colony habitat with futuristic tech",
+      "tags": [
+        "mars",
+        "colony",
+        "sci-fi",
+        "space",
+        "habitat"
+      ],
+      "weight": 1.0
+    },
+    "Noir Detective Office": {
+      "prompt": "1940s noir detective office with frosted glass door showing reversed name, wooden desk with scattered case files, vintage rotary phone, whiskey bottle and glass, venetian blinds casting dramatic shadows, cigarette smoke in air, black and white noir atmosphere.",
+      "description": "Classic noir detective office with period details",
+      "tags": [
+        "noir",
+        "detective",
+        "office",
+        "1940s",
+        "mystery"
+      ],
+      "weight": 1.0
+    },
+    "Rain-Soaked Alley": {
+      "prompt": "Dark rain-soaked alley at night with wet cobblestones reflecting streetlights, brick walls with fire escapes, trash cans and mysterious shadows, single flickering street lamp, noir mystery atmosphere, urban decay and danger.",
+      "description": "Noir rain-soaked alley with mystery atmosphere",
+      "tags": [
+        "alley",
+        "noir",
+        "rain",
+        "mystery",
+        "urban"
+      ],
+      "weight": 1.0
+    },
+    "Jazz Club Interior": {
+      "prompt": "Intimate jazz club with small stage, vintage microphone and instruments, red velvet curtains, round tables with candles, dim moody lighting with spotlights on performers, smoky atmosphere, 1950s noir ambiance, sophisticated nightlife setting.",
+      "description": "Intimate jazz club with noir ambiance",
+      "tags": [
+        "jazz club",
+        "noir",
+        "music",
+        "nightlife",
+        "intimate"
+      ],
+      "weight": 1.0
+    },
+    "Hotel Corridor": {
+      "prompt": "Vintage hotel corridor with ornate wallpaper and numbered doors, red carpet runner down center, wall sconces providing dim lighting, mysterious figure at far end, noir thriller atmosphere, suspenseful and claustrophobic mood.",
+      "description": "Vintage hotel corridor with noir mystery",
+      "tags": [
+        "hotel",
+        "corridor",
+        "noir",
+        "mystery",
+        "suspense"
+      ],
+      "weight": 1.0
+    },
+    "Candlelit Restaurant": {
+      "prompt": "Romantic candlelit restaurant with intimate two-person tables, white tablecloths and fine china, soft ambient lighting from candles and wall sconces, elegant floral centerpieces, wine glasses catching light, sophisticated romantic atmosphere.",
+      "description": "Romantic candlelit restaurant with intimate setting",
+      "tags": [
+        "restaurant",
+        "candlelit",
+        "romantic",
+        "intimate",
+        "elegant"
+      ],
+      "weight": 1.0
+    },
+    "Observation Deck Sunset": {
+      "prompt": "Glass-walled observation deck overlooking city skyline at sunset, comfortable seating areas, potted plants, warm golden light flooding through windows, romantic panoramic views, intimate couple setting, peaceful evening atmosphere.",
+      "description": "Observation deck with romantic sunset views",
+      "tags": [
+        "observation deck",
+        "sunset",
+        "romantic",
+        "city view",
+        "intimate"
+      ],
+      "weight": 1.0
+    },
+    "Garden Gazebo": {
+      "prompt": "White wooden gazebo in lush garden setting, climbing roses and flowering vines, soft afternoon light filtering through leaves, garden path leading to entrance, peaceful romantic atmosphere, fairy lights beginning to glow at dusk.",
+      "description": "Garden gazebo with romantic floral setting",
+      "tags": [
+        "gazebo",
+        "garden",
+        "romantic",
+        "flowers",
+        "peaceful"
+      ],
+      "weight": 1.0
+    },
+    "Beach Bonfire": {
+      "prompt": "Beach bonfire at twilight with flames dancing against darkening sky, driftwood seating arranged in circle, ocean waves gently lapping shore, stars beginning to appear, romantic coastal atmosphere, warm intimate gathering.",
+      "description": "Beach bonfire with romantic twilight atmosphere",
+      "tags": [
+        "beach",
+        "bonfire",
+        "romantic",
+        "twilight",
+        "coastal"
+      ],
+      "weight": 1.0
+    },
+    "Fighter Jet Hangar": {
+      "prompt": "Military fighter jet hangar with sleek combat aircraft, ground crew performing maintenance, high ceiling with industrial lighting, tools and equipment scattered around, American flag hanging from wall, military aviation atmosphere, organized controlled chaos.",
+      "description": "Military fighter jet hangar with aviation atmosphere",
+      "tags": [
+        "hangar",
+        "fighter jet",
+        "military",
+        "aviation",
+        "war"
+      ],
+      "weight": 1.0
+    },
+    "WWI Trench": {
+      "prompt": "World War I muddy trench with wooden support beams, sandbags lining top, soldiers' equipment scattered about, duckboards on floor, periscope or ladder to no man's land, barbed wire visible above, grim wartime atmosphere, historical authenticity.",
+      "description": "WWI trench with authentic wartime atmosphere",
+      "tags": [
+        "trench",
+        "WWI",
+        "war",
+        "military",
+        "historical"
+      ],
+      "weight": 1.0
+    },
+    "Command Center": {
+      "prompt": "Military command center with large situation map on wall, multiple computer screens displaying tactical information, communications equipment, officers coordinating operations, serious focused atmosphere, modern military technology.",
+      "description": "Military command center with tactical operations",
+      "tags": [
+        "command center",
+        "military",
+        "tactical",
+        "war",
+        "operations"
+      ],
+      "weight": 1.0
+    },
+    "Desert Outpost": {
+      "prompt": "Remote desert military outpost with watchtowers and sandbag fortifications, military vehicles parked nearby, tents and temporary structures, harsh sunlight and heat haze, barren landscape surrounding, isolated frontier atmosphere.",
+      "description": "Remote desert military outpost with frontier feel",
+      "tags": [
+        "outpost",
+        "desert",
+        "military",
+        "war",
+        "isolated"
+      ],
+      "weight": 1.0
+    },
+    "Train Platform Farewell": {
+      "prompt": "Vintage train platform with steam locomotive, passengers boarding and saying goodbyes, period luggage and clothing, station clock showing departure time, nostalgic emotional atmosphere, classic romantic drama setting.",
+      "description": "Vintage train platform with emotional farewell atmosphere",
+      "tags": [
+        "train platform",
+        "vintage",
+        "romantic",
+        "farewell",
+        "nostalgic"
+      ],
+      "weight": 1.0
+    },
+    "Penthouse Balcony": {
+      "prompt": "Luxury penthouse balcony with modern furniture and city skyline views, glass railing, elegant outdoor lighting, potted plants and decorative elements, champagne glasses on table, sophisticated urban luxury atmosphere.",
+      "description": "Luxury penthouse balcony with skyline views",
+      "tags": [
+        "penthouse",
+        "balcony",
+        "luxury",
+        "urban",
+        "sophisticated"
+      ],
+      "weight": 1.0
+    },
+    "Mountain Cabin Porch": {
+      "prompt": "Rustic mountain cabin porch with wooden rocking chairs, scenic mountain vista, warm blankets draped over railings, morning coffee setting, peaceful wilderness atmosphere, serene natural beauty surrounding.",
+      "description": "Mountain cabin porch with scenic wilderness views",
+      "tags": [
+        "cabin",
+        "porch",
+        "mountain",
+        "rustic",
+        "peaceful"
+      ],
+      "weight": 1.0
+    },
+    "City Rooftop Garden": {
+      "prompt": "Urban rooftop garden with raised plant beds, string lights overhead, wooden deck flooring, city buildings visible beyond, green plants contrasting concrete jungle, peaceful urban oasis atmosphere, sunset golden hour lighting.",
+      "description": "Urban rooftop garden oasis with city views",
+      "tags": [
+        "rooftop",
+        "garden",
+        "urban",
+        "peaceful",
+        "oasis"
+      ],
+      "weight": 1.0
     }
   },
   "Apex Lighting": {
@@ -719,6 +1162,258 @@
         "natural"
       ],
       "weight": 1.2
+    },
+    "Film Noir Shadow": {
+      "prompt": "Classic film noir dramatic lighting with deep black shadows, high contrast venetian blind patterns casting dramatic stripes across scene, single source harsh key light, no fill light, chiaroscuro film aesthetic, mysterious noir atmosphere, stark black and white contrast.",
+      "description": "Film noir with venetian blind shadow patterns",
+      "tags": [
+        "noir",
+        "shadows",
+        "dramatic",
+        "contrast",
+        "classic"
+      ],
+      "weight": 1.3
+    },
+    "Practical Light Only": {
+      "prompt": "Natural practical lighting sources only, visible lamps and fixtures providing all illumination, realistic motivated lighting, warm tungsten bulbs, no artificial fill light, authentic environmental lighting, organic light falloff from visible sources.",
+      "description": "Realistic practical light sources only",
+      "tags": [
+        "practical",
+        "realistic",
+        "natural",
+        "motivated",
+        "authentic"
+      ],
+      "weight": 1.2
+    },
+    "Bounce Light Soft": {
+      "prompt": "Soft indirect bounce lighting, light reflected off walls and ceilings providing gentle fill, wraparound diffused illumination, no harsh direct light, photographic bounce card quality, flattering soft shadows, studio bounce lighting technique.",
+      "description": "Soft indirect bounce light fill",
+      "tags": [
+        "bounce",
+        "soft",
+        "indirect",
+        "flattering",
+        "studio"
+      ],
+      "weight": 1.1
+    },
+    "Colored Gel Drama": {
+      "prompt": "Theatrical colored gel lighting with bold saturated colors, contrasting red and blue gels creating dramatic color splits, vibrant magenta and cyan tones, theatrical stage lighting aesthetic, artistic color temperature conflicts, music video lighting style.",
+      "description": "Dramatic colored theatrical gel lighting",
+      "tags": [
+        "colored gel",
+        "theatrical",
+        "dramatic",
+        "saturated",
+        "artistic"
+      ],
+      "weight": 1.2
+    },
+    "Butterfly Beauty Light": {
+      "prompt": "Classic butterfly beauty lighting with light source directly above and in front of subject, small butterfly-shaped shadow under nose, symmetrical flattering illumination on face, glamour photography technique, soft even facial lighting, beauty portrait standard.",
+      "description": "Classic butterfly beauty portrait lighting",
+      "tags": [
+        "butterfly",
+        "beauty",
+        "glamour",
+        "portrait",
+        "flattering"
+      ],
+      "weight": 1.2
+    },
+    "Split Lighting": {
+      "prompt": "Dramatic split lighting with light source 90 degrees to the side, exactly half of face illuminated and half in shadow, clean division down center of face, dramatic portrait technique, strong character lighting, theatrical facial sculpting.",
+      "description": "Split lighting with half face illuminated",
+      "tags": [
+        "split",
+        "dramatic",
+        "portrait",
+        "theatrical",
+        "half-shadow"
+      ],
+      "weight": 1.3
+    },
+    "Loop Lighting": {
+      "prompt": "Classic loop lighting portrait technique, light positioned 30-45 degrees to side and slightly above, small nose shadow looping down toward corner of mouth, flattering dimensional facial sculpting, professional portrait lighting standard, natural dimensional quality.",
+      "description": "Loop lighting portrait with dimensional sculpting",
+      "tags": [
+        "loop",
+        "portrait",
+        "flattering",
+        "professional",
+        "dimensional"
+      ],
+      "weight": 1.2
+    },
+    "Broad Lighting": {
+      "prompt": "Broad lighting technique with illuminated side of face toward camera, fuller broader face appearance, light on near side of face, portrait photography technique making face appear wider, commercial portrait standard for narrow faces.",
+      "description": "Broad lighting for fuller face appearance",
+      "tags": [
+        "broad",
+        "portrait",
+        "commercial",
+        "fuller",
+        "technique"
+      ],
+      "weight": 1.1
+    },
+    "Short Lighting": {
+      "prompt": "Short lighting technique with shadow side of face toward camera, slimming portrait effect, light on far side of face, narrow dimensional appearance, dramatic portrait technique, sculpted chiseled look, professional character lighting.",
+      "description": "Short lighting for slimming portrait effect",
+      "tags": [
+        "short",
+        "portrait",
+        "slimming",
+        "dramatic",
+        "sculpted"
+      ],
+      "weight": 1.2
+    },
+    "Clamshell Beauty": {
+      "prompt": "Clamshell beauty lighting with light above and reflector below, soft wraparound illumination on face, minimal shadows under chin and nose, fashion and beauty photography standard, even flattering facial lighting, professional beauty technique.",
+      "description": "Clamshell lighting for beauty photography",
+      "tags": [
+        "clamshell",
+        "beauty",
+        "fashion",
+        "flattering",
+        "professional"
+      ],
+      "weight": 1.2
+    },
+    "Hard Midday Sun": {
+      "prompt": "Harsh overhead midday sunlight, strong direct sun from above creating deep shadows under eyes and nose, high contrast unforgiving light, bright hot highlights, documentary reality aesthetic, no diffusion, authentic harsh daylight.",
+      "description": "Harsh overhead midday sun with deep shadows",
+      "tags": [
+        "midday",
+        "harsh",
+        "overhead",
+        "documentary",
+        "unforgiving"
+      ],
+      "weight": 1.1
+    },
+    "Magic Hour Glow": {
+      "prompt": "Magic hour golden light just after sunrise or before sunset, warm amber and rose gold tones, soft directional glow, long dramatic shadows, romantic dreamy quality, cinematic golden warmth, perfect outdoor portrait light, ethereal atmospheric glow.",
+      "description": "Magic hour golden glow with warm tones",
+      "tags": [
+        "magic hour",
+        "golden",
+        "romantic",
+        "cinematic",
+        "ethereal"
+      ],
+      "weight": 1.3
+    },
+    "Overcast Soft Box": {
+      "prompt": "Overcast sky acting as giant natural softbox, completely even diffused light from above, no visible shadows, soft neutral illumination, professional product photography quality, clean commercial lighting, perfect for even exposure throughout scene.",
+      "description": "Overcast sky natural softbox lighting",
+      "tags": [
+        "overcast",
+        "softbox",
+        "even",
+        "commercial",
+        "clean"
+      ],
+      "weight": 1.1
+    },
+    "Spotlight Solo": {
+      "prompt": "Single dramatic spotlight in darkness, tight beam illuminating subject in void of black, theatrical stage lighting, hard spotlight edge, dramatic isolation technique, performance lighting aesthetic, subject emerging from darkness.",
+      "description": "Dramatic single spotlight in darkness",
+      "tags": [
+        "spotlight",
+        "dramatic",
+        "theatrical",
+        "isolated",
+        "stage"
+      ],
+      "weight": 1.3
+    },
+    "Bounce Flash": {
+      "prompt": "Bounced camera flash off ceiling or wall, soft diffused flash lighting, no harsh direct flash shadows, natural-looking artificial light, photojournalism technique, realistic event lighting, subtle fill flash aesthetic.",
+      "description": "Soft bounced flash lighting technique",
+      "tags": [
+        "flash",
+        "bounced",
+        "soft",
+        "photojournalism",
+        "realistic"
+      ],
+      "weight": 1.1
+    },
+    "Car Headlight Drama": {
+      "prompt": "Dramatic car headlight illumination at night, bright white beams cutting through darkness, fog and mist catching light, twin parallel light sources, automotive lighting aesthetic, urban night thriller atmosphere, harsh beam quality.",
+      "description": "Dramatic car headlight beams at night",
+      "tags": [
+        "headlight",
+        "automotive",
+        "night",
+        "dramatic",
+        "urban"
+      ],
+      "weight": 1.2
+    },
+    "Smoky Atmosphere": {
+      "prompt": "Heavy atmospheric smoke or haze illuminated by light sources, visible volumetric god rays through smoke, dramatic light shafts, mysterious atmosphere, concert and stage lighting effect, particles catching light, ethereal smoky ambiance.",
+      "description": "Volumetric smoky atmosphere with light rays",
+      "tags": [
+        "smoke",
+        "volumetric",
+        "atmospheric",
+        "dramatic",
+        "mysterious"
+      ],
+      "weight": 1.3
+    },
+    "Window Frame Pattern": {
+      "prompt": "Window frame casting geometric shadow patterns across scene, architectural light and shadow interplay, mullion and frame shapes projected onto surfaces, natural window light creating graphic patterns, architectural photography aesthetic.",
+      "description": "Window frame creating shadow patterns",
+      "tags": [
+        "window",
+        "pattern",
+        "geometric",
+        "architectural",
+        "shadows"
+      ],
+      "weight": 1.2
+    },
+    "Contre-Jour Silhouette": {
+      "prompt": "Contre-jour backlighting technique with subject silhouetted against bright background, minimal visible detail on subject, bright glowing rim light on edges, dramatic contour lighting, artistic high-contrast composition, subject as dark shape.",
+      "description": "Contre-jour silhouette backlighting",
+      "tags": [
+        "contre-jour",
+        "silhouette",
+        "backlight",
+        "artistic",
+        "contour"
+      ],
+      "weight": 1.3
+    },
+    "Diffusion Filter Glow": {
+      "prompt": "Soft diffusion filter creating dreamy glow in highlights, gentle halation around bright areas, romantic soft-focus quality, bloom in light sources, vintage Hollywood glamour aesthetic, ethereal glowing highlights, delicate soft rendering.",
+      "description": "Diffusion filter creating soft glow effect",
+      "tags": [
+        "diffusion",
+        "glow",
+        "soft",
+        "romantic",
+        "vintage"
+      ],
+      "weight": 1.2
+    },
+    "Medical Examination Light": {
+      "prompt": "Clinical medical examination lighting, bright white fluorescent overhead illumination, harsh even lighting showing every detail, sterile hospital atmosphere, no shadows, cold white color temperature, documentary medical aesthetic, unforgiving clarity.",
+      "description": "Clinical medical examination lighting",
+      "tags": [
+        "medical",
+        "clinical",
+        "fluorescent",
+        "harsh",
+        "sterile"
+      ],
+      "weight": 1.0
     }
   },
   "Apex Style": {
@@ -848,18 +1543,305 @@
       ],
       "weight": 1.2
     },
-    "Fashion Collage Portrait": {
-      "prompt": "Ultra-realistic IMAX-level Netflix-style cinematic elegant collage portrait, premium five-panel fashion collage layout, premium luxury fashion editorial collage aesthetic, ultra-rich color grading with deep saturated fabric tones, sophisticated color palette, warm cinematic highlights against moody dark backdrop. Creamy bokeh, elegant portrait separation, HDR lighting, global illumination, photorealistic rendering, shallow depth of field, masterpiece quality, ultra-sharp details, 8K production detail.",
-      "description": "Premium fashion collage portrait with ultra-realistic cinematic rendering",
+    "Fashion Studio Portrait": {
+      "prompt": "Ultra-realistic IMAX-level Netflix-style cinematic elegant portrait, premium luxury fashion editorial aesthetic, ultra-rich color grading with deep saturated fabric tones, sophisticated color palette, warm cinematic highlights against moody dark backdrop. Creamy bokeh, elegant portrait separation, HDR lighting, global illumination, photorealistic rendering, shallow depth of field, masterpiece quality, ultra-sharp details, 8K production detail.",
+      "description": "Premium fashion portrait with ultra-realistic cinematic rendering",
       "tags": [
         "fashion",
-        "collage",
         "portrait",
         "cinematic",
         "ultra-realistic",
         "editorial"
       ],
       "weight": 1.3
+    },
+    "Documentary Realism": {
+      "prompt": "Documentary photojournalism style, authentic unposed moments, natural lighting preserved, reportage aesthetic, candid street photography, raw genuine emotion, unmanipulated realism, authentic human moments, photojournalistic integrity, real-world texture and grain.",
+      "description": "Documentary photojournalism with authentic realism",
+      "tags": [
+        "documentary",
+        "photojournalism",
+        "authentic",
+        "candid",
+        "raw"
+      ],
+      "weight": 1.2
+    },
+    "Film Noir Classic": {
+      "prompt": "Classic film noir aesthetic, high contrast black and white, dramatic shadow play, hard-boiled detective atmosphere, 1940s cinematography style, venetian blind shadows, femme fatale lighting, classic Hollywood noir mood, stark chiaroscuro contrast.",
+      "description": "Classic film noir with dramatic shadows",
+      "tags": [
+        "film noir",
+        "black and white",
+        "dramatic",
+        "classic",
+        "1940s"
+      ],
+      "weight": 1.3
+    },
+    "Vintage Film Grain": {
+      "prompt": "Vintage film photography aesthetic, authentic film grain texture, analog camera character, nostalgic color palette, slight color shift and fading, organic film artifacts, retro photo processing look, warm nostalgic memories feel, classic photo album quality.",
+      "description": "Vintage film with authentic grain and color",
+      "tags": [
+        "vintage",
+        "film grain",
+        "analog",
+        "nostalgic",
+        "retro"
+      ],
+      "weight": 1.2
+    },
+    "Cyberpunk Neon": {
+      "prompt": "Cyberpunk aesthetic, neon-soaked futuristic cityscape, vibrant pink cyan and purple neon colors, high-tech low-life atmosphere, dystopian urban future, holographic elements, rain-slicked surfaces reflecting neon, Blade Runner inspired mood, technological noir aesthetic.",
+      "description": "Cyberpunk with neon colors and futuristic mood",
+      "tags": [
+        "cyberpunk",
+        "neon",
+        "futuristic",
+        "dystopian",
+        "sci-fi"
+      ],
+      "weight": 1.3
+    },
+    "Oil Painting Classical": {
+      "prompt": "Classical oil painting technique, rich painterly brushstrokes, Renaissance master quality, deep saturated colors, traditional fine art aesthetic, museum-quality rendering, chiaroscuro light and shadow, Old Master painting style, timeless artistic elegance.",
+      "description": "Classical oil painting with Renaissance quality",
+      "tags": [
+        "oil painting",
+        "classical",
+        "renaissance",
+        "fine art",
+        "painterly"
+      ],
+      "weight": 1.2
+    },
+    "Impressionist Soft": {
+      "prompt": "Impressionist painting style, soft broken brushstrokes, atmospheric light effects, Monet-inspired color palette, dreamy ethereal quality, emphasis on light and color over detail, plein air painting aesthetic, gentle pastel tones, romantic atmospheric mood.",
+      "description": "Impressionist with soft brushstrokes and light",
+      "tags": [
+        "impressionist",
+        "soft",
+        "painterly",
+        "atmospheric",
+        "monet"
+      ],
+      "weight": 1.2
+    },
+    "Art Nouveau Elegant": {
+      "prompt": "Art Nouveau decorative style, flowing organic lines and curves, elegant ornamental details, nature-inspired motifs, Alphonse Mucha influence, sophisticated vintage aesthetic, decorative arts movement, graceful flowing composition, elegant period style.",
+      "description": "Art Nouveau with flowing organic elegance",
+      "tags": [
+        "art nouveau",
+        "elegant",
+        "decorative",
+        "organic",
+        "vintage"
+      ],
+      "weight": 1.2
+    },
+    "Art Deco Geometric": {
+      "prompt": "Art Deco style, geometric patterns and bold shapes, 1920s glamour aesthetic, luxurious metallic accents, streamlined modern elegance, jazz age sophistication, symmetrical geometric design, vintage luxury aesthetic, Great Gatsby era style.",
+      "description": "Art Deco with geometric patterns and glamour",
+      "tags": [
+        "art deco",
+        "geometric",
+        "1920s",
+        "luxury",
+        "glamour"
+      ],
+      "weight": 1.2
+    },
+    "Pop Art Bold": {
+      "prompt": "Pop Art style, bold vibrant colors, comic book aesthetic, Ben-Day dots pattern, high contrast graphic design, Andy Warhol influence, mass culture imagery, screen print quality, bright saturated pop culture aesthetic.",
+      "description": "Pop Art with bold colors and comic style",
+      "tags": [
+        "pop art",
+        "bold",
+        "vibrant",
+        "comic",
+        "warhol"
+      ],
+      "weight": 1.2
+    },
+    "Minimalist Modern": {
+      "prompt": "Minimalist modern aesthetic, clean simple composition, negative space emphasis, reduced color palette, contemporary gallery art style, essential elements only, sophisticated simplicity, modernist design principles, elegant restraint.",
+      "description": "Minimalist with clean modern simplicity",
+      "tags": [
+        "minimalist",
+        "modern",
+        "clean",
+        "simple",
+        "contemporary"
+      ],
+      "weight": 1.2
+    },
+    "Surrealist Dream": {
+      "prompt": "Surrealist dream imagery, impossible combinations and perspectives, Salvador Dali inspired, subconscious dreamscape aesthetic, magical realism elements, unexpected juxtapositions, fantastical surreal atmosphere, dream logic composition.",
+      "description": "Surrealist with dreamlike impossibilities",
+      "tags": [
+        "surrealist",
+        "dream",
+        "fantastical",
+        "dali",
+        "magical"
+      ],
+      "weight": 1.2
+    },
+    "Gothic Dark Romance": {
+      "prompt": "Gothic romantic aesthetic, dark moody atmosphere, Victorian Gothic elegance, dramatic shadows and candlelight, romantic melancholy mood, baroque ornamental details, mysterious ethereal quality, dark romance atmosphere.",
+      "description": "Gothic with dark romantic elegance",
+      "tags": [
+        "gothic",
+        "dark",
+        "romantic",
+        "victorian",
+        "moody"
+      ],
+      "weight": 1.3
+    },
+    "Steampunk Victorian": {
+      "prompt": "Steampunk aesthetic, Victorian era meets industrial technology, brass copper and leather materials, clockwork mechanical details, retro-futuristic invention style, steam-powered machinery aesthetic, vintage industrial elegance, Jules Verne inspired atmosphere.",
+      "description": "Steampunk with Victorian industrial elegance",
+      "tags": [
+        "steampunk",
+        "victorian",
+        "industrial",
+        "brass",
+        "retro-futuristic"
+      ],
+      "weight": 1.2
+    },
+    "Vaporwave Aesthetic": {
+      "prompt": "Vaporwave aesthetic, 1980s-90s nostalgia, pink and cyan color scheme, retro computer graphics, Roman bust sculptures, geometric patterns, digital glitch effects, internet culture aesthetic, nostalgic digital surrealism.",
+      "description": "Vaporwave with retro digital nostalgia",
+      "tags": [
+        "vaporwave",
+        "retro",
+        "nostalgia",
+        "1980s",
+        "digital"
+      ],
+      "weight": 1.1
+    },
+    "Nordic Minimalism": {
+      "prompt": "Scandinavian minimalist design, clean functional aesthetics, natural materials and textures, muted neutral color palette, hygge cozy atmosphere, modern Nordic simplicity, organic minimalist approach, serene peaceful mood.",
+      "description": "Nordic minimalism with natural simplicity",
+      "tags": [
+        "nordic",
+        "scandinavian",
+        "minimalist",
+        "hygge",
+        "natural"
+      ],
+      "weight": 1.1
+    },
+    "Japanese Wabi-Sabi": {
+      "prompt": "Japanese wabi-sabi aesthetic, beauty in imperfection, natural aging and patina, rustic organic materials, asymmetrical composition, zen-inspired simplicity, transient beauty appreciation, mindful imperfection, serene contemplative mood.",
+      "description": "Wabi-sabi with beauty in imperfection",
+      "tags": [
+        "japanese",
+        "wabi-sabi",
+        "zen",
+        "imperfection",
+        "organic"
+      ],
+      "weight": 1.2
+    },
+    "Baroque Dramatic": {
+      "prompt": "Baroque dramatic style, ornate elaborate details, dynamic diagonal compositions, rich deep colors, theatrical dramatic lighting, emotional grandeur, extravagant decorative elements, classical European opulence, dramatic movement and energy.",
+      "description": "Baroque with dramatic ornate grandeur",
+      "tags": [
+        "baroque",
+        "dramatic",
+        "ornate",
+        "theatrical",
+        "opulent"
+      ],
+      "weight": 1.2
+    },
+    "Grunge Texture": {
+      "prompt": "Grunge aesthetic, rough weathered textures, distressed worn surfaces, urban decay quality, 1990s alternative culture, raw unpolished finish, gritty authentic character, imperfect organic texture, rebellious anti-aesthetic.",
+      "description": "Grunge with rough weathered textures",
+      "tags": [
+        "grunge",
+        "texture",
+        "weathered",
+        "distressed",
+        "raw"
+      ],
+      "weight": 1.1
+    },
+    "Cottagecore Pastoral": {
+      "prompt": "Cottagecore aesthetic, pastoral countryside romance, vintage homemade quality, natural botanical elements, soft romantic nostalgia, handcrafted artisan feel, rustic farmhouse charm, gentle rural beauty, cozy pastoral life.",
+      "description": "Cottagecore with pastoral romantic charm",
+      "tags": [
+        "cottagecore",
+        "pastoral",
+        "romantic",
+        "rustic",
+        "botanical"
+      ],
+      "weight": 1.1
+    },
+    "Dark Academia": {
+      "prompt": "Dark academia aesthetic, scholarly intellectual atmosphere, Gothic university setting, vintage books and candlelight, classical education mood, burgundy and dark green tones, romantic scholarly pursuit, literary artistic atmosphere.",
+      "description": "Dark academia with scholarly Gothic mood",
+      "tags": [
+        "dark academia",
+        "scholarly",
+        "gothic",
+        "vintage",
+        "intellectual"
+      ],
+      "weight": 1.2
+    },
+    "Solarpunk Utopia": {
+      "prompt": "Solarpunk aesthetic, optimistic eco-future, renewable energy integration, lush green technology, sustainable utopian vision, Art Nouveau meets futurism, hopeful bright atmosphere, nature and technology harmony, vibrant ecological future.",
+      "description": "Solarpunk with optimistic eco-future",
+      "tags": [
+        "solarpunk",
+        "eco",
+        "utopian",
+        "sustainable",
+        "hopeful"
+      ],
+      "weight": 1.1
+    },
+    "Dieselpunk Industrial": {
+      "prompt": "Dieselpunk aesthetic, 1920s-1950s diesel technology, industrial machinery design, wartime retro-futurism, Art Deco meets industrial, oil and metal aesthetic, gritty mechanical atmosphere, alternate history technology, noir industrial mood.",
+      "description": "Dieselpunk with industrial retro-futurism",
+      "tags": [
+        "dieselpunk",
+        "industrial",
+        "retro-futurism",
+        "mechanical",
+        "1940s"
+      ],
+      "weight": 1.1
+    },
+    "Afrofuturism": {
+      "prompt": "Afrofuturism aesthetic, African diaspora meets science fiction, vibrant cultural patterns and technology, bold colorful designs, Afrocentric futuristic vision, traditional meets technological, celebratory empowering atmosphere, unique cultural sci-fi perspective.",
+      "description": "Afrofuturism with cultural sci-fi fusion",
+      "tags": [
+        "afrofuturism",
+        "cultural",
+        "sci-fi",
+        "vibrant",
+        "futuristic"
+      ],
+      "weight": 1.2
+    },
+    "Magical Realism": {
+      "prompt": "Magical realism style, everyday reality with magical elements, subtle supernatural occurrences, Gabriel García Márquez inspired, ordinary meets extraordinary, dreamlike but grounded, Latin American literary aesthetic, mystical everyday atmosphere.",
+      "description": "Magical realism with subtle supernatural",
+      "tags": [
+        "magical realism",
+        "supernatural",
+        "dreamlike",
+        "literary",
+        "mystical"
+      ],
+      "weight": 1.2
     }
   },
   "Apex Camera Lens": {

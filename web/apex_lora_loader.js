@@ -1,13 +1,9 @@
 /**
  * Apex LoRA Loader Web Extension
- * Interactive folder browser embedded inside the node
+ * Floating browser panel - native ComfyUI approach without DOM widgets
  *
- * Modern ComfyUI extension API:
- * - nodeCreated for per-instance setup (replaces beforeRegisterNodeDef + onNodeCreated patching)
- * - loadedGraphNode for workflow restore
- * - Object.defineProperty on widget.value to intercept ALL value changes
- * - addDOMWidget for embedded HTML panel
- * - serialize = false on button widget
+ * Uses floating panel attached to document.body instead of addDOMWidget
+ * This prevents canvas blocking issues entirely
  */
 
 import { app } from "../../../scripts/app.js";
@@ -26,47 +22,81 @@ async function fetchLoraPreview(loraName) {
     return data.preview_path ?? null;
 }
 
-function buildBrowserDOM() {
-    const container = document.createElement("div");
-    container.style.cssText = `
-        width: 100%;
+function refreshNodePreview(node) {
+    if (node.setDirtyCanvas) node.setDirtyCanvas(true, true);
+    else node.graph?.setDirtyCanvas(true, true);
+}
+
+// ── Floating Panel Creation ──────────────────────────────────────────────────
+
+function createFloatingBrowser(node) {
+    const panel = document.createElement("div");
+    panel.className = "apex-lora-browser-panel";
+    panel.style.cssText = `
+        position: fixed;
+        width: 600px;
         max-height: 500px;
-        overflow: hidden;
         background: #1a1a1a;
-        border: 1px solid #444;
-        border-radius: 5px;
+        border: 2px solid #4a9eff;
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        z-index: 10000;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     `;
 
+    // Header with breadcrumb and close button
     const header = document.createElement("div");
     header.style.cssText = `
-        padding: 8px 10px;
+        padding: 10px 12px;
         background: #252525;
         border-bottom: 1px solid #444;
         color: #aaa;
         font-size: 12px;
         display: flex;
         align-items: center;
-        gap: 5px;
-        flex-shrink: 0;
+        justify-content: space-between;
+        cursor: move;
+        user-select: none;
     `;
 
+    const breadcrumb = document.createElement("div");
+    breadcrumb.style.cssText = "flex: 1; display: flex; align-items: center; gap: 5px;";
+    
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "✕";
+    closeBtn.style.cssText = `
+        background: #c44;
+        border: none;
+        border-radius: 3px;
+        color: #fff;
+        cursor: pointer;
+        padding: 4px 8px;
+        font-size: 14px;
+        line-height: 1;
+    `;
+    closeBtn.onclick = () => closeBrowser(node);
+    
+    header.appendChild(breadcrumb);
+    header.appendChild(closeBtn);
+
+    // Content area
     const content = document.createElement("div");
     content.style.cssText = `
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 10px;
-        max-height: 400px;
+        padding: 12px;
+        max-height: 440px;
     `;
 
     const foldersSection = document.createElement("div");
-    foldersSection.style.marginBottom = "10px";
+    foldersSection.style.marginBottom = "12px";
 
     const foldersTitle = document.createElement("h4");
     foldersTitle.textContent = "Folders:";
-    foldersTitle.style.cssText = "color:#fff;margin:0 0 8px 0;font-size:12px;";
+    foldersTitle.style.cssText = "color:#fff;margin:0 0 8px 0;font-size:13px;";
 
     const foldersGrid = document.createElement("div");
     foldersGrid.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;";
@@ -78,12 +108,12 @@ function buildBrowserDOM() {
 
     const lorasTitle = document.createElement("h4");
     lorasTitle.textContent = "LoRAs:";
-    lorasTitle.style.cssText = "color:#fff;margin:0 0 8px 0;font-size:12px;";
+    lorasTitle.style.cssText = "color:#fff;margin:0 0 8px 0;font-size:13px;";
 
     const lorasGrid = document.createElement("div");
     lorasGrid.style.cssText = `
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
         gap: 10px;
         margin-bottom: 10px;
     `;
@@ -98,42 +128,134 @@ function buildBrowserDOM() {
         align-items: center;
         gap: 8px;
         padding: 8px;
-        flex-shrink: 0;
     `;
 
     content.appendChild(foldersSection);
     content.appendChild(lorasSection);
     content.appendChild(pagination);
-    container.appendChild(header);
-    container.appendChild(content);
 
-    const previewContainer = document.createElement("div");
-    previewContainer.style.cssText = `
-        width: 100%;
-        min-height: 200px;
-        background: #1a1a1a;
-        border: 1px solid #444;
-        border-radius: 5px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        padding: 10px;
-    `;
+    panel.appendChild(header);
+    panel.appendChild(content);
 
-    const previewImg = document.createElement("img");
-    previewImg.style.cssText = `
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-        border-radius: 4px;
-    `;
-    previewContainer.appendChild(previewImg);
+    // Store references
+    panel._breadcrumb = breadcrumb;
+    panel._foldersGrid = foldersGrid;
+    panel._lorasGrid = lorasGrid;
+    panel._pagination = pagination;
 
-    return { container, header, foldersGrid, lorasGrid, pagination, previewContainer, previewImg };
+    // Make draggable
+    makeDraggable(panel, header);
+
+    // Close on ESC
+    const escHandler = (e) => {
+        if (e.key === "Escape") closeBrowser(node);
+    };
+    document.addEventListener("keydown", escHandler);
+    panel._escHandler = escHandler;
+
+    return panel;
 }
 
-// ── Node setup ────────────────────────────────────────────────────────────────
+function makeDraggable(element, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    handle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
+// ── Panel Management ──────────────────────────────────────────────────────────
+
+function openBrowser(node) {
+    const s = node._loraState;
+    if (s.browserOpen || s._floatingPanel) return;
+
+    s.browserOpen = true;
+    
+    // Create floating panel
+    const panel = createFloatingBrowser(node);
+    s._floatingPanel = panel;
+    document.body.appendChild(panel);
+
+    // Position near node
+    positionPanelNearNode(node, panel);
+
+    // Load content
+    loadBrowserFolder(node, s.currentFolder || "");
+
+    // Update button label
+    const toggleBtn = node.widgets?.find(w => w.name === "toggle_browser");
+    if (toggleBtn) toggleBtn.label = "📁 Hide Browser";
+}
+
+function closeBrowser(node) {
+    const s = node._loraState;
+    if (!s.browserOpen) return;
+
+    s.browserOpen = false;
+
+    // Remove panel
+    if (s._floatingPanel) {
+        if (s._floatingPanel._escHandler) {
+            document.removeEventListener("keydown", s._floatingPanel._escHandler);
+        }
+        s._floatingPanel.remove();
+        s._floatingPanel = null;
+    }
+
+    // Update button label
+    const toggleBtn = node.widgets?.find(w => w.name === "toggle_browser");
+    if (toggleBtn) toggleBtn.label = "📁 Show Browser";
+}
+
+function positionPanelNearNode(node, panel) {
+    // Get node position on canvas
+    const canvasRect = app.canvas.canvas.getBoundingClientRect();
+    const scale = app.canvas.ds.scale;
+    
+    // Convert node position to screen coordinates
+    const nodeX = (node.pos[0] * scale) + canvasRect.left + app.canvas.ds.offset[0] * scale;
+    const nodeY = (node.pos[1] * scale) + canvasRect.top + app.canvas.ds.offset[1] * scale;
+    const nodeWidth = node.size[0] * scale;
+    
+    // Position to the right of node, or centered if not enough space
+    let left = nodeX + nodeWidth + 20;
+    let top = nodeY;
+    
+    // Check if panel would go off-screen
+    if (left + 600 > window.innerWidth) {
+        left = Math.max(20, (window.innerWidth - 600) / 2);
+    }
+    if (top + 500 > window.innerHeight) {
+        top = Math.max(20, (window.innerHeight - 500) / 2);
+    }
+    
+    panel.style.left = left + "px";
+    panel.style.top = top + "px";
+}
+
+// ── Node Setup ────────────────────────────────────────────────────────────────
 
 function setupLoraLoaderNode(node) {
     const loraWidget = node.widgets?.find(w => w.name === "lora_name");
@@ -146,13 +268,14 @@ function setupLoraLoaderNode(node) {
         selectedLoraPreview: null,
         currentPage: 0,
         itemsPerPage: 50,
-        browserExpanded: true,
-        loras: [],         // cache for pagination
+        browserOpen: false,
+        loras: [],
+        _floatingPanel: null,
     };
 
     const s = node._loraState;
 
-    // ── Intercept ALL widget value changes (including workflow restore, arrow keys) ──
+    // Intercept widget value changes
     const _key = "_apexLoraValue";
     loraWidget[_key] = loraWidget.value ?? "";
 
@@ -164,11 +287,8 @@ function setupLoraLoaderNode(node) {
             if (old !== newVal && newVal) {
                 s.selectedLora = newVal;
                 onLoraChanged(node, newVal);
-                if (s.browserExpanded) {
-                    setTimeout(() => {
-                        s.browserExpanded = false;
-                        updateBrowserVisibility(node);
-                    }, 100);
+                if (s.browserOpen) {
+                    closeBrowser(node);
                 }
             }
         },
@@ -176,81 +296,34 @@ function setupLoraLoaderNode(node) {
         configurable: true,
     });
 
-    // ── Build DOM ────────────────────────────────────────────────────────────
-    const dom = buildBrowserDOM();
-    node._loraDom = dom;
-
-    // ── Toggle button ────────────────────────────────────────────────────────
-    const toggleBtn = node.addWidget("button", "toggle_browser", "📁 Hide Browser", () => {
-        s.browserExpanded = !s.browserExpanded;
-        updateBrowserVisibility(node);
+    // Toggle button
+    const toggleBtn = node.addWidget("button", "toggle_browser", "📁 Show Browser", () => {
+        if (s.browserOpen) {
+            closeBrowser(node);
+        } else {
+            openBrowser(node);
+        }
     });
     toggleBtn.serialize = false;
 
-    // ── DOM widgets ──────────────────────────────────────────────────────────
-    node.addDOMWidget("lora_browser", "div", dom.container, {
-        getValue: () => s.selectedLora,
-        setValue: (v) => { s.selectedLora = v; },
-        hideOnZoom: false,
-        getHeight:    () => s.browserExpanded ? 500 : 0,
-        getMinHeight: () => s.browserExpanded ? 400 : 0,
-        getMaxHeight: () => s.browserExpanded ? 600 : 0,
-    });
+    // Store original onRemoved to cleanup
+    const origOnRemoved = node.onRemoved;
+    node.onRemoved = function() {
+        closeBrowser(node);
+        if (origOnRemoved) origOnRemoved.apply(this, arguments);
+    };
 
-    node.addDOMWidget("lora_preview", "div", dom.previewContainer, {
-        getValue: () => s.selectedLoraPreview,
-        setValue: (v) => { s.selectedLoraPreview = v; },
-        hideOnZoom: false,
-        getHeight:    () => (!s.browserExpanded && s.selectedLoraPreview) ? 250 : 0,
-        getMinHeight: () => (!s.browserExpanded && s.selectedLoraPreview) ? 200 : 0,
-        getMaxHeight: () => (!s.browserExpanded && s.selectedLoraPreview) ? 400 : 0,
-    });
-
-    // ── Initial load ─────────────────────────────────────────────────────────
-    loadBrowserFolder(node, "");
-    updateBrowserVisibility(node);
-}
-
-// ── Browser visibility ────────────────────────────────────────────────────────
-
-function updateBrowserVisibility(node) {
-    try {
-        const s = node._loraState;
-        const dom = node._loraDom;
-        if (!s || !dom) return;
-
-        const toggleWidget = node.widgets?.find(w => w.name === "toggle_browser");
-        if (toggleWidget) {
-            toggleWidget.label = s.browserExpanded ? "📁 Hide Browser" : "📁 Show Browser";
-        }
-
-        if (s.browserExpanded) {
-            dom.container.style.display = "flex";
-            dom.previewContainer.style.display = "none";
-            node.size[1] = Math.max(node.size[1], 620);
-        } else {
-            dom.container.style.display = "none";
-            if (s.selectedLoraPreview && s.selectedLoraPreview !== "loading") {
-                dom.previewContainer.style.display = "flex";
-                node.size[1] = Math.max(node.computeSize()[1], 350);
-            } else {
-                dom.previewContainer.style.display = "none";
-                node.size[1] = node.computeSize()[1];
-            }
-        }
-
-        requestAnimationFrame(() => node.setDirtyCanvas?.(true, true));
-    } catch (err) {
-        console.error("[Apex LoRA Browser] updateBrowserVisibility error:", err);
+    if (loraWidget.value) {
+        onLoraChanged(node, loraWidget.value);
     }
 }
 
-// ── Folder loading ────────────────────────────────────────────────────────────
+// ── Folder Loading ────────────────────────────────────────────────────────────
 
 async function loadBrowserFolder(node, folderPath) {
     const s = node._loraState;
-    const dom = node._loraDom;
-    if (!s || !dom) return;
+    const panel = s._floatingPanel;
+    if (!panel) return;
 
     try {
         s.currentFolder = folderPath;
@@ -263,26 +336,26 @@ async function loadBrowserFolder(node, folderPath) {
         });
 
         if (!res.ok) {
-            console.error("[Apex LoRA Browser] Failed to load folder");
+            console.error("[Apex LoRA] Failed to load folder");
             return;
         }
 
         const data = await res.json();
         s.loras = data.loras;
 
-        updateBreadcrumb(node, folderPath, data.parent_folder);
-        updateFolders(node, data.folders, data.parent_folder);
-        updateLorasGrid(node);
-        updatePagination(node);
+        updateBreadcrumb(node, panel, folderPath, data.parent_folder);
+        updateFolders(node, panel, data.folders, data.parent_folder);
+        updateLorasGrid(node, panel);
+        updatePagination(node, panel);
     } catch (err) {
-        console.error("[Apex LoRA Browser] loadBrowserFolder error:", err);
+        console.error("[Apex LoRA] loadBrowserFolder error:", err);
     }
 }
 
 // ── Breadcrumb ────────────────────────────────────────────────────────────────
 
-function updateBreadcrumb(node, folderPath, parentFolder) {
-    const breadcrumb = node._loraDom.header;
+function updateBreadcrumb(node, panel, folderPath, parentFolder) {
+    const breadcrumb = panel._breadcrumb;
     breadcrumb.innerHTML = "";
 
     const homeBtn = document.createElement("span");
@@ -318,9 +391,9 @@ function updateBreadcrumb(node, folderPath, parentFolder) {
 
 // ── Folders ───────────────────────────────────────────────────────────────────
 
-function updateFolders(node, folders, parentFolder) {
+function updateFolders(node, panel, folders, parentFolder) {
     const s = node._loraState;
-    const foldersGrid = node._loraDom.foldersGrid;
+    const foldersGrid = panel._foldersGrid;
     foldersGrid.innerHTML = "";
 
     if (parentFolder !== null) {
@@ -337,13 +410,14 @@ function createFolderButton(node, label, path) {
     const btn = document.createElement("button");
     btn.textContent = label;
     btn.style.cssText = `
-        padding: 6px 10px;
+        padding: 6px 12px;
         background: #2a2a2a;
         border: 1px solid #444;
         border-radius: 4px;
         color: #fff;
         cursor: pointer;
         font-size: 11px;
+        transition: all 0.15s;
     `;
     btn.onmouseover = () => { btn.style.background = "#3a3a3a"; btn.style.borderColor = "#4a9eff"; };
     btn.onmouseout  = () => { btn.style.background = "#2a2a2a"; btn.style.borderColor = "#444"; };
@@ -351,11 +425,11 @@ function createFolderButton(node, label, path) {
     return btn;
 }
 
-// ── LoRA grid ─────────────────────────────────────────────────────────────────
+// ── LoRA Grid ─────────────────────────────────────────────────────────────────
 
-function updateLorasGrid(node) {
+function updateLorasGrid(node, panel) {
     const s = node._loraState;
-    const lorasGrid = node._loraDom.lorasGrid;
+    const lorasGrid = panel._lorasGrid;
     lorasGrid.innerHTML = "";
 
     const start = s.currentPage * s.itemsPerPage;
@@ -374,8 +448,8 @@ function createLoraItem(node, lora) {
         flex-direction: column;
         align-items: center;
         cursor: pointer;
-        padding: 6px;
-        border-radius: 4px;
+        padding: 8px;
+        border-radius: 6px;
         border: 2px solid ${isSelected ? "#4a9eff" : "transparent"};
         background: ${isSelected ? "#2a3a4a" : "transparent"};
         transition: all 0.2s;
@@ -397,15 +471,16 @@ function createLoraItem(node, lora) {
     // Thumbnail
     const thumbnail = document.createElement("div");
     thumbnail.style.cssText = `
-        width: 80px; height: 80px;
+        width: 90px;
+        height: 90px;
         background: #0a0a0a;
         border: 1px solid #333;
-        border-radius: 3px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     `;
 
     if (lora.has_preview) {
@@ -418,7 +493,7 @@ function createLoraItem(node, lora) {
     } else {
         const ph = document.createElement("div");
         ph.textContent = "No Preview";
-        ph.style.cssText = "color:#555;font-size:9px;text-align:center;";
+        ph.style.cssText = "color:#555;font-size:9px;text-align:center;padding:4px;";
         thumbnail.appendChild(ph);
     }
 
@@ -427,8 +502,8 @@ function createLoraItem(node, lora) {
     label.textContent = lora.name;
     label.title = lora.name;
     label.style.cssText = `
-        font-size: 10px;
-        color: #ccc;
+        font-size: 11px;
+        color: #ddd;
         text-align: center;
         word-break: break-word;
         max-width: 100%;
@@ -437,46 +512,19 @@ function createLoraItem(node, lora) {
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        line-height: 1.2;
+        line-height: 1.3;
     `;
 
     item.appendChild(thumbnail);
     item.appendChild(label);
 
     item.onclick = () => {
-        try {
-            const loraWidget = node.widgets?.find(w => w.name === "lora_name");
-            if (loraWidget) {
-                loraWidget.value = lora.relative_path;
-                s.selectedLora = lora.relative_path;
-            }
-
-            if (lora.has_preview) {
-                s.selectedLoraPreview = "loading";
-                fetchLoraPreview(lora.relative_path)
-                    .then(path => {
-                        s.selectedLoraPreview = path;
-                        if (path && node._loraDom?.previewImg) {
-                            node._loraDom.previewImg.src = `/apex/lora_image?path=${encodeURIComponent(path)}`;
-                        }
-                    })
-                    .catch(() => { s.selectedLoraPreview = null; });
-            } else {
-                s.selectedLoraPreview = null;
-            }
-
-            // Collapse browser with slight delay to prevent UI freeze
-            setTimeout(() => {
-                try {
-                    s.browserExpanded = false;
-                    updateBrowserVisibility(node);
-                } catch (err) {
-                    console.error("[Apex LoRA Browser] Error collapsing:", err);
-                }
-            }, 50);
-        } catch (err) {
-            console.error("[Apex LoRA Browser] Item click error:", err);
+        const loraWidget = node.widgets?.find(w => w.name === "lora_name");
+        if (loraWidget) {
+            loraWidget.value = lora.relative_path;
+            s.selectedLora = lora.relative_path;
         }
+        closeBrowser(node);
     };
 
     return item;
@@ -484,9 +532,9 @@ function createLoraItem(node, lora) {
 
 // ── Pagination ────────────────────────────────────────────────────────────────
 
-function updatePagination(node) {
+function updatePagination(node, panel) {
     const s = node._loraState;
-    const pagination = node._loraDom.pagination;
+    const pagination = panel._pagination;
     pagination.innerHTML = "";
 
     const totalPages = Math.ceil(s.loras.length / s.itemsPerPage);
@@ -497,10 +545,10 @@ function updatePagination(node) {
         btn.textContent = text;
         btn.disabled = disabled;
         btn.style.cssText = `
-            padding: 4px 8px;
+            padding: 5px 10px;
             background: ${disabled ? "#1a1a1a" : "#2a2a2a"};
             border: 1px solid #444;
-            border-radius: 3px;
+            border-radius: 4px;
             color: ${disabled ? "#555" : "#fff"};
             cursor: ${disabled ? "not-allowed" : "pointer"};
             font-size: 11px;
@@ -511,51 +559,70 @@ function updatePagination(node) {
 
     pagination.appendChild(paginationBtn("◀", s.currentPage === 0, () => {
         s.currentPage--;
-        updateLorasGrid(node);
-        updatePagination(node);
+        updateLorasGrid(node, panel);
+        updatePagination(node, panel);
     }));
 
     const pageInfo = document.createElement("span");
     pageInfo.textContent = `${s.currentPage + 1}/${totalPages}`;
-    pageInfo.style.cssText = "color:#aaa;font-size:11px;padding:0 8px;";
+    pageInfo.style.cssText = "color:#bbb;font-size:12px;padding:0 10px;";
     pagination.appendChild(pageInfo);
 
     pagination.appendChild(paginationBtn("▶", s.currentPage >= totalPages - 1, () => {
         s.currentPage++;
-        updateLorasGrid(node);
-        updatePagination(node);
+        updateLorasGrid(node, panel);
+        updatePagination(node, panel);
     }));
 }
 
-// ── LoRA changed (dropdown / arrow key / programmatic) ────────────────────────
+// ── LoRA Changed ──────────────────────────────────────────────────────────────
 
 function onLoraChanged(node, loraName) {
-    try {
-        const s = node._loraState;
-        const dom = node._loraDom;
-        if (!s || !loraName) return;
-
-        s.selectedLoraPreview = "loading";
-
-        fetchLoraPreview(loraName)
-            .then(path => {
-                s.selectedLoraPreview = path;
-                if (path && dom?.previewImg) {
-                    dom.previewImg.src = `/apex/lora_image?path=${encodeURIComponent(path)}`;
-                }
-                if (!s.browserExpanded) {
-                    updateBrowserVisibility(node);
-                }
-            })
-            .catch(() => { s.selectedLoraPreview = null; });
-
-        requestAnimationFrame(() => node.setDirtyCanvas?.(true, true));
-    } catch (err) {
-        console.error("[Apex LoRA Browser] onLoraChanged error:", err);
-    }
+    const s = node._loraState;
+    if (!s || !loraName) return;
+    
+    s.selectedLora = loraName;
+    s.selectedLoraPreview = "loading";
+    node.imgs = [];
+    
+    // Fetch and display preview
+    fetchLoraPreview(loraName)
+        .then(path => {
+            if (!path) {
+                s.selectedLoraPreview = null;
+                s._previewImage = null;
+                node.imgs = [];
+                refreshNodePreview(node);
+                return;
+            }
+            
+            s.selectedLoraPreview = path;
+            
+            // Load image
+            const img = new Image();
+            img.onload = () => {
+                s._previewImage = img;
+                node.imgs = [img];
+                node.imageIndex = 0;
+                refreshNodePreview(node);
+            };
+            img.onerror = () => {
+                s.selectedLoraPreview = null;
+                s._previewImage = null;
+                node.imgs = [];
+                refreshNodePreview(node);
+            };
+            img.src = `/apex/lora_image?path=${encodeURIComponent(path)}`;
+        })
+        .catch(() => {
+            s.selectedLoraPreview = null;
+            s._previewImage = null;
+            node.imgs = [];
+            refreshNodePreview(node);
+        });
 }
 
-// ── Extension registration ────────────────────────────────────────────────────
+// ── Extension Registration ────────────────────────────────────────────────────
 
 app.registerExtension({
     name: "ApexArtist.LoraLoader",
@@ -567,13 +634,12 @@ app.registerExtension({
 
     loadedGraphNode(node) {
         if (node.type !== "ApexLoraLoader") return;
-        // DOM is already built by nodeCreated — just sync visibility with restored widget values
         const s = node._loraState;
         if (!s) return;
         const loraWidget = node.widgets?.find(w => w.name === "lora_name");
         if (loraWidget?.value) {
             s.selectedLora = loraWidget.value;
+            onLoraChanged(node, loraWidget.value);
         }
-        updateBrowserVisibility(node);
     }
 });

@@ -15,5 +15,5 @@ ComfyUI custom node extension providing **Professional VFX and post-production n
 
 ## Source
 - **Repository**: https://github.com/ApexArtist/comfyui-apex-artist
-- **Version**: 1.6.7
+- **Version**: 2.0.2
 - **Status**: Production/Stable

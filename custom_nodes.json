@@ -7,14 +7,13 @@
         "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
         "tags": ["image processing", "depth map", "vfx", "professional", "blur", "sharpen"],
         "nodes": [
-            "Apex Smart Resize",
             "Apex Depth to Normal",
             "Apex Layer Blend",
             "Apex Blur",
             "Apex Sharpen",
             "Apex Prompt Preset Selector",
             "Apex LoRA Loader",
-            "Apex LoRA Stack"
+            "Apex Load Model"
         ],
         "install_type": "git",
         "files": [

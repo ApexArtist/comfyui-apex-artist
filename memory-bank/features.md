@@ -21,12 +21,17 @@ Professional LoRA loader with interactive folder browser and optimized thumbnail
 - **API**: `apex_lora_api.py` - Three endpoints (list_folder, preview, image serving)
 - **Thumbnail Generation**: Pillow/PIL with LANCZOS resampling, center-crop to 1:1 square
 - **Caching**: Persistent JPEG thumbnails with 24-hour browser cache headers
+- **Selected Preview Rendering**: Frontend loads the selected preview as a browser `Image`, assigns `node.imgs = [img]`, sets `node.imageIndex = 0`, redraws the canvas, and clears with `node.imgs = []` when unavailable. It intentionally preserves node size on image changes, matching native Load Image behavior.
 
 ### Bug Fixes (v1.7.0)
 - **Node Freeze Fix**: Deferred browser collapse with 50ms setTimeout
 - **Error Boundaries**: Try-catch blocks prevent crashes
 - **Canvas Updates**: requestAnimationFrame prevents race conditions
 - **Loading State**: Prevents preview display during loading phase
+
+### Bug Fixes (2026-07-21)
+- **Native Selected Preview Rendering**: The selected LoRA preview on the node now uses ComfyUI's native `node.imgs` preview renderer instead of a custom `addCustomWidget()` canvas draw. This matches native Preview Image / Load Image behavior and fixes messy stretched, shifted, or clipped previews.
+- **Native Load Image-like Sizing**: LoRA preview changes no longer call `node.setSize(node.computeSize())`; the preview redraws inside the existing node bounds so manually resized nodes stay stable across different preview images.
 
 ### Preview Image Support
 Priority order:
@@ -40,86 +45,6 @@ Priority order:
 - Loading speed: 100-200x faster for 50 thumbnails
 - Grid loading: Instant with cached thumbnails
 - Supports 1000+ LoRA collections with pagination (100 items/page)
-
----
-
-## ApexSmartResize
-
-### Overview
-AI-model-optimized aspect-aware image resizing with support for 2026 generation models.
-
-### 12 Resolution Presets
-
-#### Legacy Presets
-1. **Standard** - Core SDXL resolutions
-2. **Extended** - Extended SDXL with experimental sizes
-3. **Flux** - Flux.1 (original) optimized
-4. **Portrait** - Tall format collection
-5. **Landscape** - Wide format collection
-6. **Square** - Square-only resolutions
-
-#### 2026 Model Presets
-7. **ZImage** - Z-Image Turbo (Tongyi-MAI/Alibaba, Feb 2026)
-   - Photorealistic quality + bilingual text rendering (Chinese/English)
-   - Base: 1024×1024, CFG: 3.0
-   - Cinematic: 1536×864, 1920×832
-
-8. **QwenEdit** - Qwen Image Edit 2511 (Alibaba Cloud, Dec 2025)
-   - Semantic image editing (20B parameters)
-   - Recommended: 768×768 (balanced quality/speed)
-   - Multi-angle editing and consistency
-
-9. **Krea2** - Krea 2 RAW/Turbo (Krea AI, Jun 2026)
-   - Excellent wide/cinematic formats
-   - Range: 1024-2048 (Turbo capable)
-   - Extreme: 2048×1024, 1920×832
-
-10. **Ideogram4** - Ideogram 4.0 (Jun 2026, 9.3B params)
-    - Text rendering specialist
-    - Mobile: 1080×1920 (9:16)
-    - HD: 1280×720
-
-11. **FLUX.2** - FLUX.2 [dev]/[klein] (Black Forest Labs, May 2026)
-    - Bucket resolution training support
-    - Base: 1024×1024
-    - Bucket: 768×1280, 1280×768
-
-12. **SD3.5** - Stable Diffusion 3.5 (2026)
-    - MMDiT-X architecture with rectified flow
-    - Aspect ratio sensitive
-    - Balanced: 832×1216
-
-### Divisibility Control (New)
-- **Parameter**: `enforce_divisibility` (INT, 8-128, default: 64)
-- **Purpose**: Ensures output dimensions divisible by specified value
-- **Common Values**:
-  - 8: VAE/Autoencoder compatibility
-  - 16: ControlNet models
-  - 32: Upscaler models
-  - 64: Maximum compatibility (default)
-
-### 5 Snap Methods
-1. **keep_proportion** (Default) - Scale by largest dimension, maintain aspect
-2. **closest_area** - Match total pixel count
-3. **closest_ratio** - Match aspect ratio closely
-4. **prefer_larger** - Choose larger resolutions
-5. **prefer_smaller** - Choose smaller resolutions
-
-### 5 Resize Modes
-1. **crop_center** (Default) - Resize to cover, center crop
-2. **stretch** - Stretch to exact dimensions
-3. **fit_pad_black** - Fit with black letterboxing
-4. **fit_pad_white** - Fit with white letterboxing
-5. **fit_pad_edge** - Fit with edge replication
-
-### Console Output
-Detailed JSON output including:
-- Input/output dimensions and aspect ratios
-- Total pixels and memory estimates
-- Processing details (preset, method, scale factor)
-- Size/memory change percentages
-- Divisibility adjustments
-- Processing time
 
 ---
 

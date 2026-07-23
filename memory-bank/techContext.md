@@ -10,15 +10,31 @@
 ## Development Setup
 - **OS**: Windows 10
 - **IDE**: Visual Studio Code
-- **Python venv**: `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe`
+- **Python venv**: `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe` ⚠️ **ALWAYS USE THIS**
 - **ComfyUI root**: `F:\AI\ComfyUI Sandbox\ComfyUI`
-- **Custom nodes**: `F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes`
+- **Custom nodes**: `F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes\comfyui-apex-artist`
+
+### Critical: Python Virtual Environment Usage
+**ALWAYS use the ComfyUI virtual environment Python:**
+```powershell
+# Correct - Use venv Python
+& "F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe" script.py
+
+# Wrong - System Python (missing ComfyUI dependencies)
+python script.py
+```
+
+**Why this matters:**
+- ComfyUI dependencies (torch, comfy.sd, folder_paths, etc.) are ONLY in the venv
+- Scripts that import ComfyUI modules MUST use venv Python
+- Testing, debugging, and version management scripts require venv access
 
 ## Dependencies
 
 ### ComfyUI-Provided
 - torch, numpy, scipy, Pillow
 - folder_paths, node_helpers
+- safetensors, comfy.utils, comfy.sd, ComfyUI MODEL/CLIP patcher APIs
 
 ### Extra Requirements
 - scikit-image >=0.19.0
@@ -31,6 +47,7 @@
 | `INT` | Python int | Integer parameter |
 | `FLOAT` | Python float | Float parameter |
 | `STRING` | Python str | Text output |
+| `MODEL` | ComfyUI ModelPatcher-like object | Model input/output for LoRA and quantization workflows |
 
 ## Common Widget Formats
 ```python
@@ -88,7 +105,7 @@ comfyui-apex-artist/
 ├── web/                    # Frontend extensions
 │   ├── apex_prompt.js
 │   ├── apex_lora_loader.js
-│   ├── apex_lora_merge.js
+│   ├── apex_load_model.js
 │   └── apex_prompt_lens.js
 ├── lens/                   # Lens preset source images
 ├── lens_previews/          # Processed lens thumbnails

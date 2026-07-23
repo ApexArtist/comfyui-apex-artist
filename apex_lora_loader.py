@@ -41,6 +41,16 @@ class ApexLoraLoader:
     FUNCTION = "load_lora"
     CATEGORY = "Apex Artist/Models"
     DESCRIPTION = "Load LoRA models with thumbnail preview. CLIP input is optional - applies strength to model and CLIP if connected."
+    
+    @classmethod
+    def VALIDATE_INPUTS(cls, lora_name, **kwargs):
+        """
+        Validate that the LoRA file exists
+        This allows the browser to set any valid LoRA path, not just those in the initial dropdown
+        """
+        if not folder_paths.get_full_path("loras", lora_name):
+            return f"Invalid LoRA file: {lora_name}"
+        return True
 
     def load_lora(self, model, lora_name, strength, clip=None):
         """

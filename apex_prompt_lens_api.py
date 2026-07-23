@@ -12,6 +12,7 @@ from server import PromptServer
 class ApexLensAPI:
     def __init__(self):
         self.lens_previews_dir = os.path.join(os.path.dirname(__file__), "lens_previews")
+        self.selected_lenses = {}  # Store selected lens names by node_id
         self.setup_routes()
     
     def get_lens_presets(self):
@@ -103,6 +104,49 @@ class ApexLensAPI:
                     
             except Exception as e:
                 print(f"[Apex Lens API] Error getting preview: {e}")
+                return web.json_response({"error": str(e)}, status=500)
+        
+        @PromptServer.instance.routes.post("/apex/get_selected_lens")
+        async def get_selected_lens(request):
+            """Get the selected lens name for a node after random selection"""
+            try:
+                data = await request.json()
+                node_id = data.get("node_id")
+                
+                if not node_id:
+                    return web.json_response({"error": "No node_id provided"}, status=400)
+                
+                selected_lens = self.selected_lenses.get(str(node_id))
+                
+                return web.json_response({
+                    "selected_lens": selected_lens
+                })
+                    
+            except Exception as e:
+                print(f"[Apex Lens API] Error getting selected lens: {e}")
+                return web.json_response({"error": str(e)}, status=500)
+        
+        @PromptServer.instance.routes.post("/apex/set_selected_lens")
+        async def set_selected_lens(request):
+            """Store the selected lens name for a node"""
+            try:
+                data = await request.json()
+                node_id = data.get("node_id")
+                lens_name = data.get("lens_name")
+                
+                if not node_id:
+                    return web.json_response({"error": "No node_id provided"}, status=400)
+                
+                if lens_name:
+                    self.selected_lenses[str(node_id)] = lens_name
+                else:
+                    # Remove entry if no lens name
+                    self.selected_lenses.pop(str(node_id), None)
+                
+                return web.json_response({"success": True})
+                    
+            except Exception as e:
+                print(f"[Apex Lens API] Error setting selected lens: {e}")
                 return web.json_response({"error": str(e)}, status=500)
         
         @PromptServer.instance.routes.get("/apex/lens_image")

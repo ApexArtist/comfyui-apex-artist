@@ -1,20 +1,12 @@
+NODE_VERSION = "2.1.0"
+
 from .apex_depth_to_normal import ApexDepthToNormal
 from .apex_layer_blend import ApexLayerBlend
 from .apex_blur import ApexBlur
 from .apex_sharpen import ApexSharpen
 from .apex_prompt import ApexPromptPreset
 from .apex_lora_loader import ApexLoraLoader
-from .apex_lora_merge import ApexLoRAMerge
-
-# Import quantizer nodes (optional dependency)
-try:
-    from .apex_quantizer import NODE_CLASS_MAPPINGS as QUANT_NODE_CLASS_MAPPINGS
-    from .apex_quantizer import NODE_DISPLAY_NAME_MAPPINGS as QUANT_NODE_DISPLAY_NAME_MAPPINGS
-    QUANTIZER_AVAILABLE = True
-except ImportError:
-    QUANTIZER_AVAILABLE = False
-    QUANT_NODE_CLASS_MAPPINGS = {}
-    QUANT_NODE_DISPLAY_NAME_MAPPINGS = {}
+from .apex_load_model import ApexLoadModel
 
 # Import API servers to initialize routes
 try:
@@ -39,19 +31,17 @@ NODE_CLASS_MAPPINGS = {
     "ApexSharpen": ApexSharpen,
     "ApexPromptPreset": ApexPromptPreset,
     "ApexLoraLoader": ApexLoraLoader,
-    "ApexLoRAMerge": ApexLoRAMerge,
+    "ApexLoadModel": ApexLoadModel,
 }
-NODE_CLASS_MAPPINGS.update(QUANT_NODE_CLASS_MAPPINGS)
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexDepthToNormal": "Apex Depth to Normal",
     "ApexLayerBlend": "Apex Layer Blend",
     "ApexBlur": "Apex Blur",
     "ApexSharpen": "Apex Sharpen",
-    "ApexPromptPreset": "Apex Prompt Preset Selector",
+    "ApexPromptPreset": "Apex Prompt",
     "ApexLoraLoader": "Apex LoRA Loader",
-    "ApexLoRAMerge": "Apex LoRA Merge",
+    "ApexLoadModel": "Apex Load Model",
 }
-NODE_DISPLAY_NAME_MAPPINGS.update(QUANT_NODE_DISPLAY_NAME_MAPPINGS)
 
 WEB_DIRECTORY = "./web"

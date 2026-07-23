@@ -14,6 +14,7 @@ import os
 import json
 import random
 import re
+import threading
 from typing import Dict, List, Optional, Any
 
 class ApexPromptPreset:
@@ -98,7 +99,7 @@ class ApexPromptPreset:
                     "weight": 1.0
                 },
                 "Studio Collage": {
-                    "prompt": "Studio setting with dark charcoal-gray background, soft studio depth, clean premium backdrop, no competing environmental details, focus entirely on subject and lighting.",
+                    "prompt": "Studio setting with dark charcoal-gray background, soft studio depth, clean premium backdrop, no competing environmental details, controlled space for optimal lighting.",
                     "description": "Clean studio environment with minimal backdrop",
                     "tags": ["studio", "clean", "minimal", "professional"],
                     "weight": 1.0
@@ -110,7 +111,7 @@ class ApexPromptPreset:
                     "weight": 1.0
                 },
                 "Countryside Village": {
-                    "prompt": "Rural countryside landscape with distant village houses, long passenger train moving across horizon, lush vegetation, natural trees, peaceful pastoral setting extending into the distance.",
+                    "prompt": "Rural countryside landscape with distant village houses, long train moving across horizon, lush vegetation, natural trees, peaceful pastoral setting extending into the distance.",
                     "description": "Peaceful rural village and countryside vista",
                     "tags": ["countryside", "village", "rural", "pastoral"],
                     "weight": 1.0
@@ -257,23 +258,23 @@ class ApexPromptPreset:
                 },
                 # --- Fashion Collage Portrait (from user request) ---
                 "Fashion Collage Portrait": {
-                    "prompt": "Studio setting, dark charcoal-gray background with soft studio depth, elegant portrait separation, moody dark backdrop contrast.",
-                    "description": "Studio fashion collage layout with dark backdrop and multi-panel composition",
-                    "tags": ["studio", "fashion", "collage", "portrait", "multi-panel"],
+                    "prompt": "Studio setting, dark charcoal-gray background with soft studio depth, elegant visual separation, moody dark backdrop contrast.",
+                    "description": "Studio collage layout with dark backdrop and multi-panel composition",
+                    "tags": ["studio", "collage", "multi-panel", "dark"],
                     "weight": 1.0
                 },
                 # --- Subway Fashion Portrait (from user request) ---
                 "Subway Fashion Portrait": {
-                    "prompt": "Modern subway train interior, standing beside large window, stainless steel poles, overhead fluorescent lighting, clean white walls, large train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment. Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, soft color grading, HDR, global illumination, volumetric lighting, ray tracing, masterpiece, best quality, photorealistic, hyperrealistic, 8K, DSLR photography quality. Ultra-detailed clothing textures (realistic leather, ribbed knit fabric, fluffy faux fur, intricate silver accessories), highly detailed facial features, realistic eyes, natural skin pores, subtle skin texture, shallow depth of field, creamy bokeh, ultra sharp focus. Camera specs: Canon EOS R5, 85mm lens, f/1.8, ISO 100.",
-                    "description": "Subway fashion portrait with Korean street style and camera specs",
-                    "tags": ["subway", "fashion", "portrait", "Korean street style", "camera"],
-                    "weight": 1.3
+                    "prompt": "Modern subway train interior, large windows, stainless steel poles, overhead fluorescent lighting, clean white walls, train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment.",
+                    "description": "Contemporary subway interior with urban views and natural light",
+                    "tags": ["subway", "urban", "interior", "contemporary", "transport"],
+                    "weight": 1.0
                 }
             },
             "Apex Lighting": {
                 # --- Original ---
                 "Natural Daylight Window": {
-                    "prompt": "Natural daylight streams through large window, soft diffused key light on subject, gentle shadows, bright and open illumination, soft color grading, high dynamic range appearance, controlled highlights, detail-rich shadows.",
+                    "prompt": "Natural daylight streams through large window, soft diffused key light, gentle shadows, bright and open illumination, soft color grading, high dynamic range appearance, controlled highlights, detail-rich shadows.",
                     "description": "Soft natural window light with diffused illumination",
                     "tags": ["daylight", "natural", "window", "soft"],
                     "weight": 1.2
@@ -291,7 +292,7 @@ class ApexPromptPreset:
                     "weight": 1.3
                 },
                 "Studio Professional": {
-                    "prompt": "Professional studio lighting with carefully positioned key light and fill light, even illumination across face and body, subtle rim lighting highlighting edges, soft flattering light without harsh shadows, neutral white balance, perfect exposure.",
+                    "prompt": "Professional studio lighting with carefully positioned key light and fill light, even illumination throughout the scene, subtle rim lighting highlighting edges, soft flattering light without harsh shadows, neutral white balance, perfect exposure.",
                     "description": "Professional studio setup with even balanced light",
                     "tags": ["studio", "professional", "even", "balanced"],
                     "weight": 1.3
@@ -309,15 +310,15 @@ class ApexPromptPreset:
                     "weight": 1.3
                 },
                 "HDR Balanced": {
-                    "prompt": "Cinematic color grading, high dynamic range, low-contrast balanced exposure, teal and orange color grading, soft bloom, realistic skin rendering, smooth tonal transitions, no blown highlights, preserved shadow detail.",
+                    "prompt": "Cinematic color grading, high dynamic range, low-contrast balanced exposure, teal and orange color grading, soft bloom, realistic material rendering, smooth tonal transitions, no blown highlights, preserved shadow detail.",
                     "description": "Modern HDR color grading with balanced exposure",
                     "tags": ["HDR", "cinematic", "balanced", "modern"],
                     "weight": 1.2
                 },
                 # --- New Lighting ---
                 "Moody Rembrandt Lighting": {
-                    "prompt": "Rembrandt lighting with strong key light from above and to the side, characteristic triangle of light on the shadow side of the face, deep dramatic shadows, rich chiaroscuro contrast, warm amber tones in highlights, painterly shadow quality.",
-                    "description": "Classic Rembrandt portrait lighting with deep shadows",
+                    "prompt": "Rembrandt lighting with strong key light from above and to the side, characteristic triangle of light, deep dramatic shadows, rich chiaroscuro contrast, warm amber tones in highlights, painterly shadow quality.",
+                    "description": "Classic Rembrandt lighting with deep shadows",
                     "tags": ["rembrandt", "chiaroscuro", "dramatic", "classic", "painterly"],
                     "weight": 1.3
                 },
@@ -340,7 +341,7 @@ class ApexPromptPreset:
                     "weight": 1.3
                 },
                 "Candlelit Warmth": {
-                    "prompt": "Intimate candlelit scene with warm flickering orange light, soft golden glow on faces and surfaces, deep warm shadows, dramatic contrast between light and dark, cozy romantic atmosphere, subtle smoke trails catching light above flames.",
+                    "prompt": "Intimate candlelit scene with warm flickering orange light, soft golden glow throughout the space, deep warm shadows, dramatic contrast between light and dark, cozy romantic atmosphere, subtle smoke trails catching light above flames.",
                     "description": "Warm intimate candlelight illumination",
                     "tags": ["candle", "warm", "intimate", "romantic", "cozy"],
                     "weight": 1.2
@@ -388,19 +389,19 @@ class ApexPromptPreset:
                     "weight": 1.2
                 },
                 "Silhouette Backlight": {
-                    "prompt": "Strong dramatic backlight creating clean silhouettes, bright light source behind subject with minimal or no fill light, dark shadow details with bright rim light on edges, high contrast scene, atmospheric haze catching the backlight, moody and cinematic.",
+                    "prompt": "Strong dramatic backlight creating clean silhouettes, bright light source from behind with minimal or no fill light, dark shadow details with bright rim light on edges, high contrast scene, atmospheric haze catching the backlight, moody and cinematic.",
                     "description": "Dramatic backlight creating silhouettes",
                     "tags": ["silhouette", "backlight", "dramatic", "contrast", "rim light"],
                     "weight": 1.3
                 },
                 "Ring Light Beauty": {
-                    "prompt": "Professional ring light beauty lighting, soft even illumination with characteristic circular catchlights in the eyes, minimal shadows behind the subject, flattering wraparound light on the face, clean bright beauty photography look, smooth skin rendering.",
-                    "description": "Flattering ring light beauty photography lighting",
-                    "tags": ["ring light", "beauty", "flattering", "soft", "portrait"],
+                    "prompt": "Professional ring light lighting, soft even illumination with characteristic circular catchlights, minimal shadows, flattering wraparound light throughout the frame, clean bright photography look.",
+                    "description": "Flattering ring light photography lighting",
+                    "tags": ["ring light", "flattering", "soft", "circular"],
                     "weight": 1.2
                 },
                 "LED Strip Color Wash": {
-                    "prompt": "Modern LED strip lighting creating colored accent washes on walls and subjects, vibrant saturated color in pink blue and purple, gradient transitions between colors, contemporary studio aesthetic, creative mixed color temperatures, artistic RGB illumination.",
+                    "prompt": "Modern LED strip lighting creating colored accent washes on walls and surfaces, vibrant saturated color in pink blue and purple, gradient transitions between colors, contemporary studio aesthetic, creative mixed color temperatures, artistic RGB illumination.",
                     "description": "Modern colored LED strip accent lighting",
                     "tags": ["LED", "colorful", "modern", "RGB", "artistic"],
                     "weight": 1.1
@@ -412,7 +413,7 @@ class ApexPromptPreset:
                     "weight": 1.2
                 },
                 "Dramatic Side Light": {
-                    "prompt": "Strong side lighting creating bold contrast, light raking across the subject from one side, deep shadows on the opposite side, pronounced texture enhancement, sculptural quality revealing every surface detail, intense dramatic mood.",
+                    "prompt": "Strong side lighting creating bold contrast, light raking across the scene from one side, deep shadows on the opposite side, pronounced texture enhancement, sculptural quality revealing every surface detail, intense dramatic mood.",
                     "description": "Strong side light creating texture and contrast",
                     "tags": ["side light", "dramatic", "texture", "contrast", "sculptural"],
                     "weight": 1.3
@@ -451,8 +452,8 @@ class ApexPromptPreset:
             },
             "Apex Style": {
                 "Fashion Editorial": {
-                    "prompt": "Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, ultra-detailed clothing textures, realistic skin detail, soft color grading, photorealistic, hyperrealistic, masterpiece, best quality, DSLR photography, 85mm lens, f/1.8, shallow depth of field, creamy bokeh.",
-                    "description": "Premium fashion editorial with detailed textures",
+                    "prompt": "Fashion editorial photography aesthetic, contemporary urban style, candid moment, cinematic atmosphere, ultra-detailed textures, realistic material detail, soft color grading, photorealistic, hyperrealistic, masterpiece, best quality, DSLR photography quality.",
+                    "description": "Premium fashion editorial aesthetic with detailed textures",
                     "tags": ["fashion", "editorial", "cinematic", "urban"],
                     "weight": 1.3
                 },
@@ -469,7 +470,7 @@ class ApexPromptPreset:
                     "weight": 1.2
                 },
                 "Premium Commercial": {
-                    "prompt": "Premium social media aesthetic, clean premium look, commercial fashion photography, soft minimalist polished style, naturally captured instead of heavily staged, emphasizing realism and subtle elegance, high-end digital finish, fine textures preserved.",
+                    "prompt": "Premium social media aesthetic, clean premium look, commercial photography style, soft minimalist polished aesthetic, naturally captured instead of heavily staged, emphasizing realism and subtle elegance, high-end digital finish, fine textures preserved.",
                     "description": "Commercial premium polished aesthetic",
                     "tags": ["commercial", "premium", "clean", "polished"],
                     "weight": 1.2
@@ -500,7 +501,7 @@ class ApexPromptPreset:
                     "weight": 1.2
                 },
                 "3D Clay Render": {
-                    "prompt": "3D rendered illustration, clay felt aesthetic, soft rounded forms, chibi cute character design, pastel color palette, toy-like quality, digital 3D art with soft shading, children's illustration style, playful and charming mood, soft surface texture quality.",
+                    "prompt": "3D rendered illustration, clay felt aesthetic, soft rounded forms, chibi cute design style, pastel color palette, toy-like quality, digital 3D art with soft shading, children's illustration style, playful and charming mood, soft surface texture quality.",
                     "description": "3D clay/felt rendered illustration with soft rounded forms",
                     "tags": ["3D", "clay", "render", "chibi", "toy-like", "cute"],
                     "weight": 1.2
@@ -512,251 +513,251 @@ class ApexPromptPreset:
                     "weight": 1.2
                 },
                 "Whimsical Pastel Art": {
-                    "prompt": "Soft rounded volumetric forms, cute character aesthetic, digital 3D art with soft shading, children's book illustration style, playful whimsical mood, soft surface texture quality, charming storybook design, pastel color palette, dreamy storybook atmosphere.",
+                    "prompt": "Soft rounded volumetric forms, cute design aesthetic, digital 3D art with soft shading, children's book illustration style, playful whimsical mood, soft surface texture quality, charming storybook design, pastel color palette, dreamy storybook atmosphere.",
                     "description": "Whimsical pastel art with soft volumetric forms",
                     "tags": ["whimsical", "pastel", "volumetric", "cute", "playful"],
                     "weight": 1.2
                 },
                 "Fashion Collage Portrait": {
-                    "prompt": "Ultra-realistic IMAX-level Netflix-style cinematic elegant collage portrait, premium five-panel fashion collage layout, premium luxury fashion editorial collage aesthetic, ultra-rich color grading with deep saturated fabric tones, sophisticated color palette, warm cinematic highlights against moody dark backdrop. Creamy bokeh, elegant portrait separation, HDR lighting, global illumination, photorealistic rendering, shallow depth of field, masterpiece quality, ultra-sharp details, 8K production detail.",
-                    "description": "Premium fashion collage portrait with ultra-realistic cinematic rendering",
-                    "tags": ["fashion", "collage", "portrait", "cinematic", "ultra-realistic", "editorial"],
+                    "prompt": "Ultra-realistic IMAX-level Netflix-style cinematic elegant collage visual, premium five-panel collage layout, premium luxury editorial collage aesthetic, ultra-rich color grading with deep saturated tones, sophisticated color palette, warm cinematic highlights against moody dark backdrop. Creamy bokeh, elegant visual separation, HDR lighting, global illumination, photorealistic rendering, shallow depth of field, masterpiece quality, ultra-sharp details, 8K production detail.",
+                    "description": "Premium fashion collage with ultra-realistic cinematic rendering",
+                    "tags": ["fashion", "collage", "cinematic", "ultra-realistic", "editorial"],
                     "weight": 1.3
                 }
             },
             "Apex Camera Lens": {
                 # === ULTRA WIDE ANGLE LENSES ===
                 "14mm Fisheye": {
-                    "prompt": "Extreme wide environmental shot with 14mm fisheye lens, entire scene captured with dramatic spherical distortion, full environment visible from edge to edge, subject small within vast context, creative barrel distortion, f/2.8 aperture, artistic warped perspective, immersive environmental storytelling.",
-                    "description": "Fisheye lens - entire scene with extreme distortion",
-                    "tags": ["14mm", "fisheye", "extreme wide", "distortion", "environmental"],
+                    "prompt": "14mm fisheye lens, extreme wide angle of view, dramatic spherical barrel distortion, f/2.8 aperture, edge-to-edge coverage with curved perspective, artistic warped geometry, ultra-wide field of view capturing vast context.",
+                    "description": "Fisheye lens - extreme wide with spherical distortion",
+                    "tags": ["14mm", "fisheye", "extreme wide", "distortion", "barrel"],
                     "weight": 1.0
                 },
                 "16mm Ultra Wide": {
-                    "prompt": "Expansive wide environmental shot with 16mm ultra wide lens, sweeping vista with subject in full context, dramatic perspective and depth, complete scene from foreground to horizon, slight barrel distortion, f/2.8 aperture, architectural and landscape cinematography, environmental storytelling composition.",
-                    "description": "Ultra wide lens - expansive environmental framing",
-                    "tags": ["16mm", "ultra wide", "expansive", "environmental", "vista"],
+                    "prompt": "16mm ultra wide angle lens, expansive field of view, dramatic perspective with exaggerated depth, slight barrel distortion, f/2.8 aperture, sweeping coverage from foreground to horizon, architectural and landscape cinematography character.",
+                    "description": "Ultra wide lens - expansive field of view",
+                    "tags": ["16mm", "ultra wide", "expansive", "perspective", "vista"],
                     "weight": 1.1
                 },
                 "18mm Wide": {
-                    "prompt": "Wide environmental shot with 18mm lens, broad contextual framing showing subject within full surroundings, dramatic perspective with natural proportions, architectural quality, f/3.5 aperture, landscape and environmental portraiture, subject occupies 1/3 of frame with rich context.",
-                    "description": "Wide lens - subject in rich environmental context",
-                    "tags": ["18mm", "wide", "architectural", "environmental", "context"],
+                    "prompt": "18mm wide angle lens, broad field of view with dramatic perspective, natural proportions with architectural quality, minimal barrel distortion, f/3.5 aperture, landscape and environmental character, expansive spatial coverage.",
+                    "description": "Wide lens - broad field with dramatic perspective",
+                    "tags": ["18mm", "wide", "architectural", "perspective", "spatial"],
                     "weight": 1.1
                 },
                 
                 # === WIDE ANGLE LENSES ===
                 "24mm Wide Angle": {
-                    "prompt": "Wide contextual shot with 24mm lens, environmental storytelling composition with subject in natural setting, moderate wide perspective showing surroundings, slight barrel distortion, f/2.8 aperture, documentary and architectural photography, subject and environment equally important in frame.",
-                    "description": "Wide angle - balanced environmental storytelling",
-                    "tags": ["24mm", "wide angle", "storytelling", "documentary", "balanced"],
+                    "prompt": "24mm wide angle lens, moderate wide perspective with balanced coverage, slight barrel distortion, f/2.8 aperture, documentary and architectural photography character, natural spatial relationships with environmental depth.",
+                    "description": "Wide angle - balanced perspective coverage",
+                    "tags": ["24mm", "wide angle", "balanced", "documentary", "spatial"],
                     "weight": 1.2
                 },
                 "28mm Documentary": {
-                    "prompt": "Environmental documentary shot with 28mm lens, subject in authentic context showing meaningful surroundings, natural wide perspective, minimal distortion, f/2.0 aperture, photojournalism and street photography style, candid contextual framing with environmental detail.",
-                    "description": "Documentary lens - authentic contextual framing",
-                    "tags": ["28mm", "documentary", "photojournalism", "street", "authentic"],
+                    "prompt": "28mm documentary lens, natural wide perspective with minimal distortion, f/2.0 aperture, photojournalism and street photography character, comfortable viewing angle with environmental depth, authentic spatial relationships.",
+                    "description": "Documentary lens - natural wide perspective",
+                    "tags": ["28mm", "documentary", "photojournalism", "street", "natural"],
                     "weight": 1.2
                 },
                 "35mm Street": {
-                    "prompt": "Natural wide shot with 35mm lens, subject framed with environmental context, comfortable viewing distance, minimal distortion, f/1.8 aperture, street photography and environmental portraits, medium-wide composition showing subject and immediate surroundings, natural human perspective.",
-                    "description": "Street lens - natural wide perspective with context",
-                    "tags": ["35mm", "street", "natural", "environmental", "comfortable"],
+                    "prompt": "35mm lens, natural viewing angle approximating human perspective, minimal distortion, f/1.8 aperture, street photography character, comfortable field of view, versatile medium-wide coverage with spatial depth.",
+                    "description": "Street lens - natural human perspective",
+                    "tags": ["35mm", "street", "natural", "versatile", "comfortable"],
                     "weight": 1.3
                 },
                 
                 # === STANDARD/NORMAL LENSES ===
                 "40mm Standard": {
-                    "prompt": "Medium shot with 40mm standard lens, subject and upper environment in frame, slightly compressed natural perspective, f/2.0 aperture, versatile framing showing subject waist-up with background context, balanced composition between intimacy and environment.",
-                    "description": "Standard lens - balanced medium shot composition",
-                    "tags": ["40mm", "standard", "medium shot", "balanced", "versatile"],
+                    "prompt": "40mm standard lens, slightly compressed natural perspective, f/2.0 aperture, versatile focal length with balanced field of view, moderate depth of field characteristics, neutral compression and spatial relationships.",
+                    "description": "Standard lens - balanced compression",
+                    "tags": ["40mm", "standard", "balanced", "versatile", "neutral"],
                     "weight": 1.2
                 },
                 "50mm Classic": {
-                    "prompt": "Medium shot with 50mm classic standard lens, natural perspective matching human eye, subject from waist or chest up, moderate depth of field, f/1.8 aperture, balanced environmental presence, classic photography composition, neutral compression and distortion.",
-                    "description": "Classic 50mm - natural eye perspective medium shot",
-                    "tags": ["50mm", "classic", "natural", "medium shot", "standard"],
+                    "prompt": "50mm classic standard lens, natural perspective matching human vision, moderate depth of field, f/1.8 aperture, neutral compression and distortion characteristics, versatile focal length with balanced optical properties.",
+                    "description": "Classic 50mm - natural eye perspective",
+                    "tags": ["50mm", "classic", "natural", "standard", "versatile"],
                     "weight": 1.3
                 },
                 "55mm Normal": {
-                    "prompt": "Medium close-up with 55mm normal lens, subject from chest up filling frame, light perspective compression, f/1.8 aperture, portrait-ready framing, moderate background separation, transitional focal length between standard and portrait.",
-                    "description": "Normal lens - medium close-up chest framing",
-                    "tags": ["55mm", "normal", "medium closeup", "portrait-ready", "transitional"],
+                    "prompt": "55mm normal lens, light perspective compression, f/1.8 aperture, moderate background separation with shallow depth of field, transitional focal length between standard and short telephoto ranges.",
+                    "description": "Normal lens - light compression",
+                    "tags": ["55mm", "normal", "compression", "transitional", "moderate"],
                     "weight": 1.2
                 },
                 
                 # === PORTRAIT TELEPHOTO LENSES ===
                 "75mm Portrait": {
-                    "prompt": "Close-up portrait with 75mm lens, tight framing on upper body and face, subject's head and shoulders filling frame, light flattering compression, f/1.8 aperture, shallow depth of field, creamy background separation, three-quarter portrait distance, natural facial proportions.",
-                    "description": "Portrait lens - close-up head and shoulders",
-                    "tags": ["75mm", "portrait", "close-up", "flattering", "upper body"],
+                    "prompt": "75mm short telephoto lens, light flattering compression, f/1.8 aperture, shallow depth of field with creamy background separation, natural perspective compression, tight field of view with moderate working distance.",
+                    "description": "Portrait lens - light compression",
+                    "tags": ["75mm", "portrait", "compression", "flattering", "shallow"],
                     "weight": 1.3
                 },
                 "85mm Portrait Classic": {
-                    "prompt": "Close-up portrait with 85mm classic portrait lens, tight framing on face and upper torso filling majority of frame, flattering facial compression, f/1.4 aperture, shallow depth of field isolating subject, creamy circular bokeh, professional portrait rendering, background melts into soft blur, subject separated from environment.",
-                    "description": "Classic 85mm portrait - tight face framing",
-                    "tags": ["85mm", "portrait", "close-up", "flattering", "bokeh"],
+                    "prompt": "85mm classic portrait lens, flattering facial compression with natural perspective, f/1.4 wide aperture, shallow depth of field with creamy circular bokeh, tight field of view, professional rendering with smooth background separation.",
+                    "description": "Classic 85mm portrait - flattering compression",
+                    "tags": ["85mm", "portrait", "compression", "flattering", "bokeh"],
                     "weight": 1.4
                 },
                 "100mm Portrait": {
-                    "prompt": "Tight portrait with 100mm lens, face and upper chest filling frame, strong background separation, f/2.0 aperture, pronounced compression creating flattering facial features, shallow focus isolating subject from surroundings, smooth bokeh, headshot framing with minimal environmental distraction.",
-                    "description": "100mm portrait - tight facial close-up",
-                    "tags": ["100mm", "portrait", "tight", "headshot", "compression"],
+                    "prompt": "100mm short telephoto lens, pronounced compression with flattering perspective, f/2.0 aperture, strong background separation with shallow focus, smooth bokeh characteristics, tight field of view with minimal depth coverage.",
+                    "description": "100mm portrait - pronounced compression",
+                    "tags": ["100mm", "portrait", "tight", "compression", "bokeh"],
                     "weight": 1.3
                 },
                 "105mm Headshot": {
-                    "prompt": "Tight headshot with 105mm lens, face filling majority of frame from forehead to shoulders, strong flattering compression, f/2.0 aperture, very shallow depth of field, background completely defocused, professional headshot composition, facial features in intimate detail, subject dominates frame.",
-                    "description": "Headshot lens - face-dominant tight framing",
-                    "tags": ["105mm", "headshot", "tight", "facial", "intimate"],
+                    "prompt": "105mm short telephoto lens, strong flattering compression, f/2.0 aperture, very shallow depth of field with complete background defocus, narrow field of view, professional optical characteristics with smooth bokeh.",
+                    "description": "105mm lens - strong compression",
+                    "tags": ["105mm", "telephoto", "tight", "compression", "shallow"],
                     "weight": 1.3
                 },
                 
                 # === TELEPHOTO LENSES ===
                 "135mm Fashion": {
-                    "prompt": "Extreme close-up with 135mm telephoto lens, face and expression filling frame, very strong compression flattening perspective, f/2.0 aperture, extremely shallow depth of field, background compressed into abstract color wash, fashion and beauty close-up, facial details in sharp focus while everything else melts away, subject isolation.",
-                    "description": "Fashion telephoto - extreme facial close-up",
-                    "tags": ["135mm", "fashion", "extreme closeup", "compression", "beauty"],
+                    "prompt": "135mm telephoto lens, very strong compression flattening perspective, f/2.0 aperture, extremely shallow depth of field, background compressed into abstract color wash, narrow field of view with pronounced telephoto character, smooth bokeh rendering.",
+                    "description": "Fashion telephoto - extreme compression",
+                    "tags": ["135mm", "fashion", "compression", "telephoto", "beauty"],
                     "weight": 1.3
                 },
                 "150mm Telephoto": {
-                    "prompt": "Very tight close-up with 150mm telephoto lens, subject's face dominates frame, extreme compression and perspective flattening, f/2.8 aperture, razor-thin depth of field, background completely abstracted, distant camera position creating intimate frame, isolated subject rendering with compressed spatial relationships.",
-                    "description": "Telephoto - very tight compressed framing",
-                    "tags": ["150mm", "telephoto", "tight", "compression", "isolated"],
+                    "prompt": "150mm telephoto lens, extreme compression and perspective flattening, f/2.8 aperture, razor-thin depth of field, background completely abstracted, distant working distance with narrow field of view, compressed spatial relationships.",
+                    "description": "Telephoto - extreme compression",
+                    "tags": ["150mm", "telephoto", "compression", "narrow", "distant"],
                     "weight": 1.2
                 },
                 "200mm Long Telephoto": {
-                    "prompt": "Extreme tight close-up with 200mm long telephoto lens, face filling entire frame from distant vantage point, maximum compression flattening all perspective, f/2.8 aperture, paper-thin depth of field, background reduced to pure bokeh abstractions, voyeuristic distant perspective creating intimate framing, wildlife and sports photography compression, subject completely isolated.",
-                    "description": "Long telephoto - maximum compression close-up",
-                    "tags": ["200mm", "long telephoto", "extreme compression", "isolated", "distant"],
+                    "prompt": "200mm long telephoto lens, maximum compression flattening all perspective, f/2.8 aperture, paper-thin depth of field, background reduced to pure bokeh abstractions, distant working distance with very narrow field of view, wildlife and sports photography compression character.",
+                    "description": "Long telephoto - maximum compression",
+                    "tags": ["200mm", "long telephoto", "extreme compression", "narrow", "distant"],
                     "weight": 1.2
                 },
                 "300mm Super Telephoto": {
-                    "prompt": "Ultra-tight extreme close-up with 300mm super telephoto lens, minute details filling frame from very far distance, extreme perspective compression collapsing depth, f/4.0 aperture, minimal depth of field, background utterly defocused into color fields, maximum subject isolation, wildlife and sports photography aesthetic, compressed spatial relationships.",
-                    "description": "Super telephoto - ultra-tight maximum isolation",
-                    "tags": ["300mm", "super telephoto", "ultra tight", "wildlife", "maximum compression"],
+                    "prompt": "300mm super telephoto lens, extreme perspective compression collapsing depth, f/4.0 aperture, minimal depth of field, background utterly defocused into color fields, very narrow field of view from distant working distance, wildlife and sports photography aesthetic.",
+                    "description": "Super telephoto - maximum compression",
+                    "tags": ["300mm", "super telephoto", "compression", "wildlife", "distant"],
                     "weight": 1.1
                 },
                 
                 # === MACRO LENSES ===
                 "60mm Macro": {
-                    "prompt": "Macro close-up detail shot with 60mm macro lens, intricate details filling frame at close working distance, f/2.8 aperture, shallow depth of field revealing texture, 1:2 magnification, intimate detail rendering, close-up photography of small subjects, moderate working distance for flexibility.",
-                    "description": "Macro lens - close-up detail work",
+                    "prompt": "60mm macro lens, close working distance with 1:2 magnification ratio, f/2.8 aperture, shallow depth of field revealing intricate texture, intimate detail rendering capabilities, moderate working distance for flexibility.",
+                    "description": "Macro lens - close-up detail capability",
                     "tags": ["60mm", "macro", "close-up", "detail", "texture"],
                     "weight": 1.1
                 },
                 "100mm Macro": {
-                    "prompt": "Extreme macro detail shot with 100mm macro lens, 1:1 life-size magnification, microscopic details filling entire frame, f/2.8 aperture, razor-thin depth of field, intricate texture rendering in ultra-sharp focus, tiny subjects magnified to frame-filling size, working distance allows natural lighting, professional macro photography.",
-                    "description": "Macro 100mm - 1:1 magnification extreme detail",
+                    "prompt": "100mm macro lens, 1:1 life-size magnification ratio, f/2.8 aperture, razor-thin depth of field, ultra-sharp focus rendering of microscopic details, comfortable working distance with natural lighting capability, professional macro photography optics.",
+                    "description": "Macro 100mm - 1:1 magnification capability",
                     "tags": ["100mm", "macro", "magnification", "detail", "texture"],
                     "weight": 1.2
                 },
                 "180mm Macro": {
-                    "prompt": "Distant macro shot with 180mm macro lens, extreme detail captured from comfortable working distance, 1:1 magnification with telephoto reach, f/3.5 aperture, compressed perspective with macro detail, subject isolation through distance and magnification, professional nature macro photography, intricate details with smooth bokeh.",
-                    "description": "Telephoto macro - detail from distance",
+                    "prompt": "180mm telephoto macro lens, 1:1 magnification with extended working distance, f/3.5 aperture, compressed perspective combined with macro magnification, distance-based isolation with smooth bokeh, professional nature macro photography optics.",
+                    "description": "Telephoto macro - magnification with distance",
                     "tags": ["180mm", "macro", "telephoto", "detail", "distant"],
                     "weight": 1.1
                 },
                 
                 # === SPECIALTY LENSES ===
                 "45mm Tilt-Shift": {
-                    "prompt": "Selective focus with 45mm tilt-shift lens, creative focus plane manipulation, miniature effect with blurred edges, architectural perspective correction, f/2.8 aperture, technical photography quality, artistic selective sharpness, unique depth of field control, architectural and creative composition.",
-                    "description": "Tilt-shift - selective focus and perspective control",
+                    "prompt": "45mm tilt-shift lens, creative focus plane manipulation capability, miniature effect optical characteristics, architectural perspective correction, f/2.8 aperture, unique depth of field control independent of aperture, technical photography optics.",
+                    "description": "Tilt-shift - perspective control and selective plane",
                     "tags": ["45mm", "tilt-shift", "selective focus", "miniature", "architectural"],
                     "weight": 1.0
                 },
                 "Lensbaby Composer": {
-                    "prompt": "Dreamy selective focus with Lensbaby lens, sweet spot of sharpness surrounded by artistic blur, swirling bokeh and soft focus edges, f/2.0 aperture, creative focus control, whimsical ethereal rendering, artistic portrait and fine art photography, painterly quality with sharp center.",
-                    "description": "Lensbaby - dreamy artistic selective focus",
+                    "prompt": "Lensbaby selective focus lens, sweet spot sharpness with peripheral artistic blur, swirling bokeh characteristics, f/2.0 aperture, creative focus control through lens manipulation, whimsical ethereal rendering, painterly optical quality.",
+                    "description": "Lensbaby - artistic selective focus optics",
                     "tags": ["lensbaby", "dreamy", "selective focus", "artistic", "whimsical"],
                     "weight": 1.0
                 },
                 "Petzval 85mm": {
-                    "prompt": "Vintage portrait with 85mm Petzval lens, swirling bokeh character, dreamy vintage optical quality, sharp center with artistic blur swirls, f/2.2 aperture, warm nostalgic color cast, soft glow in highlights, classic portrait with unique bokeh personality, artistic fine-art portrait rendering.",
-                    "description": "Petzval - vintage swirly bokeh portraits",
+                    "prompt": "85mm Petzval lens, characteristic swirling bokeh pattern, vintage optical formula with dreamy rendering, sharp center with artistic peripheral blur, f/2.2 aperture, warm nostalgic color cast, soft glow in highlights, unique bokeh personality.",
+                    "description": "Petzval - vintage swirly bokeh optics",
                     "tags": ["85mm", "petzval", "vintage", "swirly bokeh", "artistic"],
                     "weight": 1.1
                 },
                 
                 # === ZOOM LENSES ===
                 "24-70mm Standard Zoom": {
-                    "prompt": "Versatile shot with 24-70mm f/2.8 standard zoom lens, flexible framing from environmental wide to portrait close-up, professional optics, consistent rendering throughout zoom range, f/2.8 constant aperture, workhorse lens quality, balanced perspective and compression, adaptable composition.",
-                    "description": "Standard zoom - versatile wide to portrait range",
+                    "prompt": "24-70mm f/2.8 standard zoom lens, versatile focal range from environmental wide to medium telephoto, professional optics with consistent rendering throughout zoom range, f/2.8 constant aperture, workhorse lens optical quality, balanced perspective characteristics.",
+                    "description": "Standard zoom - versatile focal range",
                     "tags": ["24-70mm", "zoom", "versatile", "standard", "professional"],
                     "weight": 1.2
                 },
                 "70-200mm Telephoto Zoom": {
-                    "prompt": "Compressed telephoto shot with 70-200mm f/2.8 zoom lens, professional telephoto range from medium to tight close-up, versatile compression and subject isolation, f/2.8 constant aperture, consistent creamy bokeh throughout range, pro sports and portrait photography, flexible framing with telephoto character.",
-                    "description": "Telephoto zoom - professional portrait to closeup range",
+                    "prompt": "70-200mm f/2.8 telephoto zoom lens, professional telephoto focal range with versatile compression characteristics, f/2.8 constant aperture, consistent creamy bokeh throughout zoom range, sports and portrait photography optics, flexible telephoto character.",
+                    "description": "Telephoto zoom - professional telephoto range",
                     "tags": ["70-200mm", "telephoto zoom", "compression", "professional", "portrait"],
                     "weight": 1.3
                 },
                 "100-400mm Super Zoom": {
-                    "prompt": "Long-range telephoto shot with 100-400mm super zoom lens, extreme compression and reach from distant position, f/4.5-5.6 aperture, wildlife and sports photography versatility, powerful magnification bringing distant subjects close, compressed perspective throughout range, maximum subject isolation.",
-                    "description": "Super zoom - extreme telephoto reach and compression",
+                    "prompt": "100-400mm super telephoto zoom lens, extreme compression and reach capability, f/4.5-5.6 variable aperture, wildlife and sports photography versatility, powerful magnification range, compressed perspective throughout focal range.",
+                    "description": "Super zoom - extreme telephoto range",
                     "tags": ["100-400mm", "super zoom", "telephoto", "wildlife", "sports"],
                     "weight": 1.1
                 },
                 
                 # === CINEMA PRIME LENSES ===
                 "Zeiss Master Prime 25mm": {
-                    "prompt": "Cinematic wide shot with Zeiss Master Prime 25mm cinema lens, environmental storytelling composition for film production, T1.3 aperture, clinical sharpness with subtle organic character, wide contextual framing, minimal breathing, professional cinema rendering, subject in rich environmental context, Hollywood production quality.",
-                    "description": "Cinema wide prime - cinematic environmental framing",
+                    "prompt": "Zeiss Master Prime 25mm cinema lens, wide focal length for film production, T1.3 maximum aperture, clinical sharpness with subtle organic character, minimal focus breathing, professional cinema rendering, Hollywood production optical quality.",
+                    "description": "Cinema wide prime - professional wide optics",
                     "tags": ["25mm", "cinema", "zeiss", "master prime", "film production"],
                     "weight": 1.2
                 },
                 "Zeiss Master Prime 50mm": {
-                    "prompt": "Cinematic medium shot with Zeiss Master Prime 50mm cinema lens, natural film perspective with subtle compression, T1.3 aperture, clinical precision with organic falloff, medium composition from waist up, minimal focus breathing, professional cinema production, Netflix and IMAX quality, classic cinema framing.",
-                    "description": "Cinema standard prime - cinematic medium shot",
+                    "prompt": "Zeiss Master Prime 50mm cinema lens, natural film perspective with subtle compression, T1.3 maximum aperture, clinical precision with organic falloff characteristics, minimal focus breathing, professional cinema production standard, Netflix and IMAX optical quality.",
+                    "description": "Cinema standard prime - natural perspective optics",
                     "tags": ["50mm", "cinema", "zeiss", "master prime", "netflix"],
                     "weight": 1.3
                 },
                 "Zeiss Master Prime 85mm": {
-                    "prompt": "Cinematic portrait close-up with Zeiss Master Prime 85mm cinema lens, tight face and upper body framing for film, T1.3 aperture, clinical sharpness with smooth bokeh falloff, professional portrait compression, minimal breathing, Hollywood portrait cinematography, facial features beautifully rendered, cinema production standard.",
-                    "description": "Cinema portrait prime - cinematic close-up framing",
+                    "prompt": "Zeiss Master Prime 85mm cinema lens, short telephoto focal length for film, T1.3 maximum aperture, clinical sharpness with smooth bokeh falloff, professional portrait compression characteristics, minimal breathing, Hollywood cinematography optical standard.",
+                    "description": "Cinema portrait prime - professional portrait optics",
                     "tags": ["85mm", "cinema", "zeiss", "portrait", "hollywood"],
                     "weight": 1.3
                 },
                 "Cooke S4 35mm": {
-                    "prompt": "Cinematic medium-wide shot with Cooke S4 35mm cinema lens, organic 'Cooke Look' with warm character, T2.0 aperture, gentle falloff and smooth bokeh, environmental portrait framing for film, classic cinema rendering, subject in meaningful context, soft organic quality, professional film production, warm cinematic color.",
-                    "description": "Cooke cinema lens - organic medium-wide framing",
+                    "prompt": "Cooke S4 35mm cinema lens, organic 'Cooke Look' optical character with warm rendering, T2.0 maximum aperture, gentle falloff and smooth bokeh characteristics, classic cinema rendering, soft organic optical quality, professional film production standard, warm cinematic color rendition.",
+                    "description": "Cooke cinema lens - organic warm optics",
                     "tags": ["35mm", "cinema", "cooke", "organic", "film"],
                     "weight": 1.3
                 },
                 "Cooke S4 65mm": {
-                    "prompt": "Cinematic medium close-up with Cooke S4 65mm cinema lens, intimate 'Cooke Look' portrait framing, T2.0 aperture, warm organic character with smooth falloff, chest and head composition for film, gentle compression and beautiful skin tones, classic cinema portrait rendering, professional production quality.",
-                    "description": "Cooke cinema portrait - warm intimate framing",
-                    "tags": ["65mm", "cinema", "cooke", "portrait", "intimate"],
+                    "prompt": "Cooke S4 65mm cinema lens, intimate 'Cooke Look' optical character, T2.0 maximum aperture, warm organic rendering with smooth falloff, gentle compression characteristics with beautiful tone rendition, classic cinema optics, professional production optical quality.",
+                    "description": "Cooke cinema lens - warm intimate optics",
+                    "tags": ["65mm", "cinema", "cooke", "intimate", "warm"],
                     "weight": 1.3
                 },
                 "Arri Signature Prime 40mm": {
-                    "prompt": "Modern cinema shot with Arri Signature Prime 40mm lens, medium framing with contemporary cinema look, T1.8 aperture, large format coverage, smooth natural bokeh with modern optical design, subject from waist up, minimal aberrations, Netflix and IMAX production standard, modern digital cinema aesthetic.",
-                    "description": "Arri cinema prime - modern medium framing",
+                    "prompt": "Arri Signature Prime 40mm cinema lens, contemporary cinema optical design, T1.8 maximum aperture, large format coverage capability, smooth natural bokeh with modern optical formula, minimal aberrations, Netflix and IMAX production optical standard, modern digital cinema characteristics.",
+                    "description": "Arri cinema prime - modern cinema optics",
                     "tags": ["40mm", "cinema", "arri", "signature", "modern"],
                     "weight": 1.2
                 },
                 
                 # === ANAMORPHIC CINEMA LENSES ===
                 "Anamorphic 35mm": {
-                    "prompt": "Widescreen cinematic shot with 35mm anamorphic cinema lens, 2.39:1 scope aspect ratio, environmental composition with anamorphic character, T2.0 aperture, characteristic horizontal blue lens flares, oval bokeh, wide contextual framing for scope format, cinematic widescreen storytelling, Hollywood blockbuster aesthetic, subject in epic widescreen context.",
-                    "description": "Anamorphic wide - widescreen environmental scope",
+                    "prompt": "35mm anamorphic cinema lens, 2.39:1 scope aspect ratio coverage, T2.0 aperture, characteristic horizontal blue lens flares, oval bokeh patterns, wide field of view with anamorphic optical character, cinematic widescreen scope format, Hollywood blockbuster optics.",
+                    "description": "Anamorphic wide - widescreen scope optics",
                     "tags": ["35mm", "anamorphic", "widescreen", "scope", "flares"],
                     "weight": 1.3
                 },
                 "Anamorphic 50mm": {
-                    "prompt": "Cinematic medium shot with 50mm anamorphic lens, 2.39:1 widescreen scope format, medium framing with anamorphic characteristics, T2.0 aperture, horizontal lens flares and oval bokeh, natural perspective in scope aspect, classic cinema widescreen composition, Hollywood scope aesthetic, subject in widescreen medium frame.",
-                    "description": "Anamorphic standard - widescreen medium shot",
+                    "prompt": "50mm anamorphic cinema lens, 2.39:1 widescreen scope format coverage, T2.0 aperture, horizontal lens flares and oval bokeh patterns, natural perspective with anamorphic optical character, classic cinema widescreen scope optics, Hollywood aesthetic rendering.",
+                    "description": "Anamorphic standard - widescreen scope optics",
                     "tags": ["50mm", "anamorphic", "medium shot", "scope", "cinema"],
                     "weight": 1.3
                 },
                 "Anamorphic 75mm": {
-                    "prompt": "Widescreen close-up with 75mm anamorphic lens, tight portrait in 2.39:1 scope format, T2.0 aperture, characteristic horizontal streaking flares, oval bokeh patterns, face and upper body filling widescreen frame, cinematic portrait compression with anamorphic character, Hollywood scope close-up, epic cinematic intimacy.",
-                    "description": "Anamorphic portrait - widescreen close-up scope",
+                    "prompt": "75mm anamorphic cinema lens, 2.39:1 scope format coverage, T2.0 aperture, characteristic horizontal streaking flares, oval bokeh patterns, cinematic portrait compression with anamorphic optical character, short telephoto field of view in scope format, Hollywood optics.",
+                    "description": "Anamorphic portrait - widescreen scope optics",
                     "tags": ["75mm", "anamorphic", "portrait", "scope", "closeup"],
                     "weight": 1.3
                 },
                 "Panavision Anamorphic": {
-                    "prompt": "Epic widescreen shot with Panavision anamorphic cinema lens, 2.39:1 Hollywood scope format, legendary Panavision rendering, T2.3 aperture, iconic horizontal blue lens flares, smooth oval bokeh, classic Hollywood blockbuster aesthetic, cinematic scope composition, premium film production quality, epic widescreen framing with anamorphic magic.",
-                    "description": "Panavision anamorphic - legendary Hollywood scope",
+                    "prompt": "Panavision anamorphic cinema lens, 2.39:1 Hollywood scope format coverage, legendary Panavision optical rendering, T2.3 aperture, iconic horizontal blue lens flares, smooth oval bokeh characteristics, classic Hollywood blockbuster optical quality, premium film production anamorphic optics.",
+                    "description": "Panavision anamorphic - legendary Hollywood scope optics",
                     "tags": ["panavision", "anamorphic", "hollywood", "epic", "legendary"],
                     "weight": 1.4
                 },
@@ -789,19 +790,19 @@ class ApexPromptPreset:
                 
                 # === VINTAGE CINEMA CHARACTER LENSES ===
                 "Vintage Cooke Panchro": {
-                    "prompt": "Classic film look with vintage Cooke Panchro cinema lens, warm organic 'Cooke Look' with vintage character, T2.3 aperture, soft film-era glow in highlights, gentle falloff and warm skin tones, classic Hollywood golden age rendering, romantic vintage cinema quality, nostalgic film aesthetic with authentic vintage optics.",
+                    "prompt": "Classic film look with vintage Cooke Panchro cinema lens, warm organic 'Cooke Look' with vintage character, T2.3 aperture, soft film-era glow in highlights, gentle falloff and warm tone rendition, classic Hollywood golden age rendering, romantic vintage cinema quality, nostalgic film aesthetic with authentic vintage optics.",
                     "description": "Vintage Cooke - classic Hollywood film look",
                     "tags": ["vintage", "cooke", "panchro", "classic", "hollywood"],
                     "weight": 1.2
                 },
                 "Vintage Helios 44-2": {
-                    "prompt": "Swirly vintage portrait with Helios 44-2 58mm lens, characteristic swirling bokeh pattern, vintage Soviet optics, f/2.0 aperture, unique bokeh rendering with swirls and cats-eye effects, warm vintage color cast, soft glow in out-of-focus areas, artistic vintage portrait character, cult classic vintage lens aesthetic.",
+                    "prompt": "Swirly vintage look with Helios 44-2 58mm lens, characteristic swirling bokeh pattern, vintage Soviet optics, f/2.0 aperture, unique bokeh rendering with swirls and cats-eye effects, warm vintage color cast, soft glow in out-of-focus areas, artistic vintage optical character, cult classic vintage lens aesthetic.",
                     "description": "Helios vintage - iconic swirly bokeh character",
                     "tags": ["helios", "vintage", "swirly bokeh", "soviet", "artistic"],
                     "weight": 1.1
                 },
                 "Vintage Canon K35": {
-                    "prompt": "Warm vintage cinema with Canon K35 cinema lens, legendary 1970s-80s cinema optics, T1.5 aperture, warm golden vintage rendering, soft dreamy character with sharp center, reduced contrast for film look, nostalgic Hollywood cinema aesthetic, popular for period films and music videos, authentic vintage cinema character.",
+                    "prompt": "Warm vintage cinema with Canon K35 cinema lens, legendary 1970s-80s cinema optics, T1.5 aperture, warm golden vintage rendering, soft dreamy character with sharp center, reduced contrast for film look, nostalgic Hollywood cinema aesthetic, authentic vintage cinema character.",
                     "description": "Canon K35 - warm vintage cinema classic",
                     "tags": ["canon k35", "vintage", "cinema", "warm", "1970s"],
                     "weight": 1.2
@@ -811,13 +812,17 @@ class ApexPromptPreset:
 
     # Cache for preset names to avoid recreating the entire preset dictionary
     _preset_cache = {}
+    _preset_cache_lock = threading.Lock()
     
     @classmethod
     def get_all_presets_in_category(cls, category: str) -> List[str]:
         """Get ALL preset names in a category (used for dynamic UI population)."""
-        # Use cache to avoid recreating the entire preset dictionary every time
+        # Use cache with thread safety to avoid recreating the entire preset dictionary every time
         if not cls._preset_cache:
-            cls._preset_cache = cls.get_default_presets()
+            with cls._preset_cache_lock:
+                # Double-check after acquiring lock
+                if not cls._preset_cache:
+                    cls._preset_cache = cls.get_default_presets()
         
         if category in cls._preset_cache:
             return list(cls._preset_cache[category].keys())
@@ -846,10 +851,11 @@ class ApexPromptPreset:
             return self.presets[category][preset_name]
         return None
 
-    def get_random_preset(self, category: str, seed: int) -> Optional[str]:
-        """Randomly select a preset from a category using weighted random selection."""
+    def get_random_preset(self, category: str, seed: int) -> tuple:
+        """Randomly select a preset from a category using weighted random selection.
+        Returns tuple of (selected_name, prompt_text)."""
         if category not in self.presets or not self.presets[category]:
-            return None
+            return (None, None)
         
         # Build weighted lists of preset names and prompts
         presets = self.presets[category]
@@ -857,12 +863,12 @@ class ApexPromptPreset:
         weights = [presets[name].get("weight", 1.0) for name in names]
         
         # Seed random selection so same seed produces same result
-        import random as rand_module
-        rng = rand_module.Random()
+        rng = random.Random()
         rng.seed(seed)
         
         selected_name = rng.choices(names, weights=weights, k=1)[0]
-        return presets[selected_name].get("prompt", "")
+        prompt_text = presets[selected_name].get("prompt", "")
+        return (selected_name, prompt_text)
 
     def process_random_brackets(self, text: str, seed: int) -> str:
         """
@@ -870,8 +876,8 @@ class ApexPromptPreset:
         Example: "woman in a [flower field, alien landscape, new york street]"
         Will randomly pick one option from the bracketed list.
         """
-        import random
-        random.seed(seed)
+        rng = random.Random()
+        rng.seed(seed)
         pattern = r'\[([^\]]+)\]'
         
         def replace_bracket(match):
@@ -879,18 +885,20 @@ class ApexPromptPreset:
             options = [opt.strip() for opt in content.split(',') if opt.strip()]
             if not options:
                 return ""
-            return random.choice(options)
+            return rng.choice(options)
         
         return re.sub(pattern, replace_bracket, text)
 
-    def _get_preset_text(self, category: str, preset_name: str, seed_offset: int) -> str:
-        """Helper method to get preset text with random support."""
+    def _get_preset_text(self, category: str, preset_name: str, seed_offset: int) -> tuple:
+        """Helper method to get preset text with random support.
+        Returns tuple of (selected_name, prompt_text)."""
         if preset_name == "Random":
-            return self.get_random_preset(category, seed_offset) or ""
+            return self.get_random_preset(category, seed_offset)
         elif preset_name != "Disabled" and preset_name != "None":
             preset_data = self.get_preset_data(category, preset_name)
-            return preset_data.get("prompt", "") if preset_data else ""
-        return ""
+            prompt_text = preset_data.get("prompt", "") if preset_data else ""
+            return (preset_name, prompt_text)
+        return (preset_name, "")
     
     def combine_prompts(self, input_text: str, seed: int = 0, environment_preset: str = "Disabled", 
                        lighting_preset: str = "Disabled", style_preset: str = "Disabled", 
@@ -903,10 +911,14 @@ class ApexPromptPreset:
             input_text = self.process_random_brackets(input_text, seed)
         
         # Get preset texts with weighted random selection support
-        env_text = self._get_preset_text("Apex Environment", environment_preset, seed + 1)
-        light_text = self._get_preset_text("Apex Lighting", lighting_preset, seed + 2)
-        style_text = self._get_preset_text("Apex Style", style_preset, seed + 3)
-        camera_lens_text = self._get_preset_text("Apex Camera Lens", camera_lens_preset, seed + 4)
+        env_name, env_text = self._get_preset_text("Apex Environment", environment_preset, seed + 1)
+        light_name, light_text = self._get_preset_text("Apex Lighting", lighting_preset, seed + 2)
+        style_name, style_text = self._get_preset_text("Apex Style", style_preset, seed + 3)
+        camera_lens_name, camera_lens_text = self._get_preset_text("Apex Camera Lens", camera_lens_preset, seed + 4)
+        
+        # Store selected lens name for UI update (stored in node instance for JavaScript access)
+        if hasattr(self, '_selected_lens_name'):
+            self._selected_lens_name = camera_lens_name if camera_lens_name and camera_lens_name != "Disabled" else None
         
         # Combine all parts in order: input → environment → lighting → style → camera lens
         parts = [p for p in [input_text.strip(), env_text, light_text, style_text, camera_lens_text] if p]
@@ -925,5 +937,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ApexPromptPreset": "Apex Prompt Preset"
+    "ApexPromptPreset": "Apex Prompt"
 }
