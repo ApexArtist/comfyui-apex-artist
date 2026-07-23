@@ -6,7 +6,6 @@ from .apex_blur import ApexBlur
 from .apex_sharpen import ApexSharpen
 from .apex_prompt import ApexPromptPreset
 from .apex_lora_loader import ApexLoraLoader
-from .apex_load_model import ApexLoadModel
 
 # Import API servers to initialize routes
 try:
@@ -31,7 +30,6 @@ NODE_CLASS_MAPPINGS = {
     "ApexSharpen": ApexSharpen,
     "ApexPromptPreset": ApexPromptPreset,
     "ApexLoraLoader": ApexLoraLoader,
-    "ApexLoadModel": ApexLoadModel,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -41,7 +39,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexSharpen": "Apex Sharpen",
     "ApexPromptPreset": "Apex Prompt",
     "ApexLoraLoader": "Apex LoRA Loader",
-    "ApexLoadModel": "Apex Load Model",
 }
 
 WEB_DIRECTORY = "./web"

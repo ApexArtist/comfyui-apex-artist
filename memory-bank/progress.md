@@ -1,6 +1,6 @@
 # Progress: comfyui-apex-artist
 
-## Active Nodes (7)
+## Active Nodes (6)
 
 ### Image Processing
 - **ApexBlur**: 9 blur algorithms
@@ -11,19 +11,25 @@
 ### Workflow & Models
 - **ApexPromptPreset**: 55 presets across 3 categories
 - **ApexLoraLoader**: Interactive browser with folder navigation and thumbnails
-- **ApexLoadModel**: Advanced model loader with dtype selection (fp16/bf16/fp8/fp32)
 
 ## Infrastructure
-- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`, `apex_load_model.js`, `apex_prompt_lens.js`
+- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`
 - API endpoints: `apex_prompt_api.py`, `apex_lora_api.py`, `apex_prompt_lens_api.py`
 - CI/CD: GitHub Actions for ComfyUI Registry
 - Version management: `update_version.py` (enhanced with auto-increment and git integration)
 - Publishing guide: `PUBLISH.md` (comprehensive workflow documentation)
 
 ## Current Status
-**Production/Stable v2.0.2** - Professional VFX and image processing with 7 core nodes. Health Score: 9.5/10 ✅
+**Production/Stable v2.1.0** - Professional VFX and image processing with 6 core nodes. Health Score: 9.5/10 ✅
 
 ## Recent Updates (July 2026)
+
+### ApexLoadModel Removed (2026-07-23)
+- **Node deleted**: `apex_load_model.py` removed — redundant with ComfyUI's native `CheckpointLoaderSimple` and other model loaders
+- **Registration cleaned**: `__init__.py` updated — import and mappings removed
+- **JS already deleted**: `web/apex_load_model.js` was already removed in previous cleanup
+- **Fix docs archived**: `apex_load_model_fixes.md` moved to `memory-bank/` for historical reference
+- **6 active nodes**: Project streamlined to core VFX and image processing nodes
 
 ### Apex LoRA Loader Native Preview Fix (2026-07-21)
 - **Selected Preview Rendering**: Updated `web/apex_lora_loader.js` to use ComfyUI's native node preview mechanism (`node.imgs = [img]`, `node.imageIndex = 0`) instead of a custom `addCustomWidget()` canvas draw.
@@ -91,6 +97,10 @@
 - [x] Fixed hardcoded path in check_model_options.py, moved to scripts/
 - [x] ApexLoraLoader selected preview uses native `node.imgs` rendering
 - [x] ApexLoraLoader preview image changes preserve node size like native Load Image
+- [x] ApexLoadModel args.fast crash fixed with hasattr guards
+- [x] ApexLoadModel fp8 dtype logic consolidated (single if/else branch)
+- [x] ApexLoadModel walrus operators removed (explicit is not None checks)
+- [x] web/apex_load_model.js deleted (node is 100% Python-native)
 
 ## Outstanding Items
 - [ ] Automated test suite (Priority 3)
@@ -99,7 +109,7 @@
 - [ ] Optional: Async I/O fix for 3 API handlers (low priority)
 
 ## Next Milestones
-1. **v2.1.0** - Code quality improvements (apex_utils integration, async I/O fixes)
+1. **v2.1.0** ✅ ApexLoadModel native optimization (complete)
 2. **v2.2.0** - Testing framework and automated test coverage
 3. **v2.3.0** - Performance optimizations (blur batch operations)
 4. **v3.0.0** - Major feature expansion (TBD based on user feedback)

@@ -34,3 +34,9 @@ Thumbs.db
 
 # Custom node generated files
 custom-node-list.json
+
+# Cline AI assistant tool config
+.clineignore
+
+# Historical fix documentation (moved to memory-bank/)
+/apex_load_model_fixes.md

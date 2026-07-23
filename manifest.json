@@ -80,14 +80,6 @@
       "category": "models/loras",
       "input_types": ["MODEL"],
       "output_types": ["MODEL"]
-    },
-    {
-      "id": "ApexLoadModel",
-      "display_name": "Apex Load Model",
-      "description": "Advanced checkpoint loader with weight dtype selection (fp16, bf16, fp8, fp32)",
-      "category": "models/loaders",
-      "input_types": ["STRING"],
-      "output_types": ["MODEL", "CLIP", "VAE"]
     }
   ],
    "version": "2.1.0"

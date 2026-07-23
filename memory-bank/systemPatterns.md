@@ -1,8 +1,7 @@
-# System Patterns: comfyui-apex-artist
 
 ## Architecture
 - **Python backend**: Individual `apex_*.py` files at root level
-- **JavaScript frontend**: Custom widgets in `web/` directory
+- **JavaScript frontend**: Custom widgets in `web/` directory (where needed)
 - **API routes**: Initialized via module import (e.g., `apex_lora_api`)
 - **Registration**: Via `NODE_CLASS_MAPPINGS` and `NODE_DISPLAY_NAME_MAPPINGS` in `__init__.py`
 
@@ -180,7 +179,7 @@ Object.defineProperty(widget, 'value', {
 ### Nodes
 - `apex_blur.py`, `apex_sharpen.py`
 - `apex_depth_to_normal.py`, `apex_layer_blend.py`
-- `apex_prompt.py`, `apex_lora_loader.py`, `apex_load_model.py`
+- `apex_prompt.py`, `apex_lora_loader.py`
 
 ### APIs
 - `apex_prompt_api.py` - Prompt preset CRUD

@@ -104,9 +104,7 @@ comfyui-apex-artist/
 ├── update_version.py       # Version management tool
 ├── web/                    # Frontend extensions
 │   ├── apex_prompt.js
-│   ├── apex_lora_loader.js
-│   ├── apex_load_model.js
-│   └── apex_prompt_lens.js
+│   └── apex_lora_loader.js
 ├── lens/                   # Lens preset source images
 ├── lens_previews/          # Processed lens thumbnails
 └── memory-bank/            # Project documentation
@@ -116,5 +114,5 @@ comfyui-apex-artist/
     ├── systemPatterns.md
     ├── techContext.md
     ├── progress.md
-    └── features.md
-```
+    ├── features.md
+    └── apex_load_model_fixes.md

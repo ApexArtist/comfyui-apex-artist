@@ -1,6 +1,6 @@
 # Project Brief: comfyui-apex-artist
 
-ComfyUI custom node extension providing **Professional VFX and post-production nodes** for advanced image processing, film grading, layer blending, and cinematic effects.
+ComfyUI custom node extension providing **Professional VFX and post-production nodes** for advanced image processing, film grading, layer blending, cinematic effects, and diffusion model loading.
 
 ## Core Requirements
 - Provide custom nodes that integrate seamlessly into ComfyUI's node graph system
@@ -15,5 +15,5 @@ ComfyUI custom node extension providing **Professional VFX and post-production n
 
 ## Source
 - **Repository**: https://github.com/ApexArtist/comfyui-apex-artist
-- **Version**: 2.0.2
+- **Version**: 2.1.0
 - **Status**: Production/Stable
