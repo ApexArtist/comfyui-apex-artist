@@ -1,4 +1,4 @@
-NODE_VERSION = "2.1.1"
+NODE_VERSION = "2.1.3"
 
 from .apex_depth_to_normal import ApexDepthToNormal
 from .apex_layer_blend import ApexLayerBlend
