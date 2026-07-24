@@ -100,17 +100,10 @@ def gaussian_blur(image: torch.Tensor, radius: float, sigma_multiplier: float = 
     
     padding = kernel_size // 2
     
-    # Apply to each channel separately for reliability
-    result_channels = []
-    for c in range(channels):
-        # Extract single channel [B, 1, H, W]
-        channel = image[:, :, :, c:c+1].permute(0, 3, 1, 2)
-        # Apply blur
-        blurred_channel = F.conv2d(channel, kernel_2d, padding=padding)
-        result_channels.append(blurred_channel)
-    
-    # Combine channels back
-    blurred = torch.cat(result_channels, dim=1)  # [B, C, H, W]
+    # Apply to all channels at once using grouped convolution (faster and equivalent)
+    # Permute to [B, C, H, W], then use groups=channels for per-channel convolutions
+    image_permuted = image.permute(0, 3, 1, 2)  # [B, C, H, W]
+    blurred = F.conv2d(image_permuted, kernel_2d.repeat(channels, 1, 1, 1), groups=channels, padding=padding)
     blurred = blurred.permute(0, 2, 3, 1)  # [B, H, W, C]
     
     return blurred

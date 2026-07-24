@@ -18,9 +18,10 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 
 ### LoRA Loader
 - Interactive modal browser with folder navigation
-- Optimized thumbnails reduce load times 100-200x
-- Smart preview detection (multiple naming patterns)
-- Handles large collections (1000+ LoRAs)
+- Optimized 256x256 thumbnails (100-200x faster loading)
+- Smart preview detection (multiple formats: PNG, JPG, WebP, GIF, BMP, TIFF)
+- Original images can be deleted after thumbnail creation to save space
+- Handles large collections (1000+ LoRAs efficiently)
 
 ## 📦 Installation
 
@@ -65,7 +66,9 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 - ComfyUI (latest stable)
 - Python 3.8+
 - PyTorch (as provided by ComfyUI)
-- No additional dependencies required
+- Pillow (PIL) with image format support (provided by ComfyUI)
+
+**Note on WebP support:** WebP thumbnail generation requires Pillow to be compiled with libwebp support. If WebP processing fails, the system will gracefully fall back to serving the original WebP image directly. Most modern Pillow installations include WebP support by default.
 
 ## 📄 License
 

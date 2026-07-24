@@ -109,27 +109,35 @@ class ApexLoraLoader:
         """
         Find the preview image for a LoRA file
         
-        Searches for preview images in this order:
-        1. <lora_name>.preview.png
-        2. <lora_name>.preview.jpg
-        3. <lora_name>.png
-        4. <lora_name>.jpg
+        Priority:
+        1. Check .thumbnails/{lora_name}.jpg first (cached optimized thumbnail)
+        2. If not found, search for original preview images
+        
+        This allows originals to be deleted after thumbnail creation to save space.
         
         Args:
             lora_name: LoRA filename (e.g., "my_lora.safetensors")
             
         Returns:
-            Full path to preview image, or None if not found
+            Full path to preview image (thumbnail or original), or None if not found
         """
         lora_path = folder_paths.get_full_path("loras", lora_name)
         if not lora_path:
             return None
         
-        # Get base path without extension
-        base_path = os.path.splitext(lora_path)[0]
+        # Get base name and directory
+        base_name = os.path.splitext(os.path.basename(lora_path))[0]
+        lora_dir = os.path.dirname(lora_path)
         
-        # Check for preview images in order of preference
-        # Supports all common image formats
+        # PRIORITY 1: Check .thumbnails folder first
+        thumbnails_dir = os.path.join(lora_dir, ".thumbnails")
+        thumbnail_path = os.path.join(thumbnails_dir, f"{base_name}.jpg")
+        
+        if os.path.exists(thumbnail_path):
+            return thumbnail_path
+        
+        # PRIORITY 2: Search for original preview images
+        base_path = os.path.splitext(lora_path)[0]
         preview_extensions = [
             ".preview.png",
             ".preview.jpg",

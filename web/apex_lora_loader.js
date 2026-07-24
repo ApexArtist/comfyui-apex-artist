@@ -91,6 +91,33 @@ function createFloatingBrowser(node) {
         max-height: 440px;
     `;
 
+    // Scan Thumbnails button
+    const scanButton = document.createElement("button");
+    scanButton.textContent = "🔄 Scan Thumbnails";
+    scanButton.style.cssText = `
+        width: 100%;
+        padding: 8px 12px;
+        background: #2a5a8a;
+        border: 1px solid #4a9eff;
+        border-radius: 4px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+    `;
+    scanButton.onmouseover = () => {
+        if (!scanButton.disabled) {
+            scanButton.style.background = "#3a6a9a";
+        }
+    };
+    scanButton.onmouseout = () => {
+        if (!scanButton.disabled) {
+            scanButton.style.background = "#2a5a8a";
+        }
+    };
+
     const foldersSection = document.createElement("div");
     foldersSection.style.marginBottom = "12px";
 
@@ -130,6 +157,7 @@ function createFloatingBrowser(node) {
         padding: 8px;
     `;
 
+    content.appendChild(scanButton);
     content.appendChild(foldersSection);
     content.appendChild(lorasSection);
     content.appendChild(pagination);
@@ -142,6 +170,7 @@ function createFloatingBrowser(node) {
     panel._foldersGrid = foldersGrid;
     panel._lorasGrid = lorasGrid;
     panel._pagination = pagination;
+    panel._scanButton = scanButton;
 
     // Make draggable
     makeDraggable(panel, header);
@@ -201,6 +230,12 @@ function openBrowser(node) {
     // Position near node
     positionPanelNearNode(node, panel);
 
+    // Wire up scan button
+    const scanButton = panel._scanButton;
+    if (scanButton) {
+        scanButton.onclick = () => scanThumbnails(node);
+    }
+
     // Load content
     loadBrowserFolder(node, s.currentFolder || "");
 
@@ -253,6 +288,88 @@ function positionPanelNearNode(node, panel) {
     
     panel.style.left = left + "px";
     panel.style.top = top + "px";
+}
+
+// ── Scan Thumbnails ───────────────────────────────────────────────────────────
+
+async function scanThumbnails(node) {
+    const s = node._loraState;
+    const panel = s._floatingPanel;
+    if (!panel) return;
+
+    const scanButton = panel._scanButton;
+    if (!scanButton || scanButton.disabled) return;
+
+    try {
+        // Disable button and update text
+        scanButton.disabled = true;
+        scanButton.style.cursor = "not-allowed";
+        scanButton.style.opacity = "0.6";
+        scanButton.textContent = "⏳ Scanning...";
+
+        const res = await api.fetchApi("/apex/lora_scan_thumbnails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ folder_path: s.currentFolder || "" })
+        });
+
+        if (!res.ok) {
+            console.error("[Apex LoRA] Failed to scan thumbnails");
+            scanButton.textContent = "❌ Scan Failed";
+            setTimeout(() => {
+                scanButton.textContent = "🔄 Scan Thumbnails";
+                scanButton.disabled = false;
+                scanButton.style.cursor = "pointer";
+                scanButton.style.opacity = "1";
+            }, 2000);
+            return;
+        }
+
+        const data = await res.json();
+        
+        // Show result
+        if (data.status === "success") {
+            const summary = data.generated > 0 
+                ? `✅ Generated ${data.generated} thumbnail${data.generated > 1 ? 's' : ''}!`
+                : `✅ All thumbnails already exist`;
+            
+            scanButton.textContent = summary;
+            
+            // If thumbnails were generated, refresh the folder to show them
+            if (data.generated > 0) {
+                // Refresh folder contents immediately to show new thumbnails
+                await loadBrowserFolder(node, s.currentFolder || "");
+            }
+            
+            // Reset button after showing result
+            setTimeout(() => {
+                const btn = panel._scanButton; // Re-get reference in case panel refreshed
+                if (btn) {
+                    btn.textContent = "🔄 Scan Thumbnails";
+                    btn.disabled = false;
+                    btn.style.cursor = "pointer";
+                    btn.style.opacity = "1";
+                }
+            }, 2000);
+        } else {
+            scanButton.textContent = "❌ Scan Error";
+            setTimeout(() => {
+                scanButton.textContent = "🔄 Scan Thumbnails";
+                scanButton.disabled = false;
+                scanButton.style.cursor = "pointer";
+                scanButton.style.opacity = "1";
+            }, 2000);
+        }
+    } catch (err) {
+        console.error("[Apex LoRA] scanThumbnails error:", err);
+        scanButton.textContent = "❌ Scan Error";
+        setTimeout(() => {
+            scanButton.textContent = "🔄 Scan Thumbnails";
+            scanButton.disabled = false;
+            scanButton.style.cursor = "pointer";
+            scanButton.style.opacity = "1";
+        }, 2000);
+    }
 }
 
 // ── Node Setup ────────────────────────────────────────────────────────────────
@@ -397,7 +514,7 @@ function updateFolders(node, panel, folders, parentFolder) {
     foldersGrid.innerHTML = "";
 
     if (parentFolder !== null) {
-        foldersGrid.appendChild(createFolderButton(node, "⬆️ ..", parentFolder));
+        foldersGrid.appendChild(createFolderButton(node, "⬅ Back", parentFolder));
     }
 
     folders.forEach(folder => {
@@ -487,7 +604,13 @@ function createLoraItem(node, lora) {
         const img = document.createElement("img");
         img.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;";
         fetchLoraPreview(lora.relative_path)
-            .then(path => { if (path) img.src = `/apex/lora_image?path=${encodeURIComponent(path)}`; })
+            .then(path => { 
+                if (path) {
+                    // Add timestamp to prevent browser caching old thumbnails
+                    const cacheBuster = Date.now();
+                    img.src = `/apex/lora_image?path=${encodeURIComponent(path)}&t=${cacheBuster}`;
+                }
+            })
             .catch(() => {});
         thumbnail.appendChild(img);
     } else {
@@ -612,7 +735,9 @@ function onLoraChanged(node, loraName) {
                 node.imgs = [];
                 refreshNodePreview(node);
             };
-            img.src = `/apex/lora_image?path=${encodeURIComponent(path)}`;
+            // Add timestamp to prevent browser caching old thumbnails
+            const cacheBuster = Date.now();
+            img.src = `/apex/lora_image?path=${encodeURIComponent(path)}&t=${cacheBuster}`;
         })
         .catch(() => {
             s.selectedLoraPreview = null;
