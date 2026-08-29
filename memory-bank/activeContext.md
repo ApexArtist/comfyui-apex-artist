@@ -155,3 +155,9 @@ The `ApexLoadModel` node has been **removed entirely** from the project:
 - Frontend-only; hard refresh browser to apply.
 
 - Restored realtime client-side 3D preview: panorama decoded once to ImageData (PANO_MAX_W cap), precomputed per-pixel ray lon/lat maps keyed by size/fov/roll, per-frame bilinear reprojection into an offscreen canvas drawn cover-fit. Center ring+dot overlay restored. Drag/Shift-drag/wheel update widgets -> rAF local redraw (realtime); server snapshot (apex/hdri_preview) still syncs on release and serves .hdr/.exr. Fixed lon mapping to backend convention (u = lon/2pi + 0.5).
+
+## Pitch fix (post-commit a18b0b3)
+- Rewrote JS render loop: per-pixel ray vectors (rayX/Y/Z, keyed on size/fov/roll) rotated by Rx(pitch) then Ry(yaw) — matches backend R = Ry@Rx@Rz exactly. Old linear lat + pitch pan removed.
+- Verified: pitch=±90 center ray hits zenith/nadir; yaw sign consistent frontend/backend; node --check passes.
+
+2026-08-29T23:57:31.2483271+05:30

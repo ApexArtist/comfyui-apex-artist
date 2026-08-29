@@ -144,8 +144,9 @@ function loadSource(node) {
 }
 
 // Realtime local renderer: equirect -> perspective reprojection in JS.
-// Ray lon/lat offsets depend only on size/fov/roll (precomputed); per frame
-// we add yaw/pitch and bilinear-sample the panorama.
+// Ray unit vectors depend only on size/fov/roll (precomputed); per frame we
+// rotate them by pitch (about camera X) and yaw (about world Y), matching the
+// backend rotation order R = Ry @ Rx @ Rz, then convert to equirect lon/lat.
 function ensureRayMap(state, w, h, fovDeg, rollDeg) {
     const key = w + "x" + h + "|" + fovDeg.toFixed(2) + "|" + rollDeg.toFixed(2);
     if (state.rayKey === key) return;
@@ -154,22 +155,22 @@ function ensureRayMap(state, w, h, fovDeg, rollDeg) {
     const rollR = (rollDeg * Math.PI) / 180;
     const f = w / 2 / Math.tan(fovR / 2);
     const cosR = Math.cos(rollR), sinR = Math.sin(rollR);
-    const lon = new Float32Array(w * h);
-    const lat = new Float32Array(w * h);
+    const rx = new Float32Array(w * h);
+    const ryy = new Float32Array(w * h);
+    const rz = new Float32Array(w * h);
     let i = 0;
     for (let yy = 0; yy < h; yy++) {
         const dy = h / 2 - yy - 0.5;            // screen y down; camera up is +y
         for (let xx = 0; xx < w; xx++, i++) {
             const dx = xx - w / 2 + 0.5;
-            const rx = dx * cosR - dy * sinR;   // roll in screen plane
-            const ry = dx * sinR + dy * cosR;
-            const wx = rx, wy = ry, wz = -f;    // camera forward is -Z
-            lon[i] = Math.atan2(wx, -wz);
-            lat[i] = Math.asin(wy / Math.hypot(wx, wy, wz));
+            const a = dx * cosR - dy * sinR;    // roll in screen plane
+            const b = dx * sinR + dy * cosR;
+            const wx = a, wy = b, wz = -f;      // camera forward is -Z
+            const len = Math.hypot(wx, wy, wz);
+            rx[i] = wx / len; ryy[i] = wy / len; rz[i] = wz / len;
         }
     }
-    state.rayLon = lon;
-    state.rayLat = lat;
+    state.rayX = rx; state.rayY = ryy; state.rayZ = rz;
 }
 
 function renderLocalFrame(node) {
@@ -197,29 +198,45 @@ function renderLocalFrame(node) {
     const pitchR = (getWidgetValue(node, "pitch", 0) * Math.PI) / 180;
     const pw = pano.width, ph = pano.height, sd = pano.data;
     const out = state.frameData.data;
-    const lon = state.rayLon, lat = state.rayLat;
+    const rayX = state.rayX, rayY = state.rayY, rayZ = state.rayZ;
     const TWO_PI = Math.PI * 2;
 
+    // Rotate camera-space rays to world space: R = Ry(yaw) @ Rx(pitch),
+    // matching the backend (_rotation_matrix with roll pre-applied to rays).
+    const cy = Math.cos(yawR), sy = Math.sin(yawR);
+    const cp = Math.cos(pitchR), sp = Math.sin(pitchR);
+
     for (let i = 0, p = 0; i < w * h; i++, p += 4) {
-        // Backend convention: pixel x = (lon/2pi + 0.5) * width.
-        let u = (lon[i] + yawR) / TWO_PI + 0.5;
+        const x0r = rayX[i], y0r = rayY[i], z0r = rayZ[i];
+        // Pitch: rotate about camera X axis (Rx @ ray)
+        const y1 = y0r * cp - z0r * sp;
+        const z1 = y0r * sp + z0r * cp;
+        // Yaw: rotate about world Y axis (Ry @ ray)
+        const wx = x0r * cy + z1 * sy;
+        const wy = y1;
+        const wz = -x0r * sy + z1 * cy;
+
+        // Equirect mapping: lon = atan2(dx, -dz), lat = asin(dy)
+        const lon = Math.atan2(wx, -wz);
+        const lat = Math.asin(wy < -1 ? -1 : wy > 1 ? 1 : wy);
+
+        let u = lon / TWO_PI + 0.5;
         u -= Math.floor(u);
         const fx = u * pw;
-        const x0 = fx | 0;
-        const x1 = (x0 + 1) % pw;
-        const tx = fx - x0;
+        const sx0 = fx | 0;
+        const sx1 = (sx0 + 1) % pw;
+        const tx = fx - sx0;
 
-        let v = 0.5 - (lat[i] + pitchR) / Math.PI;   // 0..1, 0 = top
-        v = v < 0 ? 0 : v > 1 ? 1 : v;
+        const v = 0.5 - lat / Math.PI;   // 0..1, 0 = top
         const fy = v * (ph - 1);
-        const y0 = fy | 0;
-        const y1 = y0 < ph - 1 ? y0 + 1 : y0;
-        const ty = fy - y0;
+        const sy0 = fy | 0;
+        const sy1 = sy0 < ph - 1 ? sy0 + 1 : sy0;
+        const ty = fy - sy0;
 
-        const r0 = (y0 * pw + x0) * 4;
-        const r1 = (y0 * pw + x1) * 4;
-        const r2 = (y1 * pw + x0) * 4;
-        const r3 = (y1 * pw + x1) * 4;
+        const r0 = (sy0 * pw + sx0) * 4;
+        const r1 = (sy0 * pw + sx1) * 4;
+        const r2 = (sy1 * pw + sx0) * 4;
+        const r3 = (sy1 * pw + sx1) * 4;
         const topw = 1 - tx, botw = 1 - ty;
         out[p]     = sd[r0] * topw * botw + sd[r1] * tx * botw + sd[r2] * topw * ty + sd[r3] * tx * ty;
         out[p + 1] = sd[r0 + 1] * topw * botw + sd[r1 + 1] * tx * botw + sd[r2 + 1] * topw * ty + sd[r3 + 1] * tx * ty;
