@@ -5,12 +5,13 @@
         "version": "2.1.3",
         "author": "Apex Artist",
         "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
-        "tags": ["image processing", "depth map", "vfx", "professional", "blur", "sharpen"],
+        "tags": ["image processing", "depth map", "vfx", "professional", "blur", "sharpen", "hdri", "panorama"],
         "nodes": [
             "Apex Depth to Normal",
             "Apex Layer Blend",
             "Apex Blur",
             "Apex Sharpen",
+            "Apex HDRI Viewer",
             "Apex Prompt Preset Selector",
             "Apex LoRA Loader"
         ],

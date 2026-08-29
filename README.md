@@ -9,6 +9,7 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 - **ApexSharpen** — 8 sharpening methods (Unsharp Mask, High Pass, Clarity, etc.)
 - **ApexLayerBlend** — 25+ blend modes for layer compositing
 - **ApexDepthToNormal** — Convert depth maps to normal maps
+- **ApexHDRIViewer** — Load HDRI/360° panoramas, aim a camera view, and output the captured image
 
 ### Models & Workflow
 - **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
@@ -20,6 +21,7 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 - Interactive modal browser with folder navigation
 - Optimized 256x256 thumbnails (100-200x faster loading)
 - Smart preview detection (multiple formats: PNG, JPG, WebP, GIF, BMP, TIFF)
+
 - Original images can be deleted after thumbnail creation to save space
 - Handles large collections (1000+ LoRAs efficiently)
 
@@ -53,9 +55,11 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 - **ApexSharpen**: 18-25ms
 - **ApexLayerBlend**: 2-25ms depending on mode
 - **ApexDepthToNormal**: 12ms
+- **ApexHDRIViewer**: depends on output resolution and batch size
 
 ## 🚀 Changelog
 
+**v2.1.2** - 2026-07-25 — LoRA thumbnail system fixes: automatic regeneration on image updates, browser cache-busting, improved back button
 **v2.1.1** - 2026-07-23 — Patch: version bump, removed stale ApexLoadModel references from metadata files
 **v2.0.3** - 2026-07-19 — Project cleanup: removed ApexLoRAExtract, ApexLoRAMerge, and ApexModelQuantizer to focus on core VFX features
 **v2.0.2** - 2026-07-16 — Brand refresh: repositioned as efficient nodes to make ComfyUI convenient, removed VFX branding
@@ -67,6 +71,7 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 - Python 3.8+
 - PyTorch (as provided by ComfyUI)
 - Pillow (PIL) with image format support (provided by ComfyUI)
+- OpenCV (`opencv-python`) for true `.hdr` / `.exr` HDRI loading
 
 **Note on WebP support:** WebP thumbnail generation requires Pillow to be compiled with libwebp support. If WebP processing fails, the system will gracefully fall back to serving the original WebP image directly. Most modern Pillow installations include WebP support by default.
 

@@ -265,9 +265,15 @@ class ApexPromptPreset:
                 },
                 # --- Subway Fashion Portrait (from user request) ---
                 "Subway Fashion Portrait": {
-                    "prompt": "Modern subway train interior, large windows, stainless steel poles, overhead fluorescent lighting, clean white walls, train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment.",
+                    "prompt": "Modern subway train interior, standing beside large window, stainless steel poles, overhead fluorescent lighting, clean white walls, large train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment. Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, soft color grading, HDR, global illumination, volumetric lighting, ray tracing, masterpiece, best quality, photorealistic, hyperrealistic, 8K, DSLR photography quality. Ultra-detailed clothing textures (realistic leather, ribbed knit fabric, fluffy faux fur, intricate silver accessories), highly detailed facial features, realistic eyes, natural skin pores, subtle skin texture, shallow depth of field, creamy bokeh, ultra sharp focus. Camera specs: Canon EOS R5, 85mm lens, f/1.8, ISO 100.",
                     "description": "Contemporary subway interior with urban views and natural light",
                     "tags": ["subway", "urban", "interior", "contemporary", "transport"],
+                    "weight": 1.0
+                },
+                "Cozy Bedroom Window": {
+                    "prompt": "Cozy minimalist bedroom bathed in warm golden morning sunlight streaming through large white-framed window. Soft natural light creates gentle highlights and long window-frame shadows across neatly made white bed with fluffy duvet, cream sherpa blanket, and pale blush pillows. Clear glass vase with pale pink tulips on white windowsill beside ceramic coffee mug and small framed photograph. Outside window, softly blurred urban apartment buildings create subtle depth with creamy bokeh effect. White walls decorated with small aesthetic photo prints and minimal handwritten quote, calm lived-in atmosphere. Clean Scandinavian interior design, neutral beige and white color palette, airy composition, peaceful morning mood.",
+                    "description": "Cozy Scandinavian bedroom with morning window light",
+                    "tags": ["bedroom", "cozy", "scandinavian", "window", "morning"],
                     "weight": 1.0
                 }
             },

@@ -1,2 +1,3 @@
 # No extra dependencies required beyond ComfyUI core
 # numpy, scipy, Pillow, torch, torchvision, torchaudio, aiofiles are provided by ComfyUI
+opencv-python>=4.8.0

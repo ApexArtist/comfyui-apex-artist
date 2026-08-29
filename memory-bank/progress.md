@@ -1,26 +1,58 @@
 # Progress: comfyui-apex-artist
 
-## Active Nodes (6)
+## Active Nodes (7)
 
 ### Image Processing
 - **ApexBlur**: 9 blur algorithms
 - **ApexSharpen**: 8 edge-aware sharpening algorithms
 - **ApexDepthToNormal**: Depth → normal map conversion
 - **ApexLayerBlend**: 25+ Photoshop-style blending modes
+- **ApexHDRIViewer**: Load HDRI/panorama, aim camera view, output captured image
 
 ### Workflow & Models
 - **ApexPromptPreset**: 55 presets across 3 categories
 - **ApexLoraLoader**: Interactive browser with folder navigation and thumbnails
 
 ## Infrastructure
-- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`
+- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`, `apex_hdri_viewer.js`
 - API endpoints: `apex_prompt_api.py`, `apex_lora_api.py`, `apex_prompt_lens_api.py`
 - CI/CD: GitHub Actions for ComfyUI Registry
 - Version management: `update_version.py` (enhanced with auto-increment and git integration)
 - Publishing guide: `PUBLISH.md` (comprehensive workflow documentation)
 
 ## Current Status
-**Production/Stable v2.1.1** - Professional VFX and image processing with 6 core nodes. Health Score: 9.5/10 ✅
+**Production/Stable v2.1.3** - Professional VFX and image processing with 7 core nodes. Health Score: 9.5/10 ✅
+
+### ApexHDRIViewer Added (2026-08-28)
+- **New node**: `apex_hdri_viewer.py` created with `ApexHDRIViewer` as a Load Image-style HDRI/panorama camera viewer
+- **Projection modes**: rectilinear and equidistant fisheye camera views from equirectangular panoramas
+- **Controls**: selected HDRI image file, yaw, pitch, roll, FOV, lens type, output width, output height
+- **Frontend**: `web/apex_hdri_viewer.js` renders a low-resolution in-node camera preview from browser-displayable panoramas and updates yaw/pitch/roll/FOV values interactively
+- **Implementation**: OpenCV loads `.hdr`/`.exr`; PyTorch `grid_sample` handles reprojection with horizontal seam wrapping
+
+### ApexHDRIViewer Frontend Fix (2026-08-29)
+- Root cause: browser `new Image()` cannot decode `.hdr`/`.exr`, so the client-side panorama preview never rendered (no onload, unhandled onerror) → "preview gone, no drag visual".
+- Fix: preview now rendered **server-side** and served as PNG — NEW `apex_hdri_preview_api.py` with GET `/apex/hdri_preview?filename=&yaw=&pitch=&roll=&fov=&lens=` (reuses `equirect_to_camera_view`), registered in `__init__.py`.
+- `web/apex_hdri_viewer.js` rewritten to fetch/draw that preview PNG; drag = yaw/pitch, Shift+drag = roll, wheel = FOV; debounced preview refresh + widget-callback commit re-runs the IMAGE output. Preview uses a **fixed comfortable height (~420px, min 320/max 720)** rather than mirroring the wide output aspect, so the drag window is tall, not a thin strip.
+- Verified: backend→PNG works for both lenses; Node harness confirms load/fetch/drag/(yaw 10→20).
+
+## Recent Updates (August 2026)
+
+### ApexMotionBlur & MediaAccumulatorStitch Removed (2026-08-18)
+- **Nodes deleted**: `apex_motion_blur.py` and `apex_media_stitch.py` removed to streamline project focus
+- **Registration cleaned**: `__init__.py` updated — imports and mappings removed
+- **Metadata cleaned**: `custom_nodes.json` and `manifest.json` updated — node entries and video/motion-blur tags removed
+- **6 core nodes**: Project refocused on essential VFX and image processing nodes
+
+### ApexMotionBlur Added (2026-08-03)
+- **New node**: `apex_motion_blur.py` created with `ApexMotionBlur`
+- **Registration updated**: `__init__.py` imports and maps `ApexMotionBlur` as **Apex Motion Blur**
+- **Metadata updated**: `custom_nodes.json` and `manifest.json` now list Apex Motion Blur and video/motion-blur tags
+- **Algorithm**: Pure PyTorch fractional temporal shutter accumulation over IMAGE frame batches `[frames, H, W, C]`
+- **Defaults**: `fps=24`, `shutter_angle=180`, `sample_count=7`, `strength=1.0`, `edge_mode=clamp`
+- **Workflow**: Use between LTX/H3/Wan/decoded frames and VHS/Video Combine to bake blur into frames before saving
+- **Validation**: Syntax compile passed; package registration check confirms `ApexMotionBlur` in `NODE_CLASS_MAPPINGS`
+- **Import blocker fixed**: Removed stray `umb` prefix from `apex_lora_loader.py` shebang
 
 ## Recent Updates (July 2026)
 
@@ -114,3 +146,4 @@
 2. **v2.2.0** - Testing framework and automated test coverage
 3. **v2.3.0** - Performance optimizations (blur batch operations)
 4. **v3.0.0** - Major feature expansion (TBD based on user feedback)
+- [FIXED] web/apex_hdri_viewer.js was corrupted by line-numbered incremental inserts (duplicate fragments after registerExtension) causing the preview to disappear. Rebuilt cleanly via temp part files + concatenation. Verified by executing the module in a Node harness with ComfyUI/DOM stubs: extension registers, widget created, draw OK, drag OK, node auto-sized 420x500. Web dir contains only extension .js files.

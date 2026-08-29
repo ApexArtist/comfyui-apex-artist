@@ -6,6 +6,8 @@ from .apex_blur import ApexBlur
 from .apex_sharpen import ApexSharpen
 from .apex_prompt import ApexPromptPreset
 from .apex_lora_loader import ApexLoraLoader
+from .apex_hdri_viewer import ApexHDRIViewer
+from .apex_json_node import ApexJSON
 
 # Import API servers to initialize routes
 try:
@@ -23,6 +25,11 @@ try:
 except ImportError:
     print("Warning: Could not import apex_prompt_lens_api")
 
+try:
+    from . import apex_hdri_preview_api
+except ImportError:
+    print("Warning: Could not import apex_hdri_preview_api")
+
 NODE_CLASS_MAPPINGS = {
     "ApexDepthToNormal": ApexDepthToNormal,
     "ApexLayerBlend": ApexLayerBlend,
@@ -30,6 +37,8 @@ NODE_CLASS_MAPPINGS = {
     "ApexSharpen": ApexSharpen,
     "ApexPromptPreset": ApexPromptPreset,
     "ApexLoraLoader": ApexLoraLoader,
+    "ApexHDRIViewer": ApexHDRIViewer,
+    "ApexJSON": ApexJSON,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -39,6 +48,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexSharpen": "Apex Sharpen",
     "ApexPromptPreset": "Apex Prompt",
     "ApexLoraLoader": "Apex LoRA Loader",
+    "ApexHDRIViewer": "Apex HDRI Viewer",
+    "ApexJSON": "Apex JSON Lookup",
 }
 
 WEB_DIRECTORY = "./web"
+
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

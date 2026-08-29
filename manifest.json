@@ -19,12 +19,15 @@
     "depth-maps",
     "normal-maps",
     "layer-blending",
+    "hdri",
+    "panorama",
     "ai-tools"
   ],
   "python_version": ">=3.8",
   "comfyui_version": ">=0.1.0",
   "dependencies": [
-    "scikit-image>=0.19.0"
+    "scikit-image>=0.19.0",
+    "opencv-python>=4.8.0"
   ],
   "install_type": "git",
   "author": {
@@ -64,6 +67,14 @@
       "category": "image/filter",
       "input_types": ["IMAGE"],
       "output_types": ["IMAGE", "STRING"]
+    },
+    {
+      "id": "ApexHDRIViewer",
+      "display_name": "Apex HDRI Viewer",
+      "description": "Render rectilinear or fisheye camera views from equirectangular HDRI/panorama images",
+      "category": "image/transform",
+      "input_types": ["IMAGE"],
+      "output_types": ["IMAGE"]
     },
     {
       "id": "ApexPromptPreset",

@@ -1,5 +1,27 @@
 # Features: comfyui-apex-artist
 
+## ApexHDRIViewer
+
+### Overview
+Load Image-style camera viewer for equirectangular HDRI/panorama files. It loads a selected panorama from ComfyUI input storage, lets the user aim a camera view, and outputs the captured full-resolution camera image controlled by yaw, pitch, roll, FOV, lens model, and output dimensions.
+
+### Key Features
+- **Rectilinear Projection**: Standard pinhole-style camera view with horizontal FOV control
+- **Fisheye Projection**: Equidistant fisheye mapping for ultra-wide spherical views
+- **Camera Controls**: Yaw, pitch, roll, and FOV widgets drive the final render
+- **Load Image-style File Selection**: `hdri_image` uses ComfyUI's native upload/select widget for input images
+- **Custom Output Size**: Width/height controls from 64 to 8192 pixels
+- **Animated/Batch File Support**: Multi-frame files are rendered frame-by-frame where Pillow exposes frames
+- **Interactive Camera Viewer**: Frontend canvas renders a low-resolution camera view from browser-displayable panoramas and updates yaw/pitch/roll/FOV values while Python remains responsible for final quality
+
+### Technical Implementation
+- **Backend**: `apex_hdri_viewer.py` - Native input-file loading plus PyTorch `grid_sample` equirectangular reprojection with horizontal seam wrapping
+- **Frontend**: `web/apex_hdri_viewer.js` - In-node low-resolution camera preview with drag-to-aim, Shift+drag roll, and wheel-to-zoom controls
+- **HDR Format Loading**: Uses OpenCV for `.hdr`/`.exr` source loading and PyTorch for reprojection, preserving float HDR data before final ComfyUI image output clamping
+- **Category**: `Apex Artist/Image`
+
+---
+
 ## ApexLoraLoader
 
 ### Overview

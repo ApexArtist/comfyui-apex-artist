@@ -177,9 +177,18 @@ Object.defineProperty(widget, 'value', {
 ## Component Files
 
 ### Nodes
-- `apex_blur.py`, `apex_sharpen.py`
+- `apex_blur.py`, `apex_sharpen.py`, `apex_hdri_viewer.py`
 - `apex_depth_to_normal.py`, `apex_layer_blend.py`
 - `apex_prompt.py`, `apex_lora_loader.py`
+
+### Temporal Video/Image Batch Processing Pattern
+- ComfyUI video frame batches are treated as normal `IMAGE` tensors shaped `[frames, H, W, C]` until a downstream video combine/export node encodes them.
+
+### Equirectangular Reprojection Pattern
+- `ApexHDRIViewer` is a Load Image-style node that selects/uploads a panorama file and performs final panorama-to-camera reprojection in Python/PyTorch, not frontend JS.
+- Use OpenCV for true `.hdr`/`.exr` file decoding and `torch.nn.functional.grid_sample` for bilinear reprojection.
+- Wrap the horizontal longitude seam by padding one repeated source column on each side before sampling.
+- Frontend camera viewer widgets may display a lightweight panorama preview, but should only write standard widget values (`yaw`, `pitch`, `roll`, `fov`); backend remains the full-resolution output source of truth.
 
 ### APIs
 - `apex_prompt_api.py` - Prompt preset CRUD
@@ -188,3 +197,4 @@ Object.defineProperty(widget, 'value', {
 ### Web UI
 - `web/apex_prompt.js` - Prompt preset UI
 - `web/apex_lora_loader.js` - Interactive LoRA browser
+- `web/apex_hdri_viewer.js` - HDRI Viewer aiming widget

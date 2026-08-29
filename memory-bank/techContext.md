@@ -3,6 +3,8 @@
 ## Technologies
 - **Python**: >=3.8 (tested with 3.10, 3.12)
 - **PyTorch**: Core tensor/image processing (provided by ComfyUI)
+- **PyTorch grid_sample**: Used for HDRI/equirectangular reprojection without OpenCV
+- **OpenCV**: Used by ApexHDRIViewer to decode `.hdr` / `.exr` source files
 - **ComfyUI API**: >=0.1.0
 - **JavaScript**: Frontend extensions
 - **scikit-image**: >=0.19.0
@@ -38,6 +40,7 @@ python script.py
 
 ### Extra Requirements
 - scikit-image >=0.19.0
+- opencv-python >=4.8.0 for HDRI source decoding
 
 ## Input/Output Types
 | Type | Format | Description |
@@ -48,6 +51,9 @@ python script.py
 | `FLOAT` | Python float | Float parameter |
 | `STRING` | Python str | Text output |
 | `MODEL` | ComfyUI ModelPatcher-like object | Model input/output for LoRA and quantization workflows |
+
+### Video Frame Batch Convention
+- Generated/decoded video frames are still ComfyUI `IMAGE` tensors until encoded by a saver/combine node.
 
 ## Common Widget Formats
 ```python
@@ -104,7 +110,8 @@ comfyui-apex-artist/
 ├── update_version.py       # Version management tool
 ├── web/                    # Frontend extensions
 │   ├── apex_prompt.js
-│   └── apex_lora_loader.js
+│   ├── apex_lora_loader.js
+│   └── apex_hdri_viewer.js
 ├── lens/                   # Lens preset source images
 ├── lens_previews/          # Processed lens thumbnails
 └── memory-bank/            # Project documentation
@@ -116,3 +123,4 @@ comfyui-apex-artist/
     ├── progress.md
     ├── features.md
     └── apex_load_model_fixes.md
+```
