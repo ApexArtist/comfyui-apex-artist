@@ -6,6 +6,7 @@ Simple, single-strength LoRA loader with visual preview support
 import os
 import folder_paths
 import comfy.utils
+import comfy.sd
 
 class ApexLoraLoader:
     """

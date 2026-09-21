@@ -4,6 +4,12 @@ This document outlines the complete workflow for publishing new versions of the 
 
 ## Pre-Publish Checklist
 
+### Current preparation: 2.2.0 (September 21, 2026)
+- Version metadata and release notes prepared locally; see `CHANGELOG.md`.
+- No push, remote release, or registry publication authorized for this preparation.
+- Browser smoke tests and clean-install checks remain pending.
+- **Important:** the existing GitHub workflow publishes on a push to `main` that changes `pyproject.toml`; a later push is a publishing action, not just a backup.
+
 Before publishing a new version, ensure all of the following are complete:
 
 ### Code Quality
@@ -19,6 +25,9 @@ Before publishing a new version, ensure all of the following are complete:
 - [ ] Verify backward compatibility with existing workflows
 - [ ] Check for memory leaks or performance issues
 - [ ] Test on clean ComfyUI installation if possible
+- [ ] Run core tests: `python scripts\test_project_core.py`
+- [ ] Run character validator: `python scripts\validate_character_prompt.py`
+- [ ] Syntax check frontend: `node --check web\<filename>.js` for each file
 
 ### Documentation
 - [ ] README.md is up to date with new features
@@ -29,10 +38,10 @@ Before publishing a new version, ensure all of the following are complete:
 
 ### Version Files
 - [ ] All version numbers are consistent across files
-- [ ] CHANGELOG or release notes prepared
-- [ ] manifest.json is accurate
+- [ ] Release notes prepared
+- [ ] comfyui.yaml metadata is accurate
 - [ ] pyproject.toml metadata is current
-- [ ] package.json (if applicable) is updated
+- [ ] __init__.py NODE_VERSION matches
 
 ---
 
@@ -46,38 +55,22 @@ Follow [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
 - **MINOR** (0.x.0): New features, backward compatible
 - **MAJOR** (x.0.0): Breaking changes, major overhaul
 
-### 2. Run Version Update Script
+### 2. Update Version Numbers Manually
 
-The `update_version.py` script updates version numbers across all project files:
+This project does not currently include an automated version-update script. Update version numbers manually in these files:
 
-```bash
-# Basic usage - manually enter version
-python update_version.py
-
-# Auto-increment patch version (e.g., 1.2.3 → 1.2.4)
-python update_version.py --patch
-
-# Auto-increment minor version (e.g., 1.2.3 → 1.3.0)
-python update_version.py --minor
-
-# Auto-increment major version (e.g., 1.2.3 → 2.0.0)
-python update_version.py --major
-
-# Preview changes without applying them
-python update_version.py --dry-run --patch
-
-# Update version and create git commit + tag
-python update_version.py --patch --commit --tag
-```
+- `__init__.py` — `NODE_VERSION = "x.y.z"`
+- `comfyui.yaml` — `version: "x.y.z"`
+- `pyproject.toml` — `version = "x.y.z"`
+- `manifest.json` and `custom_nodes.json` — package `version` fields (not `manifest_version`)
 
 ### 3. Verify Version Consistency
 
-After running the script, verify that version numbers are updated in:
+After updating, verify that version numbers match across:
 - `__init__.py` (NODE_VERSION)
-- `manifest.json` (version field)
 - `pyproject.toml` (version field)
 - `comfyui.yaml` (version field)
-- Any other relevant files
+- `manifest.json` and `custom_nodes.json` (package version fields)
 
 ---
 
@@ -185,10 +178,8 @@ If publishing to ComfyUI Registry:
 
 **Solution:**
 ```bash
-# Run script again with --dry-run to check
-python update_version.py --dry-run
-
-# Or manually edit files to match
+# Inspect the five version files listed above and manually align them.
+# There is no update_version.py script in this repository.
 ```
 
 ### Git Push Rejected
@@ -251,10 +242,7 @@ git push origin v1.2.3
 ### Complete Publishing Command Sequence
 
 ```bash
-# 1. Update version (choose one)
-python update_version.py --patch
-python update_version.py --minor
-python update_version.py --major
+# 1. Manually update the five version files and CHANGELOG.md
 
 # 2. Review changes
 git status
@@ -271,13 +259,10 @@ git tag -a v1.2.3 -m "Release version 1.2.3"
 git push origin main --tags
 ```
 
-### One-Command Publishing (with script)
+### Local preparation only
 
-```bash
-# Update version, commit, tag, and push in one go
-python update_version.py --patch --commit --tag
-git push origin main --tags
-```
+Stop after the commit when a push has not been authorized. Leave the release tag
+and publication until the remaining checks pass and publication is requested.
 
 ---
 
@@ -318,4 +303,4 @@ When creating release notes or CHANGELOG entries:
 
 ---
 
-**Last Updated:** 2026-07-18
+**Last Updated:** 2026-09-21

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Apex HDRI Viewer Node - Equirectangular panorama camera renderer
 
@@ -10,7 +10,7 @@ resolution; the optional JS frontend only drives widget values for aiming.
 
 import math
 import os
-import hashlib
+import uuid
 
 import numpy as np
 from PIL import Image, ImageOps, ImageSequence
@@ -177,21 +177,24 @@ class ApexHDRIViewer:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "hdri_image": (cls._list_hdri_files(), {"image_upload": True}),
+                "image_input": ("IMAGE",),
                 "yaw": ("FLOAT", {"default": 0.0, "min": -360.0, "max": 360.0, "step": 0.5}),
                 "pitch": ("FLOAT", {"default": 0.0, "min": -89.0, "max": 89.0, "step": 0.5}),
                 "roll": ("FLOAT", {"default": 0.0, "min": -180.0, "max": 180.0, "step": 0.5}),
                 "fov": ("FLOAT", {"default": 90.0, "min": 10.0, "max": 179.0, "step": 1.0}),
+                "back_fov": ("FLOAT", {"default": 150.0, "min": 10.0, "max": 179.0, "step": 1.0}),
                 "lens_type": (["rectilinear", "fisheye"], {"default": "rectilinear"}),
                 "output_width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
                 "output_height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+                "exposure": ("FLOAT", {"default": 0.0, "min": -5.0, "max": 5.0, "step": 0.1}),
             }
         }
 
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("camera_view",)
+    RETURN_TYPES = ("IMAGE", "IMAGE")
+    RETURN_NAMES = ("front_view", "back_view")
     FUNCTION = "render"
     CATEGORY = "Apex Artist/Image"
+    OUTPUT_NODE = True
     SEARCH_ALIASES = ["hdri loader", "panorama viewer", "environment map", "360 image", "equirectangular camera"]
 
     @staticmethod
@@ -257,18 +260,24 @@ class ApexHDRIViewer:
 
         return ApexHDRIViewer._pil_to_tensor_batch(image_path)
 
-    def render(self, hdri_image, yaw, pitch, roll, fov, lens_type,
-               output_width, output_height):
+    def render(self, image_input, yaw, pitch, roll, fov, back_fov, lens_type,
+               output_width, output_height, exposure):
         try:
             output_width = int(output_width)
             output_height = int(output_height)
-            image_path = folder_paths.get_annotated_filepath(hdri_image)
-            source = self._load_hdri_tensor(image_path)
+
+            # Apply exposure adjustment
+            source = image_input
+            if exposure != 0.0:
+                source = source * (2.0 ** exposure)
+
             print(
                 f"Apex HDRI Viewer: {lens_type}, yaw={yaw}, pitch={pitch}, "
-                f"roll={roll}, fov={fov}, size={output_width}x{output_height}, file={hdri_image}"
+                f"roll={roll}, fov={fov}, back_fov={back_fov}, size={output_width}x{output_height}, exposure={exposure}"
             )
-            rendered = equirect_to_camera_view(
+
+            # Render front view
+            front_view = equirect_to_camera_view(
                 source,
                 yaw,
                 pitch,
@@ -278,28 +287,73 @@ class ApexHDRIViewer:
                 output_height,
                 lens_type,
             )
-            return (rendered.clamp(0.0, 1.0).cpu(),)
+
+            # Render back view (180° opposite direction with wider FOV)
+            back_yaw = (yaw + 360.0) % 360.0 - 180.0
+            back_view = equirect_to_camera_view(
+                source,
+                back_yaw,
+                pitch,
+                roll,
+                back_fov,
+                output_width,
+                output_height,
+                lens_type,
+            )
+
+            # Keep the original panorama separate from projected output images.
+            # The browser uses this bounded first-frame copy for interactive aiming.
+            panorama = image_input.detach()
+            if panorama.ndim == 3:
+                panorama = panorama.unsqueeze(0)
+            panorama = panorama[:1, ..., :3].float()
+            scale = min(1.0, 2048.0 / max(panorama.shape[1:3]))
+            if scale < 1.0:
+                panorama = F.interpolate(
+                    panorama.permute(0, 3, 1, 2),
+                    size=(max(1, round(panorama.shape[1] * scale)),
+                          max(1, round(panorama.shape[2] * scale))),
+                    mode="bilinear", align_corners=True,
+                ).permute(0, 2, 3, 1)
+            panorama = torch.nan_to_num(panorama, nan=0.0, posinf=0.0, neginf=0.0)
+            source_scale = max(1.0, float(panorama.max()))
+            source_images = self.save_images(panorama / source_scale, "ApexHDRI_source")
+            results = []
+            for label, tensor in [("front", front_view), ("back", back_view)]:
+                results.extend(self.save_images(tensor, filename_prefix=f"ApexHDRI_{label}"))
+
+            return {"ui": {"images": results, "hdri_source": source_images,
+                           "hdri_source_scale": [source_scale]},
+                    "result": (front_view, back_view)}
         except Exception as exc:
             print(f"[Apex HDRI Viewer] Error: {exc}")
-            return (torch.zeros((1, 1, 1, 3), dtype=torch.float32),)
+            raise
+
+    def save_images(self, images, filename_prefix="ComfyUI"):
+        """Save unique temporary previews without overwriting user output files."""
+        output_dir = folder_paths.get_temp_directory()
+        os.makedirs(output_dir, exist_ok=True)
+        prefix = f"{filename_prefix}_{uuid.uuid4().hex}"
+        results = []
+
+        for batch_number, image in enumerate(images):
+            i = 255. * image.detach().float().cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+
+            file = f"{prefix}_{batch_number:05d}.png"
+            img.save(os.path.join(output_dir, file), compress_level=4)
+
+            results.append({
+                "filename": file,
+                "subfolder": "",
+                "type": "temp"
+            })
+
+        return results
 
     @classmethod
-    def IS_CHANGED(cls, hdri_image, yaw, pitch, roll, fov, lens_type,
-                   output_width, output_height):
-        image_path = folder_paths.get_annotated_filepath(hdri_image)
-        digest = hashlib.sha256()
-        with open(image_path, "rb") as file:
-            digest.update(file.read())
-        digest.update(str((yaw, pitch, roll, fov, lens_type, output_width, output_height)).encode("utf-8"))
-        return digest.hexdigest()
-
-    @classmethod
-    def VALIDATE_INPUTS(cls, hdri_image, **kwargs):
-        if not folder_paths.exists_annotated_filepath(hdri_image):
-            return f"Invalid HDRI/panorama image file: {hdri_image}"
-        ext = os.path.splitext(hdri_image.split("[")[0])[1].lower()
-        if ext not in cls.SUPPORTED_EXTENSIONS:
-            return f"Unsupported HDRI/panorama file extension: {ext}"
+    def VALIDATE_INPUTS(cls, image_input, **kwargs):
+        """Validate socket input tensor (ComfyUI handles IMAGE type validation)."""
         return True
 
 

@@ -63,7 +63,7 @@ def gaussian_blur(image: torch.Tensor, radius: float, sigma_multiplier: float = 
     """
     Apply optimized Gaussian blur to image tensor
     
-    Uses 2D Gaussian kernel for reliable results across all blur types.
+    Uses separable Gaussian convolution, preserving the existing zero padding.
     
     Args:
         image: Input tensor in [B, H, W, C] format
@@ -89,21 +89,22 @@ def gaussian_blur(image: torch.Tensor, radius: float, sigma_multiplier: float = 
     if kernel_size % 2 == 0:
         kernel_size += 1
     
-    # Create 2D Gaussian kernel
-    x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-    y = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-    xx, yy = torch.meshgrid(x, y, indexing='ij')
-    
-    kernel_2d = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
-    kernel_2d = kernel_2d / kernel_2d.sum()
-    kernel_2d = kernel_2d.unsqueeze(0).unsqueeze(0)  # [1, 1, H, W]
+    # A Gaussian is separable: two length-K passes replace one K-by-K pass.
+    # Build in at least float32, then match the input for convolution.
+    kernel_dtype = torch.float64 if image.dtype == torch.float64 else torch.float32
+    x = torch.arange(kernel_size, device=device, dtype=kernel_dtype) - kernel_size // 2
+    kernel = torch.exp(-x.square() / (2 * sigma**2))
+    kernel = (kernel / kernel.sum()).to(dtype=image.dtype)
     
     padding = kernel_size // 2
     
     # Apply to all channels at once using grouped convolution (faster and equivalent)
     # Permute to [B, C, H, W], then use groups=channels for per-channel convolutions
     image_permuted = image.permute(0, 3, 1, 2)  # [B, C, H, W]
-    blurred = F.conv2d(image_permuted, kernel_2d.repeat(channels, 1, 1, 1), groups=channels, padding=padding)
+    horizontal = kernel.view(1, 1, 1, -1).repeat(channels, 1, 1, 1)
+    vertical = kernel.view(1, 1, -1, 1).repeat(channels, 1, 1, 1)
+    blurred = F.conv2d(image_permuted, horizontal, groups=channels, padding=(0, padding))
+    blurred = F.conv2d(blurred, vertical, groups=channels, padding=(padding, 0))
     blurred = blurred.permute(0, 2, 3, 1)  # [B, H, W, C]
     
     return blurred
@@ -123,6 +124,7 @@ def apply_mask(original: torch.Tensor, processed: torch.Tensor, mask: torch.Tens
     """
     device = original.device
     batch, height, width, channels = original.shape
+    mask = mask.to(device=device, dtype=original.dtype)
     
     # Ensure mask has correct dimensions
     if len(mask.shape) == 2:

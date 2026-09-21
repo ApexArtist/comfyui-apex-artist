@@ -1,15 +1,21 @@
-NODE_VERSION = "2.1.3"
+NODE_VERSION = "2.2.0"
 
 from .apex_depth_to_normal import ApexDepthToNormal
 from .apex_layer_blend import ApexLayerBlend
 from .apex_blur import ApexBlur
 from .apex_sharpen import ApexSharpen
 from .apex_prompt import ApexPromptPreset
+from .apex_character_prompt import ApexCharacterPrompt
 from .apex_lora_loader import ApexLoraLoader
 from .apex_hdri_viewer import ApexHDRIViewer
 from .apex_json_node import ApexJSON
 
 # Import API servers to initialize routes
+try:
+    from . import apex_character_prompt_api
+except ImportError:
+    print("Warning: Could not import apex_character_prompt_api")
+
 try:
     from . import apex_prompt_api
 except ImportError:
@@ -36,6 +42,7 @@ NODE_CLASS_MAPPINGS = {
     "ApexBlur": ApexBlur,
     "ApexSharpen": ApexSharpen,
     "ApexPromptPreset": ApexPromptPreset,
+    "ApexCharacterPrompt": ApexCharacterPrompt,
     "ApexLoraLoader": ApexLoraLoader,
     "ApexHDRIViewer": ApexHDRIViewer,
     "ApexJSON": ApexJSON,
@@ -47,6 +54,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexBlur": "Apex Blur",
     "ApexSharpen": "Apex Sharpen",
     "ApexPromptPreset": "Apex Prompt",
+    "ApexCharacterPrompt": "Apex Character Prompt",
     "ApexLoraLoader": "Apex LoRA Loader",
     "ApexHDRIViewer": "Apex HDRI Viewer",
     "ApexJSON": "Apex JSON Lookup",

@@ -19,8 +19,7 @@ class ApexLensAPI:
         """Get all lens presets from apex_prompt.py"""
         try:
             from .apex_prompt import ApexPromptPreset
-            instance = ApexPromptPreset()
-            presets = instance.get_default_presets()
+            presets = ApexPromptPreset.get_default_presets()
             
             # Extract just the camera lens presets
             if "Apex Camera Lens" in presets:

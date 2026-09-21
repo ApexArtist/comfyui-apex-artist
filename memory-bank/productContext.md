@@ -1,29 +1,21 @@
-# Product Context: comfyui-apex-artist
+# Product Context
 
-## Purpose
-Provides professional-grade VFX and post-production nodes that integrate naturally into ComfyUI workflows, plus advanced diffusion model loading with dtype selection.
+## Why This Exists
+ComfyUI users need convenient image processing and prompt management without external tools or long node chains. This package provides professional-grade image effects, flexible prompt systems, and efficient LoRA workflows directly in the ComfyUI interface.
 
-## Problems It Solves
-- **Limited artistic controls**: ComfyUI's built-in nodes don't cover professional VFX effects (multiple blur algorithms, depth-to-normal conversion, RGB curves, layer blending)
-- **Workflow complexity**: Users previously needed to chain multiple basic nodes or use external tools
-- **Batch processing**: Nodes support batch modes for video frame sequences
-- **Interactive UI**: JavaScript extensions provide interactive widgets (RGB curve editors, LoRA browser with thumbnails)
+## How It Should Work
+Users add nodes from the "Apex Artist" category, configure parameters through native ComfyUI widgets, and connect them in workflows. LoRA selection happens through an interactive browser with thumbnails. Prompt presets offer categorized options (Environment, Lighting, Style, Camera) with seeded randomization. Image processing nodes handle batched tensors with device-aware operations.
 
-## User Experience
-- **Discoverability**: Nodes grouped under "Apex Artist" category with subcategories
-- **Consistency**: Follow ComfyUI's established UI/UX patterns
-- **Composability**: Nodes chain together naturally
-- **Performance**: GPU-accelerated via PyTorch; FP8 optimizations reduce VRAM usage
+## User Experience Goals
+- Discoverable through ComfyUI's native add-node menu
+- Familiar widget interfaces that preserve user-controlled node sizes
+- Fast LoRA browsing with folder navigation and lightweight thumbnails
+- Repeatable prompt generation with editable preset libraries
+- Photographic presets use photographic language; artistic styles retain their vocabulary
+- Preview images using ComfyUI's native node.imgs system
 
-## Node Inventory (6 registered)
-1. ApexPromptPreset — 55 presets across Environment/Lighting/Style/Camera Lens categories
-2. ApexLoraLoader — Interactive browser with folder navigation and thumbnails
-3. ApexBlur — 9 blur algorithms
-4. ApexSharpen — 8 edge-aware sharpening algorithms
-5. ApexDepthToNormal — Depth → normal map conversion
-6. ApexLayerBlend — 25+ Photoshop-style blending modes
-
-## Key Design Principles
-- **Native-first rule**: Always use ComfyUI's native mechanisms and conventions when available (e.g., node.imgs for previews, folder_paths.get_full_path_or_raise for path resolution)
-- **Error resilience**: Nodes return placeholder tensors on failure
-- **Class-level safety**: Methods used by INPUT_TYPES() must be @staticmethod or @classmethod
+## Known Limitations
+- No diffusion model loader, quantizer, or RGB curve editor (removed features)
+- Panoramas can't reveal unseen geometry or true parallax
+- HDRI interactive preview requires connecting IMAGE and running once; first frame is a downscaled 8-bit approximation, final outputs retain tensor dynamic range
+- Prompt user library is shared across the installation; private per-profile libraries and whole-node setup saves are not implemented

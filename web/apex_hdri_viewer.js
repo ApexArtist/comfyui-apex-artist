@@ -1,4 +1,4 @@
-﻿import { app } from "../../../scripts/app.js";
+import { app } from "../../../scripts/app.js";
 
 const DRAG_SENSITIVITY = 0.35;
 const FOV_WHEEL_STEP = 3;
@@ -8,6 +8,7 @@ const PREVIEW_DEFAULT_H = 420;
 const PREVIEW_MIN_W = 420;
 const RENDER_MAX_W = 480;      // internal render resolution cap (upscaled on draw)
 const PANO_MAX_W = 2048;       // decode cap for the source panorama
+const PREVIEW_REFRESH_DEBOUNCE_MS = 100;  // 10 req/sec max during drag
 
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -54,25 +55,6 @@ function fmtDeg(v) {
     return Number(v).toFixed(1) + "\u00B0";
 }
 
-function buildPreviewUrl(node) {
-    const name = findWidget(node, "hdri_image")?.value;
-    if (!name) return null;
-    const qs = new URLSearchParams();
-    qs.set("filename", String(name));
-    qs.set("yaw", getWidgetValue(node, "yaw", 0));
-    qs.set("pitch", getWidgetValue(node, "pitch", 0));
-    qs.set("roll", getWidgetValue(node, "roll", 0));
-    qs.set("fov", getWidgetValue(node, "fov", 90));
-    qs.set("lens", String(findWidget(node, "lens_type")?.value ?? "rectilinear"));
-    return "/apex/hdri_preview?" + qs.toString();
-}
-
-function buildRawUrl(node) {
-    const name = findWidget(node, "hdri_image")?.value;
-    if (!name) return null;
-    return "/view?filename=" + encodeURIComponent(String(name)) + "&type=input&subfolder=";
-}
-
 // Decode the source panorama locally for realtime rendering. Works for
 // browser-decodable formats (jpg/png/webp); .hdr/.exr fall back to the
 // server-rendered snapshot.
@@ -87,7 +69,7 @@ function decodePanorama(node, img) {
         const h = Math.max(4, Math.round(ih * scale));
         const cv = document.createElement("canvas");
         cv.width = w; cv.height = h;
-        const cx = cv.getContext("2d", { willReadFrequently: true });
+        const cx = cv.getContext("2d");  // Default context for single-read decode
         cx.drawImage(img, 0, 0, w, h);
         const data = cx.getImageData(0, 0, w, h).data;
         state.pano = { data, width: w, height: h };
@@ -96,76 +78,88 @@ function decodePanorama(node, img) {
     }
 }
 
-// Server snapshot: final quality sync + .hdr/.exr support.
-let refreshTimer = null;
-let loadToken = 0;
-
-function schedulePreviewRefresh(node) {
-    clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => { loadPreview(node); }, 150);
+function viewUrlFromItem(item) {
+    if (!item?.filename) return item?.src || null;
+    const params = new URLSearchParams({ filename: item.filename, type: item.type || "temp" });
+    if (item.subfolder) params.set("subfolder", item.subfolder);
+    const url = "/view?" + params;
+    return app.api?.apiURL ? app.api.apiURL(url) : url;
 }
 
-function loadPreview(node) {
-    const url = buildPreviewUrl(node);
-    const state = (node._hdriState = node._hdriState || {});
-    if (!url) { state.error = "No image selected"; node.setDirtyCanvas?.(true, true); return; }
-    const sep = url.indexOf("?") >= 0 ? "&" : "?";
-    const src = url + sep + "ts=" + Date.now();
-    if (state.serverSrc === src) return;
-    state.serverSrc = src;
-    const token = ++loadToken;
+function loadSocketSource(node, item) {
+    const state = (node._hdriState ||= {});
+    const url = viewUrlFromItem(item);
+    if (!url || state.removed) return false;
+    if (state.socketSrc === url) return true;
+    state.socketSrc = url;
+    state.socketImageLoaded = false;
+    state.pano = null;
+    state.srcImg = null;
+    state.error = "Loading panorama…";
+    const token = state.loadToken = (state.loadToken || 0) + 1;
     const img = new Image();
     img.onload = () => {
-        if (token !== loadToken) return;
-        state.serverImg = img;
-        node.setDirtyCanvas?.(true, true);
-    };
-    img.onerror = () => { if (token === loadToken) state.serverImg = null; };
-    img.src = src;
-}
-
-function loadSource(node) {
-    const state = (node._hdriState = node._hdriState || {});
-    const raw = buildRawUrl(node);
-    if (!raw) { state.pano = null; state.srcImg = null; return; }
-    const img = new Image();
-    img.onload = () => {
+        if (state.removed || state.loadToken !== token) return;
         state.srcImg = img;
         decodePanorama(node, img);
+        state.socketImageLoaded = !!state.pano;
+        state.error = state.pano ? null : "Could not decode the panorama preview.";
         node.setDirtyCanvas?.(true, true);
     };
     img.onerror = () => {
-        state.srcImg = null;
-        state.pano = null;
-        state.error = "Could not load the panorama image.";
+        if (state.removed || state.loadToken !== token) return;
+        state.socketSrcFailed = url;
+        state.error = "Could not load panorama. Run the workflow again.";
         node.setDirtyCanvas?.(true, true);
     };
-    img.src = raw;
+    img.src = url;
+    return true;
+}
+
+function ensureSocketSource(node) {
+    // Never use node.imgs: those are projected outputs, not panoramas.
+    return loadSocketSource(node, node._hdriState?.sourceItem);
+}
+
+function schedulePreviewRefresh(node) {
+    const state = (node._hdriState ||= {});
+    clearTimeout(state.refreshTimer);
+    state.refreshTimer = setTimeout(() => {
+        if (!state.removed) node.setDirtyCanvas?.(true, true);
+    }, PREVIEW_REFRESH_DEBOUNCE_MS);
 }
 
 // Realtime local renderer: equirect -> perspective reprojection in JS.
 // Ray unit vectors depend only on size/fov/roll (precomputed); per frame we
 // rotate them by pitch (about camera X) and yaw (about world Y), matching the
 // backend rotation order R = Ry @ Rx @ Rz, then convert to equirect lon/lat.
-function ensureRayMap(state, w, h, fovDeg, rollDeg) {
-    const key = w + "x" + h + "|" + fovDeg.toFixed(2) + "|" + rollDeg.toFixed(2);
+function ensureRayMap(state, w, h, fovDeg, rollDeg, lens, aspect) {
+    const key = [w, h, fovDeg, rollDeg, lens, aspect].join("|");
     if (state.rayKey === key) return;
     state.rayKey = key;
     const fovR = (fovDeg * Math.PI) / 180;
     const rollR = (rollDeg * Math.PI) / 180;
-    const f = w / 2 / Math.tan(fovR / 2);
     const cosR = Math.cos(rollR), sinR = Math.sin(rollR);
     const rx = new Float32Array(w * h);
     const ryy = new Float32Array(w * h);
     const rz = new Float32Array(w * h);
     let i = 0;
     for (let yy = 0; yy < h; yy++) {
-        const dy = h / 2 - yy - 0.5;            // screen y down; camera up is +y
+        const gy = 1 - 2 * yy / (h - 1);
         for (let xx = 0; xx < w; xx++, i++) {
-            const dx = xx - w / 2 + 0.5;
-            const a = dx * cosR - dy * sinR;    // roll in screen plane
-            const b = dx * sinR + dy * cosR;
-            const wx = a, wy = b, wz = -f;      // camera forward is -Z
+            const gx = 2 * xx / (w - 1) - 1;
+            let dx = gx * Math.tan(fovR / 2);
+            let dy = gy * Math.tan(fovR / 2) * aspect;
+            let wz = -1;
+            if (lens === "fisheye") {
+                const theta = Math.min(1, Math.hypot(gx, gy)) * fovR / 2;
+                const phi = Math.atan2(gy, gx);
+                dx = Math.sin(theta) * Math.cos(phi);
+                dy = Math.sin(theta) * Math.sin(phi);
+                wz = -Math.cos(theta);
+            }
+            const wx = dx * cosR - dy * sinR;
+            const wy = dx * sinR + dy * cosR;
             const len = Math.hypot(wx, wy, wz);
             rx[i] = wx / len; ryy[i] = wy / len; rz[i] = wz / len;
         }
@@ -179,9 +173,11 @@ function renderLocalFrame(node) {
     if (!pano) return false;
     const boxW = Math.max(64, Math.round(state.boxW || 420));
     const boxH = Math.max(64, Math.round(state.boxH || 320));
-    const scale = Math.min(1, RENDER_MAX_W / boxW);
-    const w = Math.max(32, Math.round(boxW * scale));
-    const h = Math.max(32, Math.round(boxH * scale));
+    const ow = getWidgetValue(node, "output_width", boxW);
+    const oh = getWidgetValue(node, "output_height", boxH);
+    const scale = Math.min(boxW / ow, boxH / oh, RENDER_MAX_W / Math.max(ow, oh));
+    const w = Math.max(2, Math.round(ow * scale));
+    const h = Math.max(2, Math.round(oh * scale));
 
     if (!state.frameCanvas || state.frameCanvas.width !== w || state.frameCanvas.height !== h) {
         state.frameCanvas = document.createElement("canvas");
@@ -192,7 +188,9 @@ function renderLocalFrame(node) {
         state.rayKey = null;
     }
 
-    ensureRayMap(state, w, h, getWidgetValue(node, "fov", 90), getWidgetValue(node, "roll", 0));
+    ensureRayMap(state, w, h, getWidgetValue(node, "fov", 90), getWidgetValue(node, "roll", 0),
+        findWidget(node, "lens_type")?.value || "rectilinear", oh / ow);
+    const gain = (state.sourceScale || 1) * 2 ** getWidgetValue(node, "exposure", 0);
 
     const yawR = (getWidgetValue(node, "yaw", 0) * Math.PI) / 180;
     const pitchR = (getWidgetValue(node, "pitch", 0) * Math.PI) / 180;
@@ -222,7 +220,7 @@ function renderLocalFrame(node) {
 
         let u = lon / TWO_PI + 0.5;
         u -= Math.floor(u);
-        const fx = u * pw;
+        const fx = u * (pw - 1);
         const sx0 = fx | 0;
         const sx1 = (sx0 + 1) % pw;
         const tx = fx - sx0;
@@ -238,21 +236,23 @@ function renderLocalFrame(node) {
         const r2 = (sy1 * pw + sx0) * 4;
         const r3 = (sy1 * pw + sx1) * 4;
         const topw = 1 - tx, botw = 1 - ty;
-        out[p]     = sd[r0] * topw * botw + sd[r1] * tx * botw + sd[r2] * topw * ty + sd[r3] * tx * ty;
-        out[p + 1] = sd[r0 + 1] * topw * botw + sd[r1 + 1] * tx * botw + sd[r2 + 1] * topw * ty + sd[r3 + 1] * tx * ty;
-        out[p + 2] = sd[r0 + 2] * topw * botw + sd[r1 + 2] * tx * botw + sd[r2 + 2] * topw * ty + sd[r3 + 2] * tx * ty;
         out[p + 3] = 255;
+        // Apply gain before Uint8ClampedArray truncation/clipping.
+        for (let channel = 0; channel < 3; channel++) {
+            out[p + channel] = gain * (sd[r0 + channel] * topw * botw +
+                sd[r1 + channel] * tx * botw + sd[r2 + channel] * topw * ty + sd[r3 + channel] * tx * ty);
+        }
     }
     state.frameCtx.putImageData(state.frameData, 0, 0);
     return true;
 }
 
-// Draw an image filling the box (cover) without distortion.
+// Fit the complete output in the preview without cropping or distortion.
 function drawImageCover(ctx, img, x, y, w, h) {
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
     if (!iw || !ih) return;
-    const scale = Math.max(w / iw, h / ih);
+    const scale = Math.min(w / iw, h / ih);
     const dw = iw * scale;
     const dh = ih * scale;
     ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
@@ -302,7 +302,7 @@ function drawWidgetInner(node, ctx, width, y, height) {
         ctx.fillStyle = "#888";
         ctx.font = "14px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Select an image", width / 2, y + height / 2);
+        ctx.fillText("Connect an IMAGE and run the workflow to preview", width / 2, y + height / 2);
         ctx.textAlign = "left";
     }
 
@@ -337,8 +337,30 @@ function drawWidgetInner(node, ctx, width, y, height) {
 function addPreviewWidget(node) {
     if (node._hdriWidget) return;
     node._hdriState = node._hdriState || {};
-    loadSource(node);
-    loadPreview(node);
+    // Add onExecuted hook to load socket images
+    const origExecuted = node.onExecuted;
+    node.onExecuted = function(message) {
+        if (origExecuted) origExecuted.apply(this, arguments);
+
+        const state = node._hdriState;
+        state.sourceItem = message?.hdri_source?.[0];
+        state.sourceScale = Number(message?.hdri_source_scale?.[0]) || 1;
+        state.socketSrc = null;
+        state.loadToken = (state.loadToken || 0) + 1;
+        state.pano = state.srcImg = null;
+        state.socketImageLoaded = false;
+        state.error = "Connect an IMAGE and run the workflow to preview";
+        ensureSocketSource(node);
+        node.setDirtyCanvas?.(true, true);
+    };
+
+    const origRemoved = node.onRemoved;
+    node.onRemoved = function (...args) {
+        node._hdriState.removed = true;
+        clearTimeout(node._hdriState.refreshTimer);
+        node._hdriState.pano = node._hdriState.srcImg = null;
+        return origRemoved?.apply(this, args);
+    };
     let dragging = false;
     let lastPos = null;
     let rafPending = false;
@@ -349,13 +371,15 @@ function addPreviewWidget(node) {
         rafPending = true;
         requestAnimationFrame(() => {
             rafPending = false;
-            n.setDirtyCanvas?.(true, false);
+            if (!n._hdriState.removed) n.setDirtyCanvas?.(true, false);
         });
     }
 
     const widget = node.addCustomWidget({
         name: "hdri_preview",
         type: "hdri_preview",
+        serialize: false,
+        options: { serialize: false },
         computeSize: (w) => [w ?? 200, previewHeight(w, node)],
         draw: (ctx, node, width, y, height) => {
             const computed = node._hdriWidget?.computedHeight;
@@ -415,16 +439,15 @@ function addPreviewWidget(node) {
     }
     node.setDirtyCanvas?.(true, true);
 
-    // Reload the source when the image selection changes.
-    for (const name of ["hdri_image"]) {
+    // Numeric edits use the same local renderer as dragging.
+    for (const name of ["yaw", "pitch", "roll", "fov", "lens_type", "exposure", "output_width", "output_height"]) {
         const wt = findWidget(node, name);
         if (wt && !wt._hdriHooked) {
             const orig = wt.callback;
             wt.callback = function (...args) {
-                loadSource(node);
-                loadPreview(node);
+                const result = orig?.apply(this, args);
                 node.setDirtyCanvas?.(true, true);
-                return orig?.apply(this, args);
+                return result;
             };
             wt._hdriHooked = true;
         }

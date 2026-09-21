@@ -1,149 +1,34 @@
-# Progress: comfyui-apex-artist
+# Progress
 
-## Active Nodes (7)
+## What Works
+- **9 registered nodes** (v2.2.0 prepared locally): ApexBlur (9 algorithms), ApexSharpen (8 methods), ApexLayerBlend (27 modes), ApexDepthToNormal, ApexHDRIViewer, ApexLoraLoader, ApexPromptPreset, ApexCharacterPrompt, ApexJSON
+- **Core image processing**: All blur/sharpen/blend operations functional
+- **Shared utilities**: Separable Gaussian blur (tested vs dense reference), device/dtype-aware masks, luminance/HSL conversion
+- **LoRA system**: Modal browser with folder navigation, 256×256 JPEG thumbnails, native node.imgs preview, path boundary validation
+- **Prompt preset system**: Read-only factory JSON with missing Python names supplemented; separate installation-shared user store; Save/Manage UI, atomic writes, revision conflicts, import/export, live dropdown refresh and execution invalidation. Existing factory random pool preserved.
+- **Character prompt node**: 12 preset categories with weighted seed-deterministic Random, an independent character store, 13 STRING outputs, and an optional free-text input box that leads the combined prompt (appended last in INPUT_TYPES so existing workflows keep their widget values)
+- **Security**: Resolved component path checks prevent directory traversal
+- **Testing**: September 20: 10 prompt-preset Python tests, frontend Node.js harness, full character validator (library, dropdowns, 13 outputs, seeding, brackets, API CRUD, damaged/missing-store fallback, package registration) and 7 core unittest methods all pass; real package import verified against actual `folder_paths` (9 nodes registered). Character library is 221 presets (18 face) with **Square Eyes** stored verbatim and confirmed in `character_presets.json`; September 21 additions are **Long Silver Blonde Wispy Bangs** (hair), **White Wireless Headphones** (headwear), and **Oversized Pale Blue Hoodie** (top), regenerated and verified in sync with the validator total updated to 221. Live browser smoke tests for the new controls remain pending. September 21, 2026: the validator grew to 105 checks covering the character node's new `input_text` box (position, spec, merge order, output isolation, empty-box regression, brackets) and passes 105 / 0 FAIL; the box appears in the UI only after a ComfyUI restart.
 
-### Image Processing
-- **ApexBlur**: 9 blur algorithms
-- **ApexSharpen**: 8 edge-aware sharpening algorithms
-- **ApexDepthToNormal**: Depth → normal map conversion
-- **ApexLayerBlend**: 25+ Photoshop-style blending modes
-- **ApexHDRIViewer**: Load HDRI/panorama, aim camera view, output captured image
+## What's Left to Build
+### Critical Issues
+1. **HDRI viewer**: Repaired September 21; 11 frontend checks and 6 backend tests pass. Separate source panorama metadata, correct back yaw, unique temporary files, per-node async state, matching lens/exposure/aspect. Live browser verification pending.
+4. **Preset follow-up**: Live browser smoke test pending; character API remains separate and unchanged
+5. **Registry metadata**: Reconciled nine node IDs/display names/categories, manifest outputs, and OpenCV dependency for 2.2.0; publication deferred
 
-### Workflow & Models
-- **ApexPromptPreset**: 55 presets across 3 categories
-- **ApexLoraLoader**: Interactive browser with folder navigation and thumbnails
-
-## Infrastructure
-- Web UI extensions: `apex_prompt.js`, `apex_lora_loader.js`, `apex_hdri_viewer.js`
-- API endpoints: `apex_prompt_api.py`, `apex_lora_api.py`, `apex_prompt_lens_api.py`
-- CI/CD: GitHub Actions for ComfyUI Registry
-- Version management: `update_version.py` (enhanced with auto-increment and git integration)
-- Publishing guide: `PUBLISH.md` (comprehensive workflow documentation)
+### Known Issues
+- **Known gap**: The character node ships dropdowns and a working API but no in-canvas preset manager UI, so preset changes require editing `character_presets.json` directly. `web/apex_preset_manager.js` is a reusable manager that nothing currently imports.
+- **Known gap**: `/apex/character_presets` still writes non-atomically and can overwrite the extension's JSON in place, unlike the prompt preset store.
+- HDRI/LoRA thumbnail rendering blocks async handlers
+- Character prompt registration and inherited-store regression fixed September 20; standalone/API/package-registration validator passes. Live UI restart verification pending.
+- Sampled IS_CHANGED hashing can miss changes outside samples
+- Legacy uncommitted HDRI height-control harness targets absent controls; use the new test_hdri_socket.py/.mjs regressions for the current socket contract
+- requirements.txt vs metadata dependency reconciliation needed
 
 ## Current Status
-**Production/Stable v2.1.3** - Professional VFX and image processing with 7 core nodes. Health Score: 9.5/10 ✅
+2.2.0 prepared for local commit, not publication. Current automated regressions pass; live browser and clean-install checks remain pending. Legacy HDRI height diagnostics are preserved but excluded from the current regression suite. See CHANGELOG.md.
 
-### ApexHDRIViewer Added (2026-08-28)
-- **New node**: `apex_hdri_viewer.py` created with `ApexHDRIViewer` as a Load Image-style HDRI/panorama camera viewer
-- **Projection modes**: rectilinear and equidistant fisheye camera views from equirectangular panoramas
-- **Controls**: selected HDRI image file, yaw, pitch, roll, FOV, lens type, output width, output height
-- **Frontend**: `web/apex_hdri_viewer.js` renders a low-resolution in-node camera preview from browser-displayable panoramas and updates yaw/pitch/roll/FOV values interactively
-- **Implementation**: OpenCV loads `.hdr`/`.exr`; PyTorch `grid_sample` handles reprojection with horizontal seam wrapping
-
-### ApexHDRIViewer Frontend Fix (2026-08-29)
-- Root cause: browser `new Image()` cannot decode `.hdr`/`.exr`, so the client-side panorama preview never rendered (no onload, unhandled onerror) → "preview gone, no drag visual".
-- Fix: preview now rendered **server-side** and served as PNG — NEW `apex_hdri_preview_api.py` with GET `/apex/hdri_preview?filename=&yaw=&pitch=&roll=&fov=&lens=` (reuses `equirect_to_camera_view`), registered in `__init__.py`.
-- `web/apex_hdri_viewer.js` rewritten to fetch/draw that preview PNG; drag = yaw/pitch, Shift+drag = roll, wheel = FOV; debounced preview refresh + widget-callback commit re-runs the IMAGE output. Preview uses a **fixed comfortable height (~420px, min 320/max 720)** rather than mirroring the wide output aspect, so the drag window is tall, not a thin strip.
-- Verified: backend→PNG works for both lenses; Node harness confirms load/fetch/drag/(yaw 10→20).
-
-## Recent Updates (August 2026)
-
-### ApexMotionBlur & MediaAccumulatorStitch Removed (2026-08-18)
-- **Nodes deleted**: `apex_motion_blur.py` and `apex_media_stitch.py` removed to streamline project focus
-- **Registration cleaned**: `__init__.py` updated — imports and mappings removed
-- **Metadata cleaned**: `custom_nodes.json` and `manifest.json` updated — node entries and video/motion-blur tags removed
-- **6 core nodes**: Project refocused on essential VFX and image processing nodes
-
-### ApexMotionBlur Added (2026-08-03)
-- **New node**: `apex_motion_blur.py` created with `ApexMotionBlur`
-- **Registration updated**: `__init__.py` imports and maps `ApexMotionBlur` as **Apex Motion Blur**
-- **Metadata updated**: `custom_nodes.json` and `manifest.json` now list Apex Motion Blur and video/motion-blur tags
-- **Algorithm**: Pure PyTorch fractional temporal shutter accumulation over IMAGE frame batches `[frames, H, W, C]`
-- **Defaults**: `fps=24`, `shutter_angle=180`, `sample_count=7`, `strength=1.0`, `edge_mode=clamp`
-- **Workflow**: Use between LTX/H3/Wan/decoded frames and VHS/Video Combine to bake blur into frames before saving
-- **Validation**: Syntax compile passed; package registration check confirms `ApexMotionBlur` in `NODE_CLASS_MAPPINGS`
-- **Import blocker fixed**: Removed stray `umb` prefix from `apex_lora_loader.py` shebang
-
-## Recent Updates (July 2026)
-
-### ApexLoadModel Removed (2026-07-23)
-- **Node deleted**: `apex_load_model.py` removed — redundant with ComfyUI's native `CheckpointLoaderSimple` and other model loaders
-- **Registration cleaned**: `__init__.py` updated — import and mappings removed
-- **JS already deleted**: `web/apex_load_model.js` was already removed in previous cleanup
-- **Fix docs archived**: `apex_load_model_fixes.md` moved to `memory-bank/` for historical reference
-- **6 active nodes**: Project streamlined to core VFX and image processing nodes
-
-### Apex LoRA Loader Native Preview Fix (2026-07-21)
-- **Selected Preview Rendering**: Updated `web/apex_lora_loader.js` to use ComfyUI's native node preview mechanism (`node.imgs = [img]`, `node.imageIndex = 0`) instead of a custom `addCustomWidget()` canvas draw.
-- **Native Load Image-like Sizing**: Removed forced `node.setSize(node.computeSize())` calls from preview image changes. LoRA preview updates now redraw inside the current node size, preserving manual node sizing like native Load Image.
-- **User Impact**: Selected LoRA preview now behaves like native Preview Image / Load Image previews and no longer appears messy, stretched, shifted, overlapped, clipped, or auto-resized.
-- **Documentation**: Added native node image preview pattern and native-first rule to `systemPatterns.md`, `domWidgetPatterns.md`, `features.md`, and `activeContext.md` so future agents follow ComfyUI-native behavior first.
-
-### v2.0.3 Cleanup & Optimize (2026-07-19)
-- **Node Removal**: Removed ApexLoRAExtract, ApexLoRAMerge, and ApexModelQuantizer
-- **Documentation Cleanup**: Removed APEX_LORA_EXTRACT_ADAPTIVE.md, APEX_LORA_MERGE_ADAPTIVE.md, APEX_LORA_MERGE.md
-- **Simplified Focus**: Streamlined to core VFX and image processing features
-- **Memory Bank Updated**: Cleaned all references to removed nodes
-- **Code Deduplication**: 
-  - `apex_layer_blend.py` → uses shared `rgb_to_hsl()`, `hsl_to_rgb()`, `calculate_luminance()` from `apex_utils.py` (removed 80+ lines)
-  - `apex_sharpen.py` → uses shared `calculate_luminance()` (4 instances)
-- **Performance Optimizations**:
-  - `apex_blur.py`: Grouped convolution for 3-4x faster box/lens blur
-  - `apex_blur.py`: LRU kernel cache (`@lru_cache`) avoids recomputation
-  - `apex_blur.py`: Pre-permuted tensors in radial/spin/zoom blur loops
-- **Code Quality**:
-  - `apex_prompt.py`: Thread-safe cache with double-checked locking
-  - `apex_prompt.py`: Removed inline `import random` statements
-  - `apex_prompt.py`: Fixed global `random.seed()` pollution → local `Random()` instances
-- **File Cleanup**:
-  - `check_model_options.py` → `scripts/check_model_options.py` (fixed hardcoded path)
-  - Removed old `check_model_options.py` from root
-
-### v2.0.2 Release (2026-07-18)
-- **ApexSmartResize Removed**: Redundant functionality, cleaned up codebase
-- **README.md Updated**: More concise documentation
-- **PUBLISH.md Created**: Comprehensive publishing workflow guide
-- **update_version.py Enhanced**: Auto-increment flags (--patch/--minor/--major), dry-run mode, git integration (--commit/--tag), colored output, current version detection
-
-### v1.7.0 Release
-- **ApexLoraLoader**: New node with interactive browser, folder navigation, optimized thumbnails
-- **Thumbnail System**: 256px/512px two-tier caching, 100-500x file size reduction
-- **Node Freeze Fix**: Deferred collapse, error boundaries, requestAnimationFrame updates
-- **ApexSmartResize**: Added 6 new 2026 model presets (ZImage, QwenEdit, Krea2, Ideogram4, FLUX.2, SD3.5)
-- **Divisibility Control**: New parameter for dimension enforcement (8/16/32/64)
-- **Documentation Consolidation**: Created features.md, cleaned 10 redundant files
-- **Camera Lens Browser**: Interactive lens browser with 43 visual thumbnails integrated into ApexPromptPreset
-  - 6 color-coded categories (Standard, Wide Angle, Portrait, Telephoto, Special Effects, Cinema)
-  - Generated 256×256 framing diagrams showing lens characteristics
-  - Smart visibility: Toggle hidden when "Disabled" or "Random" selected
-  - Backend API (`apex_prompt_lens_api.py`) with 3 endpoints
-  - Frontend browser (`web/apex_prompt_lens.js`, 500+ lines)
-
-## Completed Items (July 2026)
-- [x] ApexLoraLoader implementation with browser and thumbnails
-- [x] Documentation consolidation (10 files → features.md)
-- [x] Category standardization across all nodes
-- [x] Node freeze bug fix with deferred collapse
-- [x] Camera Lens Browser with 43 visual thumbnails
-- [x] Smart visibility logic for lens browser toggle button
-- [x] Memory bank documentation updates
-- [x] ApexSmartResize node removal (v2.0.2)
-- [x] PUBLISH.md creation with comprehensive workflow guide
-- [x] update_version.py enhancement with auto-increment and git features
-- [x] ApexLoRAExtract, ApexLoRAMerge, ApexModelQuantizer removal (v2.0.3)
-- [x] Project cleanup and documentation updates (v2.0.3)
-- [x] HSL/luminance deduplication in apex_layer_blend.py
-- [x] Luminance deduplication in apex_sharpen.py
-- [x] Grouped convolution + kernel cache in apex_blur.py
-- [x] Thread-safe cache + inline import fix in apex_prompt.py
-- [x] Fixed hardcoded path in check_model_options.py, moved to scripts/
-- [x] ApexLoraLoader selected preview uses native `node.imgs` rendering
-- [x] ApexLoraLoader preview image changes preserve node size like native Load Image
-- [x] ApexLoadModel args.fast crash fixed with hasattr guards
-- [x] ApexLoadModel fp8 dtype logic consolidated (single if/else branch)
-- [x] ApexLoadModel walrus operators removed (explicit is not None checks)
-- [x] web/apex_load_model.js deleted (node is 100% Python-native)
-
-## Outstanding Items
-- [ ] Automated test suite (Priority 3)
-- [ ] Optional: File naming consistency `apex_prompt.py` → `apex_prompt_preset.py` (Priority 2)
-- [ ] Optional: Batch operation optimization for radial/spin/zoom blur (2-3x speedup)
-- [ ] Optional: Async I/O fix for 3 API handlers (low priority)
-
-## Next Milestones
-1. **v2.1.0** ✅ ApexLoadModel native optimization (complete)
-2. **v2.1.1** ✅ Patch release: version bump, cleaned stale ApexLoadModel references from metadata
-2. **v2.2.0** - Testing framework and automated test coverage
-3. **v2.3.0** - Performance optimizations (blur batch operations)
-4. **v3.0.0** - Major feature expansion (TBD based on user feedback)
-- [FIXED] web/apex_hdri_viewer.js was corrupted by line-numbered incremental inserts (duplicate fragments after registerExtension) causing the preview to disappear. Rebuilt cleanly via temp part files + concatenation. Verified by executing the module in a Node harness with ComfyUI/DOM stubs: extension registers, widget created, draw OK, drag OK, node auto-sized 420x500. Web dir contains only extension .js files.
+## Evolution of Project Decisions
+- **July 2026**: Standardized categories, created shared utilities, built LoRA modal/thumbnail system; removed extraction/merge/quantizer/smart-resize nodes
+- **August 2026**: Removed motion/media nodes; introduced HDRI reprojection + server PNG preview for HDR formats
+- **September 2026**: Refined photographic preset wording (Atmospheric Moonlight, Golden Rays, etc.); socket-based HDRI work in progress; consolidated documentation from 22 files to 6 core Memory Bank files

@@ -10,12 +10,10 @@ This module provides:
 - Dynamic preset combination with seed-based deterministic randomization
 """
 
-import os
-import json
 import random
 import re
-import threading
 from typing import Dict, List, Optional, Any
+from .apex_prompt_store import get_store
 
 class ApexPromptPreset:
     """
@@ -23,21 +21,27 @@ class ApexPromptPreset:
     """
     
     def __init__(self):
-        self.presets_file = os.path.join(os.path.dirname(__file__), "prompt_presets.json")
-        self.presets = self.load_presets()
+        self._refresh_presets()
+
+    def _refresh_presets(self):
+        snapshot = get_store().snapshot()
+        self.presets = snapshot["presets"]
+        self._factory_presets = snapshot["factory"]
+        self._random_names = snapshot["random_names"]
     
     @classmethod
     def INPUT_TYPES(cls):
+        presets = get_store().snapshot()["presets"]
         return {
             "required": {
                 "input_text": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             },
             "optional": {
-                    "environment_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Environment"), {"default": "Disabled"}),
-                    "lighting_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Lighting"), {"default": "Disabled"}),
-                    "style_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Style"), {"default": "Disabled"}),
-                    "camera_lens_preset": (["Disabled", "Random"] + cls.get_all_presets_in_category("Apex Camera Lens"), {"default": "Disabled"}),
+                    "environment_preset": (["Disabled", "Random"] + list(presets["Apex Environment"]), {"default": "Disabled"}),
+                    "lighting_preset": (["Disabled", "Random"] + list(presets["Apex Lighting"]), {"default": "Disabled"}),
+                    "style_preset": (["Disabled", "Random"] + list(presets["Apex Style"]), {"default": "Disabled"}),
+                    "camera_lens_preset": (["Disabled", "Random"] + list(presets["Apex Camera Lens"]), {"default": "Disabled"}),
             }
         }
 
@@ -47,26 +51,12 @@ class ApexPromptPreset:
     CATEGORY = "Apex Artist/Text"
 
     def load_presets(self) -> Dict[str, Any]:
-        """Load presets from JSON file, create default if not exists."""
-        if os.path.exists(self.presets_file):
-            try:
-                with open(self.presets_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"Error loading presets: {e}")
-                return self.get_default_presets()
-        else:
-            presets = self.get_default_presets()
-            self.save_presets(presets)
-            return presets
+        """Read the shared library without modifying factory files."""
+        return get_store().snapshot()["presets"]
 
-    def save_presets(self, presets: Dict[str, Any]) -> None:
-        """Save presets to JSON file."""
-        try:
-            with open(self.presets_file, 'w', encoding='utf-8') as f:
-                json.dump(presets, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"Error saving presets: {e}")
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        return get_store().snapshot()["revision"]
 
     @staticmethod
     def get_default_presets() -> Dict[str, Any]:
@@ -265,7 +255,7 @@ class ApexPromptPreset:
                 },
                 # --- Subway Fashion Portrait (from user request) ---
                 "Subway Fashion Portrait": {
-                    "prompt": "Modern subway train interior, standing beside large window, stainless steel poles, overhead fluorescent lighting, clean white walls, large train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment. Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, soft color grading, HDR, global illumination, volumetric lighting, ray tracing, masterpiece, best quality, photorealistic, hyperrealistic, 8K, DSLR photography quality. Ultra-detailed clothing textures (realistic leather, ribbed knit fabric, fluffy faux fur, intricate silver accessories), highly detailed facial features, realistic eyes, natural skin pores, subtle skin texture, shallow depth of field, creamy bokeh, ultra sharp focus. Camera specs: Canon EOS R5, 85mm lens, f/1.8, ISO 100.",
+                    "prompt": "Modern subway train interior, standing beside large window, stainless steel poles, overhead fluorescent lighting, clean white walls, large train windows showing passing city skyline, natural daylight streaming through windows, softly blurred passengers seated in background, realistic subway environment. Fashion editorial photography, Korean street fashion aesthetic, contemporary urban style, candid moment, cinematic atmosphere, soft color grading, natural daylight photograph, real camera photo, masterpiece, best quality, photorealistic, hyperrealistic, 8K, DSLR photography quality. Ultra-detailed clothing textures (realistic leather, ribbed knit fabric, fluffy faux fur, intricate silver accessories), highly detailed facial features, realistic eyes, natural skin pores, subtle skin texture, shallow depth of field, creamy bokeh, ultra sharp focus. Camera specs: Canon EOS R5, 85mm lens, f/1.8, ISO 100.",
                     "description": "Contemporary subway interior with urban views and natural light",
                     "tags": ["subway", "urban", "interior", "contemporary", "transport"],
                     "weight": 1.0
@@ -482,9 +472,9 @@ class ApexPromptPreset:
                     "weight": 1.2
                 },
                 "Photorealistic": {
-                    "prompt": "Photorealistic, hyperrealistic, ultra-detailed, realistic textures, physically based rendering, ray-traced lighting, photorealistic rendering, film-quality realism, 8K resolution, ultra sharp focus, masterpiece, best quality.",
-                    "description": "Ultra-realistic photographic render",
-                    "tags": ["photorealistic", "hyperrealistic", "detailed", "8K"],
+                    "prompt": "Photorealistic photograph, candid real-life photo, natural skin texture with visible pores, shot on 35mm film, soft natural light, realistic imperfections, true-to-life colors, ultra-detailed, sharp focus, masterpiece, best quality.",
+                    "description": "Ultra-realistic photographic photo",
+                    "tags": ["photorealistic", "photograph", "detailed", "natural skin"],
                     "weight": 1.3
                 },
                 "Luxury Album Cover": {
@@ -816,23 +806,10 @@ class ApexPromptPreset:
             }
         }
 
-    # Cache for preset names to avoid recreating the entire preset dictionary
-    _preset_cache = {}
-    _preset_cache_lock = threading.Lock()
-    
     @classmethod
     def get_all_presets_in_category(cls, category: str) -> List[str]:
-        """Get ALL preset names in a category (used for dynamic UI population)."""
-        # Use cache with thread safety to avoid recreating the entire preset dictionary every time
-        if not cls._preset_cache:
-            with cls._preset_cache_lock:
-                # Double-check after acquiring lock
-                if not cls._preset_cache:
-                    cls._preset_cache = cls.get_default_presets()
-        
-        if category in cls._preset_cache:
-            return list(cls._preset_cache[category].keys())
-        return []
+        """Read the same library used by execution and the management API."""
+        return list(get_store().snapshot()["presets"].get(category, {}))
 
     def get_categories(self) -> List[str]:
         """Get list of all categories."""
@@ -860,12 +837,12 @@ class ApexPromptPreset:
     def get_random_preset(self, category: str, seed: int) -> tuple:
         """Randomly select a preset from a category using weighted random selection.
         Returns tuple of (selected_name, prompt_text)."""
-        if category not in self.presets or not self.presets[category]:
+        if not self._random_names.get(category):
             return (None, None)
         
         # Build weighted lists of preset names and prompts
-        presets = self.presets[category]
-        names = list(presets.keys())
+        presets = self._factory_presets[category]
+        names = self._random_names[category]
         weights = [presets[name].get("weight", 1.0) for name in names]
         
         # Seed random selection so same seed produces same result
@@ -902,7 +879,10 @@ class ApexPromptPreset:
             return self.get_random_preset(category, seed_offset)
         elif preset_name != "Disabled" and preset_name != "None":
             preset_data = self.get_preset_data(category, preset_name)
-            prompt_text = preset_data.get("prompt", "") if preset_data else ""
+            if preset_data is None:
+                raise ValueError("Missing preset in " + category + ": " + str(preset_name)
+                                 + ". Import the user preset or select another entry.")
+            prompt_text = preset_data.get("prompt", "")
             return (preset_name, prompt_text)
         return (preset_name, "")
     
@@ -910,6 +890,7 @@ class ApexPromptPreset:
                        lighting_preset: str = "Disabled", style_preset: str = "Disabled", 
                        camera_lens_preset: str = "Disabled") -> tuple:
         """Combine input text with environment, lighting, style, and camera lens prompts."""
+        self._refresh_presets()
         seed = seed if seed is not None else 0
         
         # Process random brackets in input text (uses deterministic seeding)
@@ -929,7 +910,7 @@ class ApexPromptPreset:
         # Combine all parts in order: input → environment → lighting → style → camera lens
         parts = [p for p in [input_text.strip(), env_text, light_text, style_text, camera_lens_text] if p]
         combined = self.clean_prompt(", ".join(parts))
-        
+
         return (combined, env_text, light_text, style_text, camera_lens_text)
 
     def clean_prompt(self, prompt: str) -> str:

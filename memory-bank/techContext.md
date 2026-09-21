@@ -1,126 +1,77 @@
-# Tech Context: comfyui-apex-artist
+# Technical Context
 
-## Technologies
-- **Python**: >=3.8 (tested with 3.10, 3.12)
-- **PyTorch**: Core tensor/image processing (provided by ComfyUI)
-- **PyTorch grid_sample**: Used for HDRI/equirectangular reprojection without OpenCV
-- **OpenCV**: Used by ApexHDRIViewer to decode `.hdr` / `.exr` source files
-- **ComfyUI API**: >=0.1.0
-- **JavaScript**: Frontend extensions
-- **scikit-image**: >=0.19.0
+## Technologies Used
+- **Python**: 3.8+ with torch 2.13.0+cu130, numpy, Pillow, aiohttp, aiofiles, opencv-python>=4.8.0
+- **ComfyUI**: Minimum version 0.1.0 declared in metadata (not tested on all versions)
+- **Frontend**: JavaScript (browser native), Node.js for test harness
+- **Platform**: Windows 10/11, PowerShell, VS Code
 
 ## Development Setup
-- **OS**: Windows 10
-- **IDE**: Visual Studio Code
-- **Python venv**: `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe` ⚠️ **ALWAYS USE THIS**
-- **ComfyUI root**: `F:\AI\ComfyUI Sandbox\ComfyUI`
-- **Custom nodes**: `F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes\comfyui-apex-artist`
+- **Workspace**: `F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes\comfyui-apex-artist`
+- **Python**: `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe`
+- **CUDA**: Available via torch+cu130
+- **Dependencies**: requirements.txt (opencv-python>=4.8.0) needs reconciliation with pyproject.toml/comfyui.yaml before release
 
-### Critical: Python Virtual Environment Usage
-**ALWAYS use the ComfyUI virtual environment Python:**
-```powershell
-# Correct - Use venv Python
-& "F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe" script.py
-
-# Wrong - System Python (missing ComfyUI dependencies)
-python script.py
-```
-
-**Why this matters:**
-- ComfyUI dependencies (torch, comfy.sd, folder_paths, etc.) are ONLY in the venv
-- Scripts that import ComfyUI modules MUST use venv Python
-- Testing, debugging, and version management scripts require venv access
-
-## Dependencies
-
-### ComfyUI-Provided
-- torch, numpy, scipy, Pillow
-- folder_paths, node_helpers
-- safetensors, comfy.utils, comfy.sd, ComfyUI MODEL/CLIP patcher APIs
-
-### Extra Requirements
-- scikit-image >=0.19.0
-- opencv-python >=4.8.0 for HDRI source decoding
-
-## Input/Output Types
-| Type | Format | Description |
-|------|--------|-------------|
-| `IMAGE` | `torch.Tensor` (B,H,W,3) float32 [0,1] | RGB image batch |
-| `MASK` | `torch.Tensor` (B,H,W) float32 | Alpha mask |
-| `INT` | Python int | Integer parameter |
-| `FLOAT` | Python float | Float parameter |
-| `STRING` | Python str | Text output |
-| `MODEL` | ComfyUI ModelPatcher-like object | Model input/output for LoRA and quantization workflows |
-
-### Video Frame Batch Convention
-- Generated/decoded video frames are still ComfyUI `IMAGE` tensors until encoded by a saver/combine node.
-
-## Common Widget Formats
-```python
-# Combo box
-(["option1", "option2"], {"default": "option1"})
-
-# Slider
-("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.1})
-
-# Integer
-("INT", {"default": 0, "min": 0, "max": 9999})
-```
-
-## Version Management & Publishing
-
-### Tool Usage
-- **Version update**: `python update_version.py [--patch|--minor|--major] [--dry-run] [--commit] [--tag]`
-- **Testing**: Run ComfyUI and test nodes manually
-- **Python verification**: Use `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe` for import checks
-- **JS syntax check**: `node --check web\filename.js`
-- **Publishing workflow**: See `PUBLISH.md` for complete guide
-
-### update_version.py Features
-- **Auto-increment**: `--patch`, `--minor`, `--major` flags for semantic versioning
-- **Preview mode**: `--dry-run` to see changes before applying
-- **Git integration**: `--commit` and `--tag` for automated git workflow
-- **Current version detection**: Reads existing version from files
-- **Multi-file update**: Updates `__init__.py`, `manifest.json`, `pyproject.toml`, `comfyui.yaml`
-- **Colored output**: Visual feedback with emoji indicators (✓, ✗, ⚡)
-
-### Publishing Workflow (Quick Reference)
-```bash
-# One-line version update and commit
-python update_version.py --patch --commit --tag
-
-# Push to remote
-git push origin main --tags
-
-# Or see PUBLISH.md for complete workflow
-```
-
-## File Structure
+## Project Structure
 ```
 comfyui-apex-artist/
-├── __init__.py              # Node registration
-├── apex_*.py                # Node implementations
-├── apex_*_api.py            # API endpoints
-├── requirements.txt         # Python dependencies
-├── manifest.json            # ComfyUI Registry metadata
-├── pyproject.toml          # Python project metadata
-├── comfyui.yaml            # ComfyUI configuration
-├── custom_nodes.json       # Custom nodes metadata
-├── PUBLISH.md              # Publishing workflow guide
-├── update_version.py       # Version management tool
-├── web/                    # Frontend extensions
-│   ├── apex_prompt.js
-│   ├── apex_lora_loader.js
-│   └── apex_hdri_viewer.js
-├── lens/                   # Lens preset source images
-├── lens_previews/          # Processed lens thumbnails
-└── memory-bank/            # Project documentation
-    ├── projectbrief.md
-    ├── productContext.md
-    ├── activeContext.md
-    ├── systemPatterns.md
-    ├── techContext.md
-    ├── progress.md
-    ├── features.md
-    └── apex_load_model_fixes.md
+├── apex_*.py              # Node implementations
+├── apex_*_api.py          # API route handlers
+├── apex_utils.py          # Shared utilities
+├── __init__.py            # ComfyUI registration
+├── web/                   # Frontend modules (4 files, 1 unregistered)
+├── lens/                  # Source images for presets
+├── lens_previews/         # Generated preview assets
+├── scripts/               # Tests, validators, generators
+├── memory-bank/           # Context documentation (6 core files)
+├── presets/               # JSON data stores
+├── pyproject.toml         # Python package metadata
+├── comfyui.yaml           # ComfyUI registry metadata
+└── README.md, PUBLISH.md  # Documentation
 ```
+
+## Technical Constraints
+- Must support batched IMAGE tensors with variable batch sizes
+- Must handle device migration (CPU/CUDA) transparently
+- Must validate file paths against ComfyUI security model
+- Frontend limited to browser-native APIs (no build step)
+- HDRI/LoRA operations currently block async handlers (needs fixing)
+
+## Tool Usage Patterns
+### Running Tests
+
+Character node (September 20, 2026): `scripts/validate_character_prompt.py` covers the 12-category library, dropdowns, 13 outputs, deterministic/weighted random selection, bracket variants, the five `/apex/character_presets` CRUD routes, damaged/missing store fallback, and real `__init__.py` registration (heavyweight node imports stubbed). All checks pass.
+
+Prompt presets (September 20, 2026): `scripts/test_prompt_presets.py` uses unittest/aiohttp temporary storage and synthetic package imports; `scripts/test_prompt_presets.mjs` runs a dependency-free DOM/API harness against the actual frontend module loaded in memory. Neither touches real user presets. 10 Python tests and the frontend harness pass; browser integration still needs manual verification.
+```powershell
+# Core unit tests (29.973s, 7 methods)
+& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\test_project_core.py
+
+# Character preset validator
+& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\validate_character_prompt.py
+
+# HDRI socket regressions (11 frontend checks + 6 backend tests)
+node scripts\test_hdri_socket.mjs
+& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\test_hdri_socket.py
+
+# JavaScript syntax check
+node --check web\<filename>.js
+```
+
+### Important Notes on Testing
+- Core tests use synthetic ComfyUI package; don't require full runtime
+- Legacy uncommitted test_hdri_viewer_preview.mjs targets obsolete payloads/absent height controls; preserved separately. New socket harness imports via data URL without creating temporary source files.
+- Syntax tests pass ≠ ComfyUI/browser integration working
+- PowerShell may truncate output; use `Start-Process -Wait` with redirected stdout/stderr for full logs
+- No end-to-end benchmark or live integration test suite exists
+
+### Version Management
+- Version 2.2.0 in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json`, and `custom_nodes.json`; prepared locally, unpublished
+- A push to main changing pyproject.toml triggers the existing registry publish workflow; do not push without authorization
+- No automated version update script; manual sync required
+- Restart ComfyUI for Python changes; hard-refresh browser for JavaScript
+
+## Development Dependencies
+- **Runtime**: All in requirements.txt
+- **Testing**: unittest (Python stdlib), Node.js for JS tests
+- **No build tools**: Frontend uses browser-native JavaScript

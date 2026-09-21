@@ -1,163 +1,78 @@
-﻿# Active Context: comfyui-apex-artist
+# Active Context
 
-## Current Focus (2026-08-29) - ApexHDRIViewer Server-Side Preview ✅
+## Current Focus
+Release preparation September 21, 2026: user requested committing the entire current project, updating version, and no push. Selected minor version 2.2.0 for new character/preset features. Synchronized five version files and nine-node metadata; added CHANGELOG.md and corrected stale publishing instructions. Current core/prompt/HDRI/character regressions and preset synchronization pass. Browser and clean-install checks remain pending. Preserve legacy diagnostics, explicitly excluded from the current passing suite. No release tag or publication during this preparation; a later main push changing pyproject.toml triggers registry publication.
 
-### Root Cause
-Client-side preview via browser `new Image()` + canvas reprojection was fundamentally broken
-for the node's main file types: **browsers cannot decode `.hdr`/`.exr`**, so `onload` never fired
-(`onerror` was unhandled) and the preview never rendered → "preview gone, no drag visual".
+HDRI socket preview repaired September 21, 2026. Backend emits separate `hdri_source` + `hdri_source_scale` UI metadata; source is a bounded first-frame panorama, outputs remain front/back IMAGE batches. Unique temporary preview files prevent overwrites. Back yaw rotates 180 degrees. Frontend uses only source metadata (never projected node.imgs), with per-node tokens/timers, removal cleanup, fisheye/exposure/output-aspect support. Removed sampled IS_CHANGED in favor of native dependency caching. New `scripts/test_hdri_socket.mjs` (11 checks) and `scripts/test_hdri_socket.py` (6 tests) pass. Existing uncommitted height-control harness preserved; it targets absent controls and obsolete UI payload. Browser smoke test pending; restart ComfyUI and refresh browser before use.
 
-### Fix (this session)
-Preview is now rendered **server-side** and served as a browser-displayable PNG, so it works for
-every format the node supports (.hdr/.exr/PNG/JPEG):
-- **NEW `apex_hdri_preview_api.py`** — registers GET `/apex/hdri_preview?filename=..&yaw=&pitch=&roll=&fov=&lens=`.
-  Reuses `ApexHDRIViewer._load_hdri_tensor` + `equirect_to_camera_view` to render a 512x288 camera
-  view and returns PNG bytes via `web.Response(body=..., content_type="image/png")`.
-  Registered in `__init__.py` (import pattern same as `apex_lora_api`).
-- **Rewrote `web/apex_hdri_viewer.js` (251 lines, `node --check` clean)** — removed all broken
-  client-side decoding/reprojection; the widget now `drawImage`s the fetched preview PNG, stretches
-  to the widget, and overlays a HUD. Drag = yaw/pitch, Shift+drag = roll, wheel = FOV; changes
-  debounce-refresh the preview (120ms) and `commitWidgetChange` fires widget callbacks to re-run
-  the IMAGE output. Preview uses a **fixed comfortable height (~520px, min 360/max 720)** instead of mirroring the wide output aspect, and the node is resized once at creation so the panel is actually visible — not a thin strip.
-- Verified end-to-end: backend rendering to PNG works for both lens types; Node harness confirms
-  module load, preview fetch, widget sizing, and drag (yaw 10→20).
+Implemented Apex Prompt factory/user preset separation (September 20, 2026); added a free-text input box to the character prompt node (September 21, 2026). Fixed Apex Prompt Save/Manage usability (frontend-only, backend unchanged) on September 21, 2026. Preserving unrelated uncommitted HDRI and character-preset work.
 
-### Reminder for user on cache
-ComfyUI caches web extensions: a hard refresh (Ctrl+Shift+R) or a full server restart is required
-to load new `web/` JS and the new `/apex/hdri_preview` route.
+## Prompt Save/Manage Usability Fix (September 21, 2026)
+- Follow-up: moved the shared prompt dialog Close button into a sticky top-right header so Manage/Save remain dismissible while scrolling. Frontend harness checks header placement, sticky CSS, and Close removal for both dialogs; harness and JS syntax check pass. Actual browser scrolling still needs a smoke test after a hard refresh.
+- `web/apex_prompt.js` only; no changes to store/API/node Python or preset JSON.
+- Save dialog now prefills category/name/text from the node's current selection ("Factory X" -> "X Copy"), validates inline (name/whitespace/reserved/empty prompt/weight) without a server round-trip, shows Name/Prompt counters, adds `Save & Use` (saves then applies `User: X` via existing `usePreset`), focuses Name/Prompt, and renames refresh to `Refresh library (keep my draft)`.
+- Manager now groups `Factory/User · Category (n)` headers, shows `Showing X of Y` + empty-state, debounces search (150ms) with match highlight, pages at 100 rows with `Show more`, uses inline delete confirm + `Undo delete`, previews import new/conflict counts, uses dated export filenames, and toasts on Save/Use/Delete/Import/Export.
+- Node buttons show `Working…`/disabled state while loading; stacked editor-over-manager dialogs get bumped z-index.
+- Tests: `node scripts/test_prompt_presets.mjs` extended (prefill, validation-no-fetch, Save & Use applies node value, group headers, count, search filter, empty state) — passes; `node --check` passes; 10 Python store/API tests pass (`scripts/test_prompt_presets.py`).
 
-## Previous Focus (2026-08-29) - ApexHDRIViewer Frontend Fix ✅
+## Character Prompt Input Box (September 21, 2026)
+- `ApexCharacterPrompt` now exposes `input_text` (empty multiline STRING) and `combine_prompts(input_text="")` merges that text **ahead** of the 12 preset categories, so the user's own words are the first tokens the text encoder sees. It supports its own `[option a, option b]` brackets, seeded with the plain seed (offset 0 vs the presets' 1-12), and stays seed-deterministic. Slots 1-12 never receive it.
+- The widget is appended **last** in `INPUT_TYPES["required"]` deliberately: ComfyUI maps saved `widgets_values` positionally, so inserting it earlier would silently shift the seed/control/preset values of existing workflows (`Character Sheet v2/v3.json`).
+- Validator grew 96 → 105 checks (widget order and spec, leading position, no leakage into the category outputs, empty-box byte-identical regression, bracket determinism, input-only prompt). All 105 character checks and the 10 prompt-preset regressions pass.
+- The running ComfyUI at 127.0.0.1:8188 still reports the old 13-input schema because Python modules load at boot; a restart is required before the box appears in the UI (live UI verification pending).
 
-### Problem Fixed
-The `web/apex_hdri_viewer.js` module had **multiple JS syntax errors** that prevented the
-`ApexArtist.HDRIViewer` extension from ever loading. Because `WEB_DIRECTORY = "./web"` is set,
-ComfyUI imports every `.js` in that folder as an ES module, so one syntax error killed the whole
-extension — the node rendered with **no interactive 3D drag-to-rotate preview**.
+## Learnings: "everything comes out 3D renders" (September 21, 2026)
+Diagnosed against the user's `Character Sheet v3.json` (Apex Character Prompt + Apex Prompt → StringConcatenate → Qwen-Image-Edit 2511 / Krea 2 subgraph, `ConditioningZeroOut` negatives):
+- The **`Photorealistic` style preset is not photographic language**: "Photorealistic, hyperrealistic, ultra-detailed, realistic textures, **physically based rendering, ray-traced lighting**, photorealistic rendering, film-quality realism, 8K resolution, ultra sharp focus, masterpiece, best quality." PBR / ray-tracing wording is 3D-CGI vocabulary in the training data and pulls toward Blender/Octane-style renders.
+- The same vocabulary appears elsewhere in the library: Environment `Subway Fashion Portrait` ("HDR, global illumination, volumetric lighting, ray tracing"), Lighting `HDR Balanced` / `Ring Light Beauty` ("realistic skin rendering", "smooth skin rendering"), Style `Fashion Studio Portrait` ("global illumination, photorealistic rendering").
+- The character library supplies the doll-like half of the look (porcelain / flawless / airbrushed complexion, idealized geometry) and the pipeline has **no negative prompt**, so nothing counteracts "3d render, cgi, doll".
+- `Random` style is a coin flip away from non-photographic: 73.7% of the weighted Style pool is illustration/CG/artistic, 5.5% explicitly 3D/CG.
+- Workflow wiring note: the character prompt feeds `StringConcatenate.delimiter` (not `string_b`). Output is still correct because `delimiter.join((a, b))` with an empty `string_b`, but it is accidental and fragile.
 
-Root causes found:
-- `return /view?filename= ...` — leading `/` parsed as an unterminated regex literal → syntax error.
-- `Yaw:  + ... + ° Pitch: ...` — unquoted `Yaw:` identifier and raw `°` byte → syntax error.
-- The drag handler only wrote widget values but never drew a live rendered camera view.
+## Character Presets Added (September 21, 2026)
+- Added three presets from a user-supplied cinematic EDM thumbnail character: **Long Silver Blonde Wispy Bangs** (`Apex Character Hair`, weight 1.1), **White Wireless Headphones** (`Apex Character Headwear`, weight 1.0), **Oversized Pale Blue Hoodie** (`Apex Character Top`, weight 1.1). Each was appended at the end of its category (matching the Square Eyes precedent) and carries its category's dominant random weight.
+- Trait check against the existing library — deliberately **not** added because equivalents already existed: gender **Female**; age **Early Twenties 22-25** (and **Young Adult 18-21**); eye color **Gray-Blue** ("gray-blue eyes, soft silvery-blue irises... gentle cool mist tone"), which is effectively identical to the described luminous blue-gray eyes; skin tone **Warm Rosy** plus **Fair Cool** (fair complexion with a natural pink flush/bloom); face expression and glossy lips, already covered by **Girl Next Door** (subtle glossy pink lips), **Nordic Cool** (calm cool expression), and **Ethereal Elf** (serene). Ethnicity was not specified by the source text, so none was guessed; "one hand resting near her chin" is a pose, not a hand accessory.
+- Library total 218 → 221 (hair 28→29, headwear 16→17, top 30→31). `character_presets.json` regenerated with `scripts/generate_character_presets.py` and confirmed in sync (`--check`); the validator's asserted total was updated to 221. Validator passes (96 PASS / 0 FAIL) and all 10 prompt-preset regressions pass.
+- Note: adding presets changes the weighted Random pool for hair, headwear, and top, so existing seeds using `Random` in those categories may now select a different preset. Named selection is unaffected.
 
-### Fix (this session)
-Cleanly rewrote `web/apex_hdri_viewer.js` (313 lines, `node --check` exit 0):
-- Correct URL builder: `/view?filename=...&type=...&subfolder=` (proper string concat).
-- `drawCameraView()` — live rectilinear/fisheye equirect→perspective reprojection on the widget
-  canvas, mirroring backend math (`R = Ry@Rx@Rz`, `lon=atan2(wx,-wz)`, `lat=asin(wy)`, forward = -Z).
-- `decodePanorama()` — decodes the selected panorama **once** into an `ImageData` frame buffer
-  (fast, no per-pixel canvas allocation); `sampleFrame()` does bilinear sampling with modular
-  horizontal seam wrap to match backend `grid_sample`.
-- Drag handler: drag = yaw/pitch, **Shift+drag = roll**, wheel = FOV; HUD overlay shows values.
-- Commits widget values to the backend `render()` on pointer-up / wheel so the full-res IMAGE
-  output stays in sync; fisheye lens now read as raw string (fixes `Number("fisheye")` → NaN bug).
+## Character Preset Added (September 20, 2026)
+- Added the **Square Eyes** face preset (`Apex Character Face`) with the user's prompt text stored verbatim (1078 chars; verified character-for-character), tags `square eyes/horizontal eyes/oval face/soft/balanced`, and weight 1.2 matching the dominant face-preset weight.
+- Face category is now 18 presets; library total 218. `character_presets.json` regenerated via `scripts/generate_character_presets.py` and confirmed in sync (`--check`).
+- The validator's library total was updated to 218 (it asserts an exact count by design).
+- Note: adding a face preset changes the weighted Random pool, so existing seeds using `face_preset = Random` may now select a different face. Named selection is unaffected.
 
-## Current Focus (2026-08-29) - ApexHDRIViewer JS Full Rewrite âœ…
+## Prompt Preset Update (September 20, 2026)
+- Added `apex_prompt_store.py`: bundled JSON remains unchanged; Python-only names supplemented at read time. User data resides under the configured ComfyUI user directory in `apex_artist/prompt_presets.json`.
+- Library scope is installation-shared, explicitly labeled; not private per-profile. One ComfyUI process is supported (process-local lock).
+- Save/Manage buttons, category text editor, factory-copy/user CRUD, filtering, import/export, revision conflicts, atomic replacement and error retention implemented.
+- Backend INPUT_TYPES/execution/API share the store; execution reloads, IS_CHANGED hashes the revision; websocket notifications refresh open node dropdowns.
+- Legacy factory write routes return 403; legacy reads remain compatible. Random preserves the original JSON pool/order/weights.
+- Validated: 10 Python preset tests (including aiohttp routes), Node.js frontend harness, 7 existing core tests. Full browser/ComfyUI integration still requires a restart and manual smoke test.
 
-### Problem Fixed
-The previous session's refactor left `web/apex_hdri_viewer.js` broken:
-- `drawCameraPreview` was disconnected / missing (the function call existed but the implementation was gone)
-- The draggable panorama preview window was not working
-- The file was partially truncated by a bad PowerShell write
+## Recent Changes (Sept 19, 2026)
+- **Shared utilities optimization**: Converted Gaussian blur to separable convolution (tested against dense reference), added float64 kernel support, preserved existing sigma/padding behavior
+- **Device/dtype safety**: Masks now match image device/dtype before blending operations
+- **Security hardening**: LoRA path validation uses resolved component checks, not string prefixes; validates final thumbnail paths
+- **Import fixes**: LoRA loader explicitly imports comfy.sd; lens preset API reads static defaults without instantiating nodes
+- **Testing**: 7 core unittest methods passed (29.973s) covering blur/sharpen/blend modes, Gaussian accuracy at 4 radii/2 sigmas, device handling, path boundaries
+- **Documentation**: Consolidated 13 redundant root-level reports into Memory Bank
 
-### Full Rewrite Summary
-`web/apex_hdri_viewer.js` was cleanly rewritten from scratch (328 lines, syntax-verified clean):
+## Active Issues
+1. **HDRI viewer**: Socket flow repaired and regression-tested; real browser smoke test pending
+2. **Preset follow-up**: Manual live-browser smoke test pending; separate character preset API was not changed
+3. **Blocking I/O**: HDRI decode/render and LoRA thumbnail scans block async handlers
+4. **Character node fixed (September 20)**: Registered class/display name and API in __init__.py. Removed inheritance of prompt-store state; character loading, random selection and IS_CHANGED are independent. Character validator now covers package exports and passes; all 10 prompt regressions pass.
+5. **Registry metadata**: May not match actual registration; needs review before publish
 
-- **[UPDATE 2026-08-29]:** Switched from native LiteGraph canvas widgets (which didn't honor `computeSize()` height on restore) to a DOM-based `canvas` widget via `node.addDOMWidget()`. The DOM widget has CSS `height: 220px` applied directly to it, effectively pinning its size.
-- `drawCameraPreview()` â€” equirectangular â†’ perspective reprojection with per-frame render cache (skips recompute when params unchanged). Supports rectilinear and fisheye lens types.
-- `getSampleCanvas()` â€” downscales source HDRI to â‰¤512px working copy for speed
-- `drawAimWidget()` â€” three non-overlapping zones: semi-transparent header bar (help text), clipped preview band (panorama + guide grid + FOV ring), semi-transparent footer bar (live yaw/pitch/roll/fov values)
-- `computeSize()` â€” derives widget height from `output_width`/`output_height` ratio via closure over `node`, capped 80â€“600px
-- `mouse()` handler â€” drag for yaw/pitch, Shift+drag for roll, scroll wheel for FOV; all pointer event types covered including `pointerleave` to cancel drag on cursor exit
-- Cache invalidation on image widget change (clears `previewUrl`, `sampleCanvas`, `renderCanvas`)
+## Next Steps
+1. Smoke-test HDRI socket preview after restart/browser refresh
+2. Smoke-test Save/Manage after restart; apply equivalent persistence fixes to character presets as a separate follow-up
+3. Move expensive API operations off event loop with memory bounds
+4. Reconcile registry metadata with source before release
 
-### ApexHDRIViewer UI Polish (also completed this session) âœ…
-1. **Default output ratio changed to 16:9** (`apex_hdri_viewer.py`) â€” `output_width`: 1024â†’1280, `output_height`: 1024â†’720
-2. **`.hdri` file format support** (`apex_hdri_viewer.py`) â€” added to `SUPPORTED_EXTENSIONS`, routed through OpenCV HDR path
-3. **Widget aspect ratio** (`web/apex_hdri_viewer.js`) â€” preview panel height mirrors output dimensions ratio
-
-
-
-### ApexHDRIViewer Implementation âœ…
-Added a new Load Image-style node for selecting HDRI/equirectangular panorama files, aiming a camera view, and outputting the captured image:
-- `apex_hdri_viewer.py` loads selected input images and implements rectilinear/equidistant fisheye reprojection with PyTorch `grid_sample`
-- `web/apex_hdri_viewer.js` adds an in-node panorama camera viewer that updates yaw/pitch/roll/FOV values
-- `__init__.py`, `custom_nodes.json`, `manifest.json`, `README.md`, and feature docs updated
-- `opencv-python` added for true `.hdr`/`.exr` loading; reprojection still uses PyTorch rather than `cv2.remap`
-
-## Previous Focus (2026-08-18) - Project Cleanup
-
-### ApexMotionBlur & MediaAccumulatorStitch Removed âœ…
-Removed video-related nodes to refocus project on core VFX and image processing:
-- `apex_motion_blur.py` and `apex_media_stitch.py` deleted
-- `__init__.py` updated â€” imports and mappings removed
-- `custom_nodes.json` and `manifest.json` updated â€” node entries and video/motion-blur tags removed
-- Project now has 6 core nodes focused on essential functionality
-
-## Previous Focus (2026-07-25) - v2.1.2 Patch Release
-
-### ApexLoadModel Removed âœ…
-The `ApexLoadModel` node has been **removed entirely** from the project:
-- `apex_load_model.py` deleted â€” the node was redundant with ComfyUI's native `CheckpointLoaderSimple` and other model loaders
-- `__init__.py` updated â€” import and mappings removed
-- `web/apex_load_model.js` already deleted in previous cleanup
-- `apex_load_model_fixes.md` moved to `memory-bank/` for historical reference
-
-### Completed Tasks (2026-07-23)
-1. âœ… **ApexLoadModel removed**: Deleted node file, cleaned up registration, moved fix docs to memory-bank
-2. âœ… **Apex Prompt Lens JS cleanup**: Deleted `web/apex_prompt_lens.js` â€” it was a complete no-op (empty `beforeRegisterNodeDef` hook, no functional code)
-3. âœ… **Stale references cleaned**: Removed deleted `apex_prompt_lens.js` mentions from memory-bank files
-4. âœ… **`.gitignore` updated**: Added `.clineignore` entry
-
-## Recent Changes (2026-07-23)
-- **apex_load_model.py**: DELETED â€” node removed (redundant with native ComfyUI loaders)
-- **__init__.py**: Removed ApexLoadModel import and mappings
-- **web/apex_load_model.js**: Already deleted in previous cleanup
-- **web/apex_prompt_lens.js**: DELETED â€” was a no-op extension
-- **apex_load_model_fixes.md**: MOVED to `memory-bank/apex_load_model_fixes.md`
-
-## Active Nodes (7 registered)
-| Node | Display Name | Category | Description |
-|------|--------------|----------|-------------|
-| | ApexPromptPreset | **Apex Prompt** | Text | 55 presets across Environment/Lighting/Style/Camera Lens categories |
-| | ApexLoraLoader | Apex LoRA Loader | Models | LoRA loader with interactive browser and native `node.imgs` preview |
-| | ApexBlur | Apex Blur | Image/Filters | 9 blur algorithms |
-| | ApexSharpen | Apex Sharpen | Image/Filters | 8 edge-aware sharpening algorithms |
-| | ApexLayerBlend | Apex Layer Blend | Image/Composite | 25+ Photoshop-style blend modes |
-| | ApexDepthToNormal | Apex Depth to Normal | Image/Composite | Depth â†’ normal map conversion |
-| | ApexHDRIViewer | Apex HDRI Viewer | Image | Load HDRI/panorama, aim camera, output captured view |
-
-## Important Patterns (Updated)
-- **Error resilience**: Nodes return placeholder tensors on failure
-- **Class-level safety**: Methods used by `INPUT_TYPES()` must be `@staticmethod` or `@classmethod`
-- **Native-first rule**: Always use ComfyUI's native mechanisms and conventions when available. Do not invent custom UI/rendering/layout behavior when a native ComfyUI/LiteGraph path exists.
-- **Property hook pattern**: Use `Object.defineProperty()` to intercept widget value changes
-- **Native node image preview pattern**: For frontend node preview images, load a browser `Image`, then assign `node.imgs = [img]` and `node.imageIndex = 0`; clear with `node.imgs = []`. Redraw with `node.setDirtyCanvas(true, true)` or `node.graph?.setDirtyCanvas(true, true)`. Do **not** call `node.setSize(node.computeSize())` on every image change; preserve the user's node size like native Load Image behavior.
-- **Shared utilities**: Use `apex_utils.py` for common operations (blur, validation, color conversion)
-- **Async I/O**: API handlers use aiofiles for non-blocking file operations
-- **Tuple returns from presets**: All `_get_preset_text()` calls now return `(name, text)` tuples
-
-## Documentation Structure
-- **features.md**: Comprehensive feature documentation
-- **systemPatterns.md**: Architecture and technical patterns  
-- **techContext.md**: Technologies and dependencies
-- **progress.md**: Project status and milestones
-- **PUBLISH.md**: Publishing workflow guide
-
-## Version Management
-- **Current**: 2.1.3
-- **Script**: `update_version.py` with `--patch`, `--minor`, `--major`, `--commit`, `--tag` flags
-
-
-## HDRI Viewer - preview polish
-- Preview draw uses cover fit (fill + center-crop) - no portrait stretching.
-- Node widened to min 420px at widget creation.
-- Drag debounce 120ms -> 60ms with stale-response token guard => near-realtime.
-- Frontend-only; hard refresh browser to apply.
-
-- Restored realtime client-side 3D preview: panorama decoded once to ImageData (PANO_MAX_W cap), precomputed per-pixel ray lon/lat maps keyed by size/fov/roll, per-frame bilinear reprojection into an offscreen canvas drawn cover-fit. Center ring+dot overlay restored. Drag/Shift-drag/wheel update widgets -> rAF local redraw (realtime); server snapshot (apex/hdri_preview) still syncs on release and serves .hdr/.exr. Fixed lon mapping to backend convention (u = lon/2pi + 0.5).
-
-## Pitch fix (post-commit a18b0b3)
-- Rewrote JS render loop: per-pixel ray vectors (rayX/Y/Z, keyed on size/fov/roll) rotated by Rx(pitch) then Ry(yaw) — matches backend R = Ry@Rx@Rz exactly. Old linear lat + pitch pan removed.
-- Verified: pitch=±90 center ray hits zenith/nadir; yaw sign consistent frontend/backend; node --check passes.
-
-2026-08-29T23:57:31.2483271+05:30
+## Important Patterns & Preferences
+- Source code and reproducible tests are authoritative over historical completion reports
+- Don't claim performance improvements without benchmarks
+- Preserve user-controlled node sizes; use native ComfyUI UI mechanisms
+- Keep findings in Memory Bank topics, not dated completion documents
+- Don't discard uncommitted code or source assets during cleanup

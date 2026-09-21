@@ -1,19 +1,17 @@
-# Project Brief: comfyui-apex-artist
+# Project Brief
 
-ComfyUI custom node extension providing **Professional VFX and post-production nodes** for advanced image processing, film grading, layer blending, cinematic effects, and diffusion model loading.
+## What This Project Does
+ComfyUI Apex Artist provides 9 custom nodes for ComfyUI: image processing (blur, sharpen, blend, depth-to-normal), panorama viewing (HDRI viewer), LoRA loading with browser UI, prompt presets with categories, and JSON lookup utilities.
 
 ## Core Requirements
-- Provide custom nodes that integrate seamlessly into ComfyUI's node graph system
-- Offer professional-grade VFX and post-production image processing functionality
-- Maintain compatibility with ComfyUI's existing architecture and API conventions
-- Support both Python backend nodes and JavaScript frontend extensions
+- Integrate with native ComfyUI conventions (graph, tensors, folder_paths, previews)
+- Maintain backward compatibility with existing workflows
+- Support batched images and device-aware tensor processing
+- Keep dependencies minimal; verify changes with runnable tests
 
-## Goals
-- Extend ComfyUI's capabilities with specialized artistic/VFX processing nodes
-- Provide intuitive node interfaces consistent with ComfyUI's design patterns
-- Enable complex artistic workflows through composable node operations
-
-## Source
-- **Repository**: https://github.com/ApexArtist/comfyui-apex-artist
-- **Version**: 2.1.2
-- **Status**: Production/Stable
+## Current State
+- Version 2.2.0 prepared locally, 9 registered nodes; not yet published
+- Core image processing functional and tested
+- HDRI socket preview repaired and regression-tested; live browser smoke test pending
+- Character prompt node and API registered; isolated storage/random selection verified by character validator
+- Not release-ready due to HDRI and metadata validation gaps

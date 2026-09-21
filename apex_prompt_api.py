@@ -1,127 +1,87 @@
-"""
-Apex Prompt API Server
-Handles preset management via HTTP endpoints
-Preset data is imported from apex_prompt.py (single source of truth).
-"""
-
-import os
+"""Preset routes: factory data is read-only, user mutations are revisioned."""
+import asyncio
 import json
-import aiofiles
+import logging
 from aiohttp import web
 from server import PromptServer
-from .apex_prompt import ApexPromptPreset
+from .apex_prompt_store import CATEGORIES, MAX_BYTES, PresetError, get_store
+
 
 class ApexPromptPresetAPI:
     def __init__(self):
-        self.presets_file = os.path.join(os.path.dirname(__file__), "prompt_presets.json")
         self.setup_routes()
 
+    async def snapshot(self):
+        return await asyncio.get_running_loop().run_in_executor(None, get_store().snapshot)
+
+    async def modify(self, request, operation):
+        try:
+            raw = bytearray()
+            async for chunk in request.content.iter_chunked(65536):
+                raw.extend(chunk)
+                if len(raw) > MAX_BYTES:
+                    return web.json_response({"error": "Preset request exceeds 4 MiB."}, status=413)
+            payload = json.loads(raw)
+            result = await asyncio.get_running_loop().run_in_executor(
+                None, get_store().mutate, operation, payload)
+            # A notification failure must not turn a successful save into an error.
+            try:
+                PromptServer.instance.send_sync("apex-presets-changed", {"revision": result["revision"]})
+            except Exception:
+                logging.exception("[Apex Prompt] Could not broadcast preset refresh")
+            return web.json_response(result)
+        except PresetError as exc:
+            return web.json_response({"error": str(exc)}, status=exc.status)
+        except (ValueError, UnicodeError) as exc:
+            return web.json_response({"error": "Invalid JSON: " + str(exc)}, status=400)
+        except OSError:
+            logging.exception("[Apex Prompt] Failed to persist user presets")
+            return web.json_response({"error": "Could not save user presets. Check server logs and directory permissions."}, status=500)
+
     def setup_routes(self):
-        """Setup API routes for preset management"""
-        
-        @PromptServer.instance.routes.get("/apex/prompt_presets")
+        routes = PromptServer.instance.routes
+
+        @routes.get("/apex/prompt_library")
+        async def library(request):
+            try:
+                return web.json_response(await self.snapshot())
+            except PresetError as exc:
+                return web.json_response({"error": str(exc)}, status=exc.status)
+
+        @routes.post("/apex/prompt_library/save")
+        async def save(request):
+            return await self.modify(request, "save")
+
+        @routes.post("/apex/prompt_library/delete")
+        async def delete(request):
+            return await self.modify(request, "delete")
+
+        @routes.post("/apex/prompt_library/import")
+        async def import_presets(request):
+            return await self.modify(request, "import")
+
+        @routes.get("/apex/prompt_presets")
         async def get_presets(request):
-            """Get all presets"""
             try:
-                if os.path.exists(self.presets_file):
-                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
-                        content = await f.read()
-                        presets = json.loads(content)
-                else:
-                    presets = ApexPromptPreset.get_default_presets()
-                return web.json_response(presets)
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+                return web.json_response((await self.snapshot())["presets"])
+            except PresetError as exc:
+                return web.json_response({"error": str(exc)}, status=exc.status)
 
-        @PromptServer.instance.routes.post("/apex/prompt_presets")
-        async def save_presets(request):
-            """Save all presets"""
+        @routes.get("/apex/prompt_presets/{category}")
+        async def get_category(request):
+            category = request.match_info["category"]
+            if category not in CATEGORIES:
+                return web.json_response({"error": "Unknown category."}, status=404)
             try:
-                presets = await request.json()
-                async with aiofiles.open(self.presets_file, 'w', encoding='utf-8') as f:
-                    await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
-                return web.json_response({"status": "success"})
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+                return web.json_response((await self.snapshot())["presets"][category])
+            except PresetError as exc:
+                return web.json_response({"error": str(exc)}, status=exc.status)
 
-        @PromptServer.instance.routes.get("/apex/prompt_presets/{category}")
-        async def get_category_presets(request):
-            """Get presets for a specific category"""
-            try:
-                category = request.match_info['category']
-                if os.path.exists(self.presets_file):
-                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
-                        content = await f.read()
-                        all_presets = json.loads(content)
-                        category_presets = all_presets.get(category, {})
-                else:
-                    all_presets = ApexPromptPreset.get_default_presets()
-                    category_presets = all_presets.get(category, {})
-                return web.json_response(category_presets)
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+        @routes.post("/apex/prompt_presets")
+        @routes.post("/apex/prompt_presets/{category}/{name}")
+        @routes.delete("/apex/prompt_presets/{category}/{name}")
+        async def legacy_write(request):
+            return web.json_response({"error": "Factory presets are read-only. Refresh your browser and use Save Preset / Manage Presets."}, status=403)
 
-        @PromptServer.instance.routes.post("/apex/prompt_presets/{category}/{name}")
-        async def save_preset(request):
-            """Save a specific preset"""
-            try:
-                category = request.match_info['category']
-                name = request.match_info['name']
-                preset_data = await request.json()
-                
-                # Load existing presets
-                if os.path.exists(self.presets_file):
-                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
-                        content = await f.read()
-                        presets = json.loads(content)
-                else:
-                    presets = {}
-                
-                # Update preset
-                if category not in presets:
-                    presets[category] = {}
-                presets[category][name] = preset_data
-                
-                # Save
-                async with aiofiles.open(self.presets_file, 'w', encoding='utf-8') as f:
-                    await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
-                
-                return web.json_response({"status": "success"})
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
 
-        @PromptServer.instance.routes.delete("/apex/prompt_presets/{category}/{name}")
-        async def delete_preset(request):
-            """Delete a specific preset"""
-            try:
-                category = request.match_info['category']
-                name = request.match_info['name']
-                
-                # Load existing presets
-                if os.path.exists(self.presets_file):
-                    async with aiofiles.open(self.presets_file, 'r', encoding='utf-8') as f:
-                        content = await f.read()
-                        presets = json.loads(content)
-                else:
-                    return web.json_response({"error": "Presets file not found"}, status=404)
-                
-                # Delete preset
-                if category in presets and name in presets[category]:
-                    del presets[category][name]
-                    
-                    # Remove empty category
-                    if not presets[category]:
-                        del presets[category]
-                    
-                    # Save
-                    async with aiofiles.open(self.presets_file, 'w', encoding='utf-8') as f:
-                        await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
-                    
-                    return web.json_response({"status": "success"})
-                else:
-                    return web.json_response({"error": "Preset not found"}, status=404)
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
-
-# Initialize the API
 api_instance = ApexPromptPresetAPI()

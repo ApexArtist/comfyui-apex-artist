@@ -21,6 +21,16 @@ except ImportError:
 class ApexLoraAPI:
     def __init__(self):
         self.setup_routes()
+
+    @staticmethod
+    def _is_within_directory(path, directory):
+        """Compare resolved path components, not sibling directory prefixes."""
+        try:
+            path = os.path.normcase(os.path.realpath(path))
+            directory = os.path.normcase(os.path.realpath(directory))
+            return os.path.commonpath((path, directory)) == directory
+        except (OSError, ValueError, TypeError):
+            return False
     
     def generate_thumbnail(self, source_path, output_path):
         """
@@ -171,7 +181,7 @@ class ApexLoraAPI:
                 full_path_real = os.path.realpath(full_path)
                 loras_root_real = os.path.realpath(loras_root)
                 
-                if not full_path_real.startswith(loras_root_real):
+                if not self._is_within_directory(full_path_real, loras_root_real):
                     return web.json_response({"error": "Invalid path"}, status=403)
                 
                 # Use the resolved path for operations
@@ -286,7 +296,7 @@ class ApexLoraAPI:
                 full_path_real = os.path.realpath(full_path)
                 loras_root_real = os.path.realpath(loras_root)
                 
-                if not full_path_real.startswith(loras_root_real):
+                if not self._is_within_directory(full_path_real, loras_root_real):
                     return web.json_response({"error": "Invalid path"}, status=403)
                 
                 if not os.path.exists(full_path_real):
@@ -405,9 +415,7 @@ class ApexLoraAPI:
                 for lora_folder in lora_folders:
                     try:
                         lora_folder_real = os.path.realpath(os.path.abspath(lora_folder))
-                        # Use startswith with os.sep to prevent path traversal
-                        # Ensure we check for directory boundary (path separator)
-                        if image_path_real.startswith(lora_folder_real + os.sep) or image_path_real == lora_folder_real:
+                        if self._is_within_directory(image_path_real, lora_folder_real):
                             is_safe = True
                             break
                     except (OSError, ValueError):
@@ -425,6 +433,10 @@ class ApexLoraAPI:
                 
                 if optimized_path != image_path:
                     image_path = optimized_path
+
+                # Thumbnail directories may themselves be symlinks outside a root.
+                if not any(self._is_within_directory(image_path, root) for root in lora_folders):
+                    return web.Response(status=403, text="Access denied")
                 
                 # Final existence check
                 if not os.path.exists(image_path):

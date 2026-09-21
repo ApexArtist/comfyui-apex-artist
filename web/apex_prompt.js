@@ -1,622 +1,441 @@
-/**
- * Apex Prompt Preset Web Extension
- * Enhances the prompt preset selector with advanced UI features
- */
-
+/** Factory/user preset manager. No build dependencies and no workflow input changes. */
 import { app } from "../../../scripts/app.js";
 import { api } from "../../../scripts/api.js";
 
-function $el(selector, propsOrChildren, children) {
-    const match = selector.match(/^([^.#]+)?((?:[.#][^.#]+)*)$/);
-    const element = document.createElement(match?.[1] || "div");
-    const modifiers = match?.[2] || "";
+export const CATEGORY_WIDGETS = {
+    "Apex Environment": "environment_preset",
+    "Apex Lighting": "lighting_preset",
+    "Apex Style": "style_preset",
+    "Apex Camera Lens": "camera_lens_preset",
+};
+const USER_PREFIX = "User: ";
+const nodes = new Set();
+let library = null;
+let requestSequence = 0;
 
-    for (const modifier of modifiers.matchAll(/([.#])([^.#]+)/g)) {
-        if (modifier[1] === ".") {
-            element.classList.add(modifier[2]);
-        } else if (modifier[1] === "#") {
-            element.id = modifier[2];
-        }
+function element(tag, props = {}, children = []) {
+    const el = document.createElement(tag);
+    Object.assign(el, props);
+    for (const child of children) el.append(child);
+    return el;
+}
+
+export function refreshNode(node, snapshot) {
+    for (const [category, widgetName] of Object.entries(CATEGORY_WIDGETS)) {
+        const widget = node.widgets?.find(w => w.name === widgetName);
+        if (!widget) continue;
+        const values = ["Disabled", "Random", ...Object.keys(snapshot.presets[category] || {})];
+        // Do not silently replace a workflow's missing preset with something else.
+        if (typeof widget.value === "string" && !values.includes(widget.value)) values.push(widget.value);
+        widget.options = { ...widget.options, values };
     }
+    node.setDirtyCanvas?.(true, true);
+}
 
-    let childNodes = children;
-    if (Array.isArray(propsOrChildren) || propsOrChildren instanceof Node || typeof propsOrChildren === "string") {
-        childNodes = propsOrChildren;
-    } else if (propsOrChildren) {
-        for (const [key, value] of Object.entries(propsOrChildren)) {
-            if (key === "style" && value && typeof value === "object") {
-                Object.assign(element.style, value);
-            } else if (key.startsWith("on") && typeof value === "function") {
-                element.addEventListener(key.slice(2), value);
-            } else if (key in element) {
-                element[key] = value;
-            } else {
-                element.setAttribute(key, value);
-            }
-        }
+export function usePreset(node, category, name, source) {
+    const widget = node.widgets?.find(w => w.name === CATEGORY_WIDGETS[category]);
+    if (!widget) throw new Error("The target category widget is unavailable.");
+    const index = node.widgets.indexOf(widget);
+    if (node.inputs?.some(input => input.widget?.name === widget.name && input.link != null)) {
+        throw new Error("This category is connected to another node. Disconnect it before using a preset.");
     }
+    const previous = widget.value;
+    widget.value = source === "user" ? USER_PREFIX + name : name;
+    widget.callback?.call(widget, widget.value, app.canvas, node, undefined, undefined);
+    node.onWidgetChanged?.(widget.name, widget.value, previous, widget, index);
+    node.setDirtyCanvas?.(true, true);
+    app.graph?.change?.();
+}
 
-    const appendChild = (child) => {
-        if (child === null || child === undefined) return;
-        element.appendChild(child instanceof Node ? child : document.createTextNode(String(child)));
+async function responseJson(response) {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `Preset request failed (${response.status}).`);
+    return data;
+}
+
+function accept(snapshot) {
+    library = snapshot;
+    for (const node of nodes) refreshNode(node, snapshot);
+    return snapshot;
+}
+
+async function loadLibrary() {
+    const sequence = ++requestSequence;
+    const data = await responseJson(await api.fetchApi("/apex/prompt_library"));
+    if (sequence === requestSequence) accept(data);
+    return data;
+}
+
+async function mutate(operation, payload) {
+    const data = await responseJson(await api.fetchApi(`/apex/prompt_library/${operation}`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+    }));
+    ++requestSequence;
+    return accept(data);
+}
+
+function toast(message) {
+    try {
+        const note = element("div", { className: "apex-prompt-toast", textContent: message, role: "status" });
+        document.body.append(note);
+        setTimeout(() => note.remove(), 3200);
+    } catch { /* headless harness: no-op */ }
+}
+
+function debounce(fn, wait = 150) {
+    let timer = 0;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), wait);
     };
+}
 
-    if (Array.isArray(childNodes)) {
-        childNodes.forEach(appendChild);
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function highlight(text, needle) {
+    const query = String(needle || "").trim().toLowerCase();
+    if (!query) return escapeHtml(text);
+    const lower = String(text).toLowerCase();
+    const index = lower.indexOf(query);
+    if (index < 0) return escapeHtml(text);
+    return escapeHtml(String(text).slice(0, index)) + "<mark>"
+        + escapeHtml(String(text).slice(index, index + query.length)) + "</mark>"
+        + escapeHtml(String(text).slice(index + query.length));
+}
+
+function dialog(title) {
+    const panel = element("dialog", { className: "apex-prompt-dialog" });
+    const error = element("p", { className: "apex-prompt-error", role: "alert" });
+    const body = element("div");
+    const close = element("button", { textContent: "Close", onclick: () => panel.close() });
+    const header = element("header", { className: "apex-prompt-dialog-header" }, [
+        element("h2", { textContent: title }), close,
+    ]);
+    panel.append(header, body, error);
+    try {
+        const open = document.querySelectorAll?.("dialog.apex-prompt-dialog[open]")?.length || 0;
+        if (open > 0) panel.style.zIndex = String(1000 + open);
+    } catch { /* headless harness */ }
+    panel.addEventListener("close", () => panel.remove(), { once: true });
+    document.body.append(panel);
+    panel.showModal();
+    return { panel, body, error };
+}
+
+function button(label, action, error) {
+    return element("button", { textContent: label, onclick: async event => {
+        const target = event.currentTarget;
+        target.disabled = true;
+        error.textContent = "";
+        try { await action(); } catch (exc) { error.textContent = exc.message; }
+        finally { target.disabled = false; }
+    } });
+}
+
+function select(values, value) {
+    const control = element("select", {}, values.map(v => element("option", { value: v, textContent: v })));
+    control.value = value;
+    return control;
+}
+
+function field(label, control) {
+    return element("label", { className: "apex-prompt-field" }, [element("span", { textContent: label }), control]);
+}
+
+function selectedCategoryText(node, snapshot, category) {
+    const widget = node?.widgets?.find(w => w.name === CATEGORY_WIDGETS[category]);
+    const value = widget?.value;
+    if (!value || value === "Disabled" || value === "Random") return { value, text: "" };
+    return { value, text: snapshot.presets[category]?.[value]?.prompt || "" };
+}
+
+function validateDraft(draft) {
+    const trimmed = String(draft.name || "").trim();
+    if (!trimmed) return "Give the preset a name.";
+    if (trimmed !== String(draft.name || "")) return "Remove leading/trailing spaces from the name.";
+    if (["Disabled", "Random", "None"].includes(trimmed) || trimmed.startsWith(USER_PREFIX)) return "That name is reserved. Pick another.";
+    if (!String(draft.prompt || "").trim()) return "Prompt text cannot be empty.";
+    const numeric = Number(draft.weight);
+    if (!Number.isFinite(numeric) || numeric <= 0 || numeric > 1000) return "Weight must be a number from 0 to 1000 (exclusive of 0).";
+    return "";
+}
+
+function counter(label, control, max) {
+    const hint = element("small", { className: "apex-prompt-hint" });
+    const refresh = () => { hint.textContent = `${label}: ${String(control.value || "").length}/${max}`; };
+    control.addEventListener?.("input", refresh);
+    refresh();
+    return hint;
+}
+
+export function openEditor(node, snapshot, entry = null, edit = false, onSaved = null) {
+    const ui = dialog(edit ? "Edit User Preset" : "Save User Preset");
+    let revision = snapshot.revision;
+    const categories = Object.keys(CATEGORY_WIDGETS);
+    let initialCategory = entry?.category || categories[0];
+    if (!entry && node) {
+        for (const cat of categories) {
+            const picked = selectedCategoryText(node, snapshot, cat);
+            if (picked.value && picked.value !== "Disabled" && picked.value !== "Random" && picked.text) { initialCategory = cat; break; }
+        }
+    }
+    const category = select(categories, initialCategory);
+    let prefillName = "";
+    let prefillText = "";
+    if (entry) {
+        prefillName = entry.name + (edit ? "" : " Copy");
+        prefillText = entry.data.prompt || "";
     } else {
-        appendChild(childNodes);
+        const picked = selectedCategoryText(node, snapshot, category.value);
+        prefillText = picked.text;
+        if (picked.value && picked.value !== "Disabled" && picked.value !== "Random") {
+            prefillName = picked.value.startsWith(USER_PREFIX) ? picked.value.slice(USER_PREFIX.length) : `${picked.value} Copy`;
+        }
     }
-
-    return element;
+    const name = element("input", { value: prefillName, maxLength: 120 });
+    name.setAttribute?.("aria-label", "Preset name");
+    const prompt = element("textarea", { value: prefillText, rows: 7, maxLength: 32000 });
+    prompt.setAttribute?.("aria-label", "Prompt text");
+    const description = element("input", { value: entry?.data.description || "", maxLength: 2000 });
+    const tags = element("input", { value: (entry?.data.tags || []).join(", ") });
+    const weight = element("input", { type: "number", value: String(entry?.data.weight ?? 1), min: "0.000001", max: "1000", step: "any" });
+    ui.body.append(element("p", { textContent: "User presets are shared by this ComfyUI installation. Save one category's text—not the whole combined prompt. Factory presets remain unchanged." }));
+    ui.body.append(field("Category", category), field("Name", name), counter("Name", name, 120));
+    ui.body.append(field("Prompt text", prompt), counter("Prompt", prompt, 32000));
+    ui.body.append(button("Copy selected category text", () => {
+        const widget = node.widgets?.find(w => w.name === CATEGORY_WIDGETS[category.value]);
+        const data = snapshot.presets[category.value]?.[widget?.value];
+        if (!data) throw new Error("Select a named preset first; Random and Disabled do not have fixed text.");
+        prompt.value = data.prompt;
+    }, ui.error));
+    ui.body.append(button("Copy input text", () => {
+        const widget = node.widgets?.find(w => w.name === "input_text");
+        if (node.inputs?.some(input => input.widget?.name === "input_text" && input.link != null)) {
+            throw new Error("Input text is connected; its runtime value is unavailable in this dialog.");
+        }
+        prompt.value = widget?.value || "";
+    }, ui.error));
+    ui.body.append(field("Description", description), field("Tags (comma separated)", tags), field("Weight — user Random only", weight));
+    ui.body.append(button("Refresh library (keep my draft)", async () => {
+        snapshot = await loadLibrary();
+        revision = snapshot.revision;
+        ui.error.textContent = "Library refreshed. Review your draft before saving; saving an edit replaces that user preset.";
+    }, ui.error));
+    const submit = async applyToNode => {
+        const draft = { name: name.value, prompt: prompt.value, weight: weight.value };
+        const problem = validateDraft(draft);
+        if (problem) throw new Error(problem);
+        const trimmed = draft.name.trim();
+        const saved = await mutate("save", {
+            revision, source: "user", category: category.value, name: trimmed,
+            original: edit ? { category: entry.category, name: entry.name } : null,
+            preset: { prompt: draft.prompt, description: description.value,
+                tags: tags.value.split(",").map(t => t.trim()).filter(Boolean), weight: Number(draft.weight) },
+        });
+        onSaved?.(saved);
+        if (applyToNode) {
+            usePreset(node, category.value, trimmed, "user");
+            toast(`Saved and applied User: ${trimmed}`);
+        } else {
+            toast(`Saved User: ${trimmed} (${category.value})`);
+        }
+        ui.panel.close();
+    };
+    ui.body.append(button("Save", () => submit(false), ui.error));
+    ui.body.append(button("Save & Use", () => submit(true), ui.error));
+    try { (name.value ? prompt : name).focus?.(); } catch { /* headless */ }
+    return ui;
 }
 
-class ApexPromptPresetManager {
-    constructor() {
-        this.presets = {};
-        this.searchTerm = "";
-        this.selectedCategory = "All";
-        this.currentNode = null;
+async function openManager(node) {
+    let snapshot = await loadLibrary();
+    const ui = dialog("Apex Prompt Preset Manager");
+    const search = element("input", { placeholder: "Search presets…", type: "search" });
+    const source = select(["All", "Factory", "User"], "All");
+    const category = select(["All", ...Object.keys(CATEGORY_WIDGETS)], "All");
+    const status = element("p", { className: "apex-prompt-hint", role: "status" });
+    const list = element("div", { className: "apex-prompt-list" });
+    const moreWrap = element("div");
+    let visibleLimit = 100;
+    let lastDeleted = null;
+    const update = value => { snapshot = value; render(); };
+    function matches(data, name, needle) {
+        const query = String(needle || "").toLowerCase();
+        if (!query) return true;
+        return `${name} ${data.prompt} ${data.description || ""} ${(data.tags || []).join(" ")}`.toLowerCase().includes(query);
     }
-
-    async loadPresets() {
-        try {
-            const response = await api.fetchApi("/apex/prompt_presets");
-            if (response.ok) {
-                this.presets = await response.json();
-            }
-        } catch (error) {
-            console.log("Using default presets");
-        }
-    }
-
-    createPresetManagerDialog() {
-        const dialog = $el("div.comfy-modal", [
-            $el("div.comfy-modal-content", [
-                $el("h2", { textContent: "Apex Prompt Preset Manager" }),
-                
-                // Search and filter section
-                $el("div.apex-preset-controls", [
-                    $el("input", {
-                        type: "text",
-                        placeholder: "Search presets...",
-                        style: {
-                            width: "200px",
-                            marginRight: "10px",
-                            padding: "5px"
-                        },
-                        oninput: (e) => {
-                            this.searchTerm = e.target.value.toLowerCase();
-                            this.updatePresetList();
-                        }
-                    }),
-                    $el("select", {
-                        style: {
-                            marginRight: "10px",
-                            padding: "5px"
-                        },
-                        onchange: (e) => {
-                            this.selectedCategory = e.target.value;
-                            this.updatePresetList();
-                        }
-                    }, [
-                        $el("option", { value: "All", textContent: "All Categories" }),
-                        ...Object.keys(this.presets).map(cat => 
-                            $el("option", { value: cat, textContent: cat })
-                        )
-                    ]),
-                    $el("button", {
-                        textContent: "Add New",
-                        onclick: () => this.showAddPresetDialog()
-                    })
-                ]),
-
-                // Preset list
-                $el("div.apex-preset-list", {
-                    style: {
-                        maxHeight: "400px",
-                        overflowY: "auto",
-                        border: "1px solid #666",
-                        marginTop: "10px"
-                    }
-                }),
-
-                // Controls
-                $el("div.apex-preset-dialog-controls", {
-                    style: {
-                        marginTop: "15px",
-                        textAlign: "right"
-                    }
-                }, [
-                    $el("button", {
-                        textContent: "Import",
-                        onclick: () => this.importPresets()
-                    }),
-                    $el("button", {
-                        textContent: "Export",
-                        style: { marginLeft: "10px" },
-                        onclick: () => this.exportPresets()
-                    }),
-                    $el("button", {
-                        textContent: "Close",
-                        style: { marginLeft: "10px" },
-                        onclick: () => dialog.remove()
-                    })
-                ])
-            ])
-        ]);
-
-        this.presetListElement = dialog.querySelector(".apex-preset-list");
-        this.updatePresetList();
-        
-        document.body.appendChild(dialog);
-        return dialog;
-    }
-
-    updatePresetList() {
-        if (!this.presetListElement) return;
-
-        const filteredPresets = this.getFilteredPresets();
-        
-        this.presetListElement.replaceChildren(
-            ...filteredPresets.map(({ category, name, data }) => 
-                this.createPresetItem(category, name, data)
-            )
-        );
-    }
-
-    getFilteredPresets() {
-        const filtered = [];
-        
-        Object.entries(this.presets).forEach(([category, presets]) => {
-            if (this.selectedCategory !== "All" && category !== this.selectedCategory) {
-                return;
-            }
-
-            Object.entries(presets).forEach(([name, data]) => {
-                const searchableText = `${category} ${name} ${data.description || ""} ${(data.tags || []).join(" ")}`.toLowerCase();
-                
-                if (!this.searchTerm || searchableText.includes(this.searchTerm)) {
-                    filtered.push({ category, name, data });
+    function render() {
+        list.replaceChildren();
+        moreWrap.replaceChildren();
+        const needle = search.value;
+        let shown = 0;
+        let total = 0;
+        for (const kind of ["factory", "user"]) {
+            if (source.value !== "All" && source.value.toLowerCase() !== kind) continue;
+            for (const cat of Object.keys(CATEGORY_WIDGETS)) {
+                if (category.value !== "All" && category.value !== cat) continue;
+                const entries = Object.entries(snapshot[kind][cat] || {}).filter(([name, data]) => matches(data, name, needle));
+                if (!entries.length) continue;
+                total += entries.length;
+                const groupCount = entries.length;
+                const head = element("h3", { textContent: `${kind === "factory" ? "Factory" : "User"} · ${cat} (${groupCount})` });
+                head.innerHTML = highlight(head.textContent, "");
+                list.append(head);
+                for (const [name, data] of entries) {
+                    if (shown >= visibleLimit) continue;
+                    shown += 1;
+                    const entry = { category: cat, name, data, source: kind };
+                    const title = element("strong", {});
+                    title.innerHTML = highlight(`${kind === "factory" ? "Factory" : "User"} · ${cat} · ${name}`, needle);
+                    const preview = element("p", {});
+                    preview.innerHTML = highlight(String(data.prompt).slice(0, 400), needle);
+                    const row = element("section", { className: "apex-prompt-row" }, [title, preview,
+                        button("Use", () => {
+                            usePreset(node, cat, name, kind);
+                            toast(`Applied ${kind === "user" ? USER_PREFIX + name : name} → ${cat}`);
+                        }, ui.error),
+                        button("Save a Copy", () => openEditor(node, snapshot, entry, false, update), ui.error),
+                    ]);
+                    if (kind === "user") row.append(
+                        button("Edit / Rename", () => openEditor(node, snapshot, entry, true, update), ui.error),
+                        button("Delete", async () => {
+                            const confirmRow = element("span", { textContent: `Delete “${name}”? ` });
+                            const yes = element("button", { textContent: "Confirm delete" });
+                            const no = element("button", { textContent: "Keep" });
+                            const inline = element("span", {}, [confirmRow, yes, no]);
+                            row.append(inline);
+                            no.onclick = () => inline.remove();
+                            yes.onclick = async () => {
+                                inline.remove();
+                                lastDeleted = { category: cat, name, data };
+                                update(await mutate("delete", { revision: snapshot.revision, source: "user", category: cat, name }));
+                                toast(`Deleted User: ${name}`);
+                            };
+                        }, ui.error),
+                    );
+                    list.append(row);
                 }
-            });
-        });
-
-        return filtered.sort((a, b) => {
-            if (a.category !== b.category) {
-                return a.category.localeCompare(b.category);
-            }
-            return a.name.localeCompare(b.name);
-        });
-    }
-
-    createPresetItem(category, name, data) {
-        return $el("div.apex-preset-item", {
-            style: {
-                padding: "10px",
-                borderBottom: "1px solid #444",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start"
-            }
-        }, [
-            $el("div.apex-preset-info", [
-                $el("div.apex-preset-header", [
-                    $el("span.apex-preset-category", {
-                        textContent: category,
-                        style: {
-                            fontSize: "12px",
-                            color: "#888",
-                            marginRight: "10px"
-                        }
-                    }),
-                    $el("strong", { textContent: name })
-                ]),
-                $el("div.apex-preset-description", {
-                    textContent: data.description || "",
-                    style: {
-                        fontSize: "13px",
-                        color: "#ccc",
-                        marginTop: "3px"
-                    }
-                }),
-                $el("div.apex-preset-prompt", {
-                    textContent: data.prompt,
-                    style: {
-                        fontSize: "12px",
-                        color: "#aaa",
-                        marginTop: "5px",
-                        fontFamily: "monospace",
-                        maxWidth: "400px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                    }
-                }),
-                data.tags && data.tags.length > 0 ? $el("div.apex-preset-tags", {
-                    style: { marginTop: "5px" }
-                }, data.tags.map(tag => 
-                    $el("span.apex-preset-tag", {
-                        textContent: tag,
-                        style: {
-                            backgroundColor: "#444",
-                            color: "#fff",
-                            padding: "2px 6px",
-                            marginRight: "5px",
-                            borderRadius: "3px",
-                            fontSize: "10px"
-                        }
-                    })
-                )) : null
-            ]),
-            $el("div.apex-preset-actions", [
-                $el("button", {
-                    textContent: "Use",
-                    style: {
-                        backgroundColor: "#007acc",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        marginRight: "5px",
-                        borderRadius: "3px",
-                        cursor: "pointer"
-                    },
-                    onclick: () => this.usePreset(category, name)
-                }),
-                $el("button", {
-                    textContent: "Edit",
-                    style: {
-                        backgroundColor: "#666",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        marginRight: "5px",
-                        borderRadius: "3px",
-                        cursor: "pointer"
-                    },
-                    onclick: () => this.editPreset(category, name, data)
-                }),
-                $el("button", {
-                    textContent: "Delete",
-                    style: {
-                        backgroundColor: "#cc4444",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        borderRadius: "3px",
-                        cursor: "pointer"
-                    },
-                    onclick: () => this.deletePreset(category, name)
-                })
-            ])
-        ]);
-    }
-
-    usePreset(category, name) {
-        if (this.currentNode) {
-            // Update the node's widget values
-            const categoryWidget = this.currentNode.widgets.find(w => w.name === "category");
-            const presetWidget = this.currentNode.widgets.find(w => w.name === "preset_name");
-            
-            if (categoryWidget) categoryWidget.value = category;
-            if (presetWidget) presetWidget.value = `${category}/${name}`;
-            
-            app.graph.setDirtyCanvas(true, true);
-        }
-    }
-
-    editPreset(category, name, data) {
-        this.showEditPresetDialog(category, name, data);
-    }
-
-    deletePreset(category, name) {
-        if (confirm(`Are you sure you want to delete the preset "${name}" from category "${category}"?`)) {
-            delete this.presets[category][name];
-            
-            // Remove category if empty
-            if (Object.keys(this.presets[category]).length === 0) {
-                delete this.presets[category];
-            }
-            
-            this.savePresets();
-            this.updatePresetList();
-        }
-    }
-
-    showAddPresetDialog() {
-        this.showEditPresetDialog("General", "", {
-            prompt: "",
-            description: "",
-            tags: [],
-            weight: 1.0
-        }, true);
-    }
-
-    showEditPresetDialog(category, name, data, isNew = false) {
-        const dialog = $el("div.comfy-modal", [
-            $el("div.comfy-modal-content", [
-                $el("h3", { textContent: isNew ? "Add New Preset" : "Edit Preset" }),
-                
-                $el("div.apex-preset-form", [
-                    $el("label", [
-                        "Category:",
-                        $el("input", {
-                            type: "text",
-                            value: category,
-                            style: {
-                                width: "100%",
-                                marginTop: "5px",
-                                padding: "5px"
-                            },
-                            id: "preset-category"
-                        })
-                    ]),
-                    
-                    $el("label", {
-                        style: { marginTop: "10px", display: "block" }
-                    }, [
-                        "Name:",
-                        $el("input", {
-                            type: "text",
-                            value: name,
-                            style: {
-                                width: "100%",
-                                marginTop: "5px",
-                                padding: "5px"
-                            },
-                            id: "preset-name"
-                        })
-                    ]),
-                    
-                    $el("label", {
-                        style: { marginTop: "10px", display: "block" }
-                    }, [
-                        "Description:",
-                        $el("input", {
-                            type: "text",
-                            value: data.description || "",
-                            style: {
-                                width: "100%",
-                                marginTop: "5px",
-                                padding: "5px"
-                            },
-                            id: "preset-description"
-                        })
-                    ]),
-                    
-                    $el("label", {
-                        style: { marginTop: "10px", display: "block" }
-                    }, [
-                        "Prompt:",
-                        $el("textarea", {
-                            value: data.prompt || "",
-                            style: {
-                                width: "100%",
-                                height: "100px",
-                                marginTop: "5px",
-                                padding: "5px"
-                            },
-                            id: "preset-prompt"
-                        })
-                    ]),
-                    
-                    $el("label", {
-                        style: { marginTop: "10px", display: "block" }
-                    }, [
-                        "Tags (comma-separated):",
-                        $el("input", {
-                            type: "text",
-                            value: (data.tags || []).join(", "),
-                            style: {
-                                width: "100%",
-                                marginTop: "5px",
-                                padding: "5px"
-                            },
-                            id: "preset-tags"
-                        })
-                    ]),
-                    
-                    $el("label", {
-                        style: { marginTop: "10px", display: "block" }
-                    }, [
-                        "Weight:",
-                        $el("input", {
-                            type: "number",
-                            value: data.weight || 1.0,
-                            min: 0.1,
-                            max: 2.0,
-                            step: 0.1,
-                            style: {
-                                width: "100%",
-                                marginTop: "5px",
-                                padding: "5px"
-                            },
-                            id: "preset-weight"
-                        })
-                    ])
-                ]),
-                
-                $el("div.apex-preset-dialog-controls", {
-                    style: {
-                        marginTop: "20px",
-                        textAlign: "right"
-                    }
-                }, [
-                    $el("button", {
-                        textContent: "Cancel",
-                        onclick: () => dialog.remove()
-                    }),
-                    $el("button", {
-                        textContent: isNew ? "Add" : "Save",
-                        style: {
-                            marginLeft: "10px",
-                            backgroundColor: "#007acc",
-                            color: "white",
-                            border: "none",
-                            padding: "8px 16px",
-                            borderRadius: "3px"
-                        },
-                        onclick: () => {
-                            this.savePresetFromDialog(dialog, isNew ? null : { category, name });
-                            dialog.remove();
-                        }
-                    })
-                ])
-            ])
-        ]);
-        
-        document.body.appendChild(dialog);
-    }
-
-    savePresetFromDialog(dialog, original) {
-        const category = dialog.querySelector("#preset-category").value.trim();
-        const name = dialog.querySelector("#preset-name").value.trim();
-        const description = dialog.querySelector("#preset-description").value.trim();
-        const prompt = dialog.querySelector("#preset-prompt").value.trim();
-        const tags = dialog.querySelector("#preset-tags").value.split(",").map(t => t.trim()).filter(t => t);
-        const weight = parseFloat(dialog.querySelector("#preset-weight").value) || 1.0;
-        
-        if (!category || !name || !prompt) {
-            alert("Category, name, and prompt are required!");
-            return;
-        }
-        
-        // Remove original if name/category changed
-        if (original && (original.category !== category || original.name !== name)) {
-            delete this.presets[original.category][original.name];
-            if (Object.keys(this.presets[original.category]).length === 0) {
-                delete this.presets[original.category];
             }
         }
-        
-        // Add/update preset
-        if (!this.presets[category]) {
-            this.presets[category] = {};
+        if (!total) {
+            list.append(element("p", { className: "apex-prompt-hint", textContent: "No presets match. Clear the search or choose another filter." }));
         }
-        
-        this.presets[category][name] = {
-            prompt,
-            description,
-            tags,
-            weight
-        };
-        
-        this.savePresets();
-        this.updatePresetList();
+        status.textContent = `Showing ${Math.min(shown, total)} of ${total} presets`;
+        if (shown < total) {
+            moreWrap.append(button(`Show more (${total - shown} remaining)`, () => { visibleLimit += 100; render(); }, ui.error));
+        }
+        if (lastDeleted) {
+            moreWrap.append(button("Undo delete", async () => {
+                const backup = lastDeleted;
+                lastDeleted = null;
+                update(await mutate("save", { revision: snapshot.revision, source: "user",
+                    category: backup.category, name: backup.name, original: null, preset: backup.data }));
+                toast(`Restored User: ${backup.name}`);
+            }, ui.error));
+        }
     }
-
-    async savePresets() {
+    const debouncedRender = debounce(() => { visibleLimit = 100; render(); });
+    for (const control of [source, category]) control.addEventListener("input", () => { visibleLimit = 100; render(); });
+    search.addEventListener("input", debouncedRender);
+    const file = element("input", { type: "file", accept: ".json,application/json", hidden: true });
+    file.addEventListener("change", async () => {
+        ui.error.textContent = "";
         try {
-            await api.fetchApi("/apex/prompt_presets", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(this.presets)
-            });
-        } catch (error) {
-            console.error("Error saving presets:", error);
-        }
-    }
-
-    exportPresets() {
-        const data = JSON.stringify(this.presets, null, 2);
-        const blob = new Blob([data], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "apex_prompt_presets.json";
-        a.click();
-        
-        URL.revokeObjectURL(url);
-    }
-
-    importPresets() {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".json";
-        
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    
-                    // Merge with existing presets
-                    Object.entries(imported).forEach(([category, presets]) => {
-                        if (!this.presets[category]) {
-                            this.presets[category] = {};
-                        }
-                        Object.assign(this.presets[category], presets);
-                    });
-                    
-                    this.savePresets();
-                    this.updatePresetList();
-                    alert("Presets imported successfully!");
-                } catch (error) {
-                    alert("Error importing presets: " + error.message);
+            if (!file.files?.length) return;
+            if (file.files[0].size > 4 * 1024 * 1024) throw new Error("Import exceeds 4 MiB.");
+            const document = JSON.parse(await file.files[0].text());
+            const incoming = document?.schema_version ? document.presets : document;
+            const counts = { fresh: 0, conflicts: [] };
+            for (const [cat, entries] of Object.entries(incoming || {})) {
+                for (const name of Object.keys(entries || {})) {
+                    const current = snapshot.user[cat]?.[name];
+                    if (current && JSON.stringify(current) !== JSON.stringify(entries[name])) counts.conflicts.push(`${cat} · ${name}`);
+                    else if (!current) counts.fresh += 1;
                 }
-            };
-            reader.readAsText(file);
-        };
-        
-        input.click();
-    }
+            }
+            if (counts.conflicts.length && !confirm(`Import ${counts.fresh} new preset(s)? ${counts.conflicts.length} conflict(s) will be rejected:\n${counts.conflicts.slice(0, 10).join("\n")}${counts.conflicts.length > 10 ? "\n…" : ""}`)) return;
+            update(await mutate("import", { revision: snapshot.revision, document }));
+            toast(`Imported ${counts.fresh} preset(s)`);
+        } catch (exc) { ui.error.textContent = exc.message; }
+        finally { file.value = ""; }
+    });
+    ui.body.append(element("p", { textContent: "Factory presets are read-only. User presets are shared across this installation. Random continues to use the original factory pool. Export user presets when sharing workflows." }),
+        field("Search", search), field("Library", source), field("Category", category), status,
+        button("New User Preset", () => openEditor(node, snapshot, null, false, update), ui.error),
+        button("Refresh", async () => update(await loadLibrary()), ui.error),
+        button("Import into User Library", () => file.click(), ui.error),
+        button("Export User Library", () => {
+            const blob = new Blob([JSON.stringify({ schema_version: 1, presets: snapshot.user }, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const stamp = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+            const link = element("a", { href: url, download: `apex_user_prompt_presets_${stamp}.json` });
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast("Exported user presets");
+        }, ui.error), file, list, moreWrap);
+    render();
 }
-
-const presetManager = new ApexPromptPresetManager();
 
 app.registerExtension({
     name: "Apex.PromptPreset",
-    
     async setup() {
-        await presetManager.loadPresets();
-        
-        // Add stylesheet
-        const style = document.createElement("style");
-        style.textContent = `
-            .apex-preset-controls {
-                display: flex;
-                align-items: center;
-                margin-bottom: 15px;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            
-            .apex-preset-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
-            }
-            
-            .apex-preset-form label {
-                display: block;
-                margin-bottom: 10px;
-                color: #fff;
-            }
-            
-            .apex-preset-form input,
-            .apex-preset-form textarea {
-                background-color: #333;
-                border: 1px solid #666;
-                color: #fff;
-                border-radius: 3px;
-            }
-            
-            .apex-preset-form input:focus,
-            .apex-preset-form textarea:focus {
-                outline: none;
-                border-color: #007acc;
-            }
-        `;
-        document.head.appendChild(style);
+        const style = element("style", { textContent: `
+            .apex-prompt-dialog { color: var(--input-text, #ddd); background: var(--comfy-menu-bg, #222); border: 1px solid #666; border-radius: 8px; width: min(850px, 90vw); max-height: 85vh; overflow: auto; padding: 20px; }
+            .apex-prompt-dialog::backdrop { background: #0009; }
+            .apex-prompt-dialog-header { position: sticky; top: -20px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -20px -20px 16px; padding: 12px 20px; background: var(--comfy-menu-bg, #222); border-bottom: 1px solid #666; }
+            .apex-prompt-dialog-header h2 { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+            .apex-prompt-dialog-header button { flex-shrink: 0; }
+            .apex-prompt-dialog button, .apex-prompt-dialog select { margin: 4px; padding: 6px; }
+            .apex-prompt-field { display: grid; gap: 5px; margin: 12px 0; }
+            .apex-prompt-field input, .apex-prompt-field textarea { width: 100%; box-sizing: border-box; }
+            .apex-prompt-row { border-bottom: 1px solid #666; padding: 12px 0; }
+            .apex-prompt-row p { white-space: pre-wrap; overflow-wrap: anywhere; }
+            .apex-prompt-row mark { background: #b58900; color: #111; border-radius: 2px; padding: 0 2px; }
+            .apex-prompt-error { color: #ff9090; white-space: pre-wrap; }
+            .apex-prompt-hint { color: #9aa; font-size: 12px; margin: 4px 0; }
+            .apex-prompt-toast { position: fixed; bottom: 18px; right: 18px; z-index: 3000; background: #2a2a2a; color: #eee; border: 1px solid #666; border-radius: 6px; padding: 10px 14px; max-width: min(420px, 90vw); box-shadow: 0 4px 18px #000a; }
+            .apex-prompt-dialog h3 { margin: 16px 0 6px; font-size: 13px; color: #bbb; text-transform: uppercase; letter-spacing: .04em; }
+        ` });
+        document.head.append(style);
+        api.addEventListener("apex-presets-changed", () => loadLibrary().catch(console.error));
+        try { await loadLibrary(); } catch (exc) { console.error("[Apex Prompt]", exc); }
     },
-    
-    async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeData.name === "ApexPromptPreset") {
-            const onAdded = nodeType.prototype.onAdded;
-            nodeType.prototype.onAdded = function() {
-                onAdded?.apply(this, arguments);
+    async beforeRegisterNodeDef(nodeType, nodeData) {
+        if (nodeData.name !== "ApexPromptPreset") return;
+        const created = nodeType.prototype.onNodeCreated;
+        nodeType.prototype.onNodeCreated = function () {
+            const result = created?.apply(this, arguments);
+            nodes.add(this);
+            const launch = action => async () => {
+                const host = action.host;
+                try {
+                    if (host && "value" in host) { host.value = "Working…"; host.disabled = true; }
+                    await action();
+                } catch (exc) { const ui = dialog("Apex Preset Error"); ui.error.textContent = exc.message; }
+                finally { if (host && "value" in host) { host.value = host.label; host.disabled = false; } }
             };
-        }
-    }
+            const saveWidget = this.addWidget("button", "Save Preset…", null, null, { serialize: false });
+            const manageWidget = this.addWidget("button", "Manage Presets…", null, null, { serialize: false });
+            saveWidget.label = "Save Preset…"; manageWidget.label = "Manage Presets…";
+            const saveAction = launch(async () => openEditor(this, await loadLibrary()));
+            saveAction.host = saveWidget; saveWidget.callback = saveAction;
+            const manageAction = launch(() => openManager(this));
+            manageAction.host = manageWidget; manageWidget.callback = manageAction;
+            if (library) refreshNode(this, library);
+            return result;
+        };
+        const removed = nodeType.prototype.onRemoved;
+        const configured = nodeType.prototype.onConfigure;
+        nodeType.prototype.onConfigure = function () {
+            const result = configured?.apply(this, arguments);
+            if (library) refreshNode(this, library);
+            return result;
+        };
+        nodeType.prototype.onRemoved = function () {
+            nodes.delete(this);
+            return removed?.apply(this, arguments);
+        };
+    },
 });
