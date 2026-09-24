@@ -7,7 +7,7 @@ This document outlines the complete workflow for publishing new versions of the 
 ### Current release: 2.3.0 (September 24, 2026)
 - Version metadata and release notes prepared; see `CHANGELOG.md`.
 - Push to `main` and registry publication authorized by the repository owner on 2026-09-24.
-- **Blocked at push time:** the stored Git Credential Manager token belongs to the GitHub account `apexartistx`, which has no write access to `ApexArtist/comfyui-apex-artist` (`403 Permission denied`), and `gh` is not installed. Complete the push from a terminal signed in as an account with write access, or with a PAT belonging to such an account. The release commit and the `v2.3.0` tag are already created locally.
+- **Push completed 2026-09-24:** an initial attempt returned `403 Permission denied` because the stored Git Credential Manager credential (`apexartistx`) lacked write access to `ApexArtist/comfyui-apex-artist`. After write access was granted, commit `1c3eaa4` and tag `v2.3.0` pushed successfully, and Actions run #29 (https://github.com/ApexArtist/comfyui-apex-artist/actions/runs/35989797563) finished with `success`.
 - Automated pre-publish verification passed (version consistency, character preset store sync, prompt store and node behaviour, frontend syntax). Live browser and clean-install checks remain pending.
 - **Important:** the existing GitHub workflow publishes on a push to `main` that changes `pyproject.toml`; the release push is a publishing action, not just a backup.
 

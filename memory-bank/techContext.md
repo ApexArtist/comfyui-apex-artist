@@ -66,8 +66,8 @@ node --check web\<filename>.js
 - No end-to-end benchmark or live integration test suite exists
 
 ### Version Management
-- Version **2.3.0** in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json`, and `custom_nodes.json`; committed and tagged `v2.3.0` locally on September 24, 2026 with the repository owner's authorization. **The push to `main` is still pending**: the stored Git Credential Manager token belongs to the GitHub account `apexartistx`, which lacks write access to `ApexArtist/comfyui-apex-artist` and returns `403 Permission denied`
-- A push to main changing pyproject.toml triggers the existing registry publish workflow; do not push without authorization (the 2.3.0 release push is authorized; it publishes to the registry once a credential with write access completes the push)
+- Version **2.3.0** in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json`, and `custom_nodes.json`; committed as `1c3eaa4`, tagged `v2.3.0`, and pushed to `main` on September 24, 2026 with the repository owner's authorization. The first push attempt returned `403 Permission denied` because the stored Git Credential Manager credential (`apexartistx`) lacked write access to `ApexArtist/comfyui-apex-artist`; after that was resolved the push succeeded
+- A push to main changing pyproject.toml triggers the existing registry publish workflow; do not push without authorization (the 2.3.0 release push was authorized, and Actions run #29 published 2.3.0 successfully on 2026-09-24: https://github.com/ApexArtist/comfyui-apex-artist/actions/runs/35989797563)
 - No automated version update script; manual sync required
 - Restart ComfyUI for Python changes; hard-refresh browser for JavaScript
 

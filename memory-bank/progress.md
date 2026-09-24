@@ -1,7 +1,7 @@
 # Progress
 
 ## What Works
-- **9 registered nodes** (v2.2.0 prepared locally): ApexBlur (9 algorithms), ApexSharpen (8 methods), ApexLayerBlend (27 modes), ApexDepthToNormal, ApexHDRIViewer, ApexLoraLoader, ApexPromptPreset, ApexCharacterPrompt, ApexJSON
+- **9 registered nodes** (v2.3.0 published September 24, 2026): ApexBlur (9 algorithms), ApexSharpen (8 methods), ApexLayerBlend (27 modes), ApexDepthToNormal, ApexHDRIViewer, ApexLoraLoader, ApexPromptPreset, ApexCharacterPrompt, ApexJSON
 - **Core image processing**: All blur/sharpen/blend operations functional
 - **Shared utilities**: Separable Gaussian blur (tested vs dense reference), device/dtype-aware masks, luminance/HSL conversion
 - **LoRA system**: Modal browser with folder navigation, 256×256 JPEG thumbnails, native node.imgs preview, path boundary validation
@@ -39,7 +39,7 @@
 - requirements.txt vs metadata dependency reconciliation needed
 
 ## Current Status
-2.3.0 is committed and tagged `v2.3.0` locally (release commit and tag on main, 4 commits ahead of `origin/main`). **The push has not succeeded**: the stored Git Credential Manager token belongs to the GitHub account `apexartistx`, which lacks write access to `ApexArtist/comfyui-apex-artist`, so `git push origin main --tags` returns `403 Permission denied`; `gh` is not installed, and the non-interactive shell cannot complete a credential prompt. The push must be completed from an interactive terminal signed in as an account with write access (or with a PAT/credential for that account); only then does the workflow that triggers on a `pyproject.toml` change publish 2.3.0 to the registry. Automated pre-publish verification passed (version consistency across the five version files, character preset store sync, prompt store/node behaviour including the new Apex Color category, frontend syntax, Python parsing). The automated test suite was removed September 23, 2026 (all dev-only, recoverable from git); verification is otherwise manual — live browser and clean-install checks remain pending. See CHANGELOG.md.
+2.3.0 was committed as `1c3eaa4`, tagged `v2.3.0`, and pushed to main on September 24, 2026 together with the three previously local commits (the two HDRI preview fixes and the 2.2.0 preparation), so `origin/main` matches local `main`. The first push attempt failed with `403 Permission denied` — the stored Git Credential Manager credential (`apexartistx`) had no write access to `ApexArtist/comfyui-apex-artist`, `gh` was not installed, and the non-interactive shell cannot complete a credential prompt; once write access was granted the push succeeded. Because the release push changes `pyproject.toml`, GitHub Actions run #29 "Publish to Comfy registry" was triggered and completed with `success` (https://github.com/ApexArtist/comfyui-apex-artist/actions/runs/35989797563), publishing 2.3.0 to the registry. Automated pre-publish verification passed (version consistency across the five version files, character preset store sync, prompt store/node behaviour including the new Apex Color category, frontend syntax, Python parsing). The automated test suite was removed September 23, 2026 (all dev-only, recoverable from git); verification is otherwise manual — live browser and clean-install checks, plus confirmation that 2.3.0 appears in the registry listing, remain pending. See CHANGELOG.md.
 
 ## Evolution of Project Decisions
 - **July 2026**: Standardized categories, created shared utilities, built LoRA modal/thumbnail system; removed extraction/merge/quantizer/smart-resize nodes
