@@ -78,10 +78,10 @@
     {
       "id": "ApexPromptPreset",
       "display_name": "Apex Prompt",
-      "description": "Professional prompt preset system with hierarchical categories, search, and dynamic management",
+      "description": "Professional prompt preset system with Environment, Lighting, Style, Color and Camera Lens categories, search, and dynamic management",
       "category": "Apex Artist/Text",
       "input_types": ["STRING"],
-      "output_types": ["STRING", "STRING", "STRING", "STRING", "STRING"]
+      "output_types": ["STRING", "STRING", "STRING", "STRING", "STRING", "STRING"]
     },
     {
       "id": "ApexLoraLoader",
@@ -108,5 +108,5 @@
       "output_types": ["STRING"]
     }
   ],
-   "version": "2.2.0"
+   "version": "2.3.0"
 }

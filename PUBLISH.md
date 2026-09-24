@@ -4,11 +4,12 @@ This document outlines the complete workflow for publishing new versions of the 
 
 ## Pre-Publish Checklist
 
-### Current preparation: 2.2.0 (September 21, 2026)
-- Version metadata and release notes prepared locally; see `CHANGELOG.md`.
-- No push, remote release, or registry publication authorized for this preparation.
-- Browser smoke tests and clean-install checks remain pending.
-- **Important:** the existing GitHub workflow publishes on a push to `main` that changes `pyproject.toml`; a later push is a publishing action, not just a backup.
+### Current release: 2.3.0 (September 24, 2026)
+- Version metadata and release notes prepared; see `CHANGELOG.md`.
+- Push to `main` and registry publication authorized by the repository owner on 2026-09-24.
+- **Blocked at push time:** the stored Git Credential Manager token belongs to the GitHub account `apexartistx`, which has no write access to `ApexArtist/comfyui-apex-artist` (`403 Permission denied`), and `gh` is not installed. Complete the push from a terminal signed in as an account with write access, or with a PAT belonging to such an account. The release commit and the `v2.3.0` tag are already created locally.
+- Automated pre-publish verification passed (version consistency, character preset store sync, prompt store and node behaviour, frontend syntax). Live browser and clean-install checks remain pending.
+- **Important:** the existing GitHub workflow publishes on a push to `main` that changes `pyproject.toml`; the release push is a publishing action, not just a backup.
 
 Before publishing a new version, ensure all of the following are complete:
 
@@ -25,8 +26,8 @@ Before publishing a new version, ensure all of the following are complete:
 - [ ] Verify backward compatibility with existing workflows
 - [ ] Check for memory leaks or performance issues
 - [ ] Test on clean ComfyUI installation if possible
-- [ ] Run core tests: `python scripts\test_project_core.py`
-- [ ] Run character validator: `python scripts\validate_character_prompt.py`
+- [ ] Verify preset store is in sync: `python scripts\generate_character_presets.py --check`
+- [ ] Confirm `git status` shows no temp or derived files before staging
 - [ ] Syntax check frontend: `node --check web\<filename>.js` for each file
 
 ### Documentation
@@ -303,4 +304,4 @@ When creating release notes or CHANGELOG entries:
 
 ---
 
-**Last Updated:** 2026-09-21
+**Last Updated:** 2026-09-24

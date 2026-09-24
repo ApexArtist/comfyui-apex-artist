@@ -22,7 +22,7 @@ comfyui-apex-artist/
 ├── web/                   # Frontend modules (4 files, 1 unregistered)
 ├── lens/                  # Source images for presets
 ├── lens_previews/         # Generated preview assets
-├── scripts/               # Tests, validators, generators
+├── scripts/               # Preset generator only (test scripts removed 2026-09-23)
 ├── memory-bank/           # Context documentation (6 core files)
 ├── presets/               # JSON data stores
 ├── pyproject.toml         # Python package metadata
@@ -38,21 +38,21 @@ comfyui-apex-artist/
 - HDRI/LoRA operations currently block async handlers (needs fixing)
 
 ## Tool Usage Patterns
-### Running Tests
+### Tests — removed September 23, 2026
 
-Character node (September 20, 2026): `scripts/validate_character_prompt.py` covers the 12-category library, dropdowns, 13 outputs, deterministic/weighted random selection, bracket variants, the five `/apex/character_presets` CRUD routes, damaged/missing store fallback, and real `__init__.py` registration (heavyweight node imports stubbed). All checks pass.
+September 23, 2026: the development test suite (core, prompt-store, HDRI socket, character validator, plus the obsolete diagnostics) was removed from `scripts/` — it is dev-only and not required for ComfyUI to load this pack. All deleted scripts remain recoverable from git (`git show HEAD:scripts/<name>`). The only script kept is `scripts/generate_character_presets.py`, which `apex_character_prompt.py` names as the regeneration path for the shipped `character_presets.json`.
 
-Prompt presets (September 20, 2026): `scripts/test_prompt_presets.py` uses unittest/aiohttp temporary storage and synthetic package imports; `scripts/test_prompt_presets.mjs` runs a dependency-free DOM/API harness against the actual frontend module loaded in memory. Neither touches real user presets. 10 Python tests and the frontend harness pass; browser integration still needs manual verification.
+Last full-suite run before removal (September 23, 2026): 7 core tests (3.5 s), 6 HDRI backend tests (1.6 s), 10 prompt-store tests (1.3 s), 105 character checks, 11 HDRI frontend checks, the prompt frontend harness, and `character_presets.json` synchronization all passed — roughly 10 seconds total. This records the last passing state, not a runnable suite: verification is now manual (browser/ComfyUI) plus the `node --check` syntax check below.
 ```powershell
-# Core unit tests (29.973s, 7 methods)
-& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\test_project_core.py
+# Automated Python tests were removed September 23, 2026 (see note above); only the preset generator remains:
+& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\generate_character_presets.py --check
 
-# Character preset validator
-& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\validate_character_prompt.py
+# Recovery example — deleted scripts are still in git HEAD:
+#   git show HEAD:scripts\test_project_core.py
 
-# HDRI socket regressions (11 frontend checks + 6 backend tests)
-node scripts\test_hdri_socket.mjs
-& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\test_hdri_socket.py
+# Recovery examples for the HDRI/prompt tests:
+#   git show HEAD:scripts\test_hdri_socket.mjs
+#   git show HEAD:scripts\test_hdri_socket.py
 
 # JavaScript syntax check
 node --check web\<filename>.js
@@ -60,14 +60,14 @@ node --check web\<filename>.js
 
 ### Important Notes on Testing
 - Core tests use synthetic ComfyUI package; don't require full runtime
-- Legacy uncommitted test_hdri_viewer_preview.mjs targets obsolete payloads/absent height controls; preserved separately. New socket harness imports via data URL without creating temporary source files.
+- The legacy HDRI diagnostics (`test_hdri_viewer_preview.mjs`, `test_ground_height_visual.py`) and the entire test suite were removed September 23, 2026 as dev-only material; the socket contract now lives in systemPatterns.md and deleted scripts are recoverable from git.
 - Syntax tests pass ≠ ComfyUI/browser integration working
-- PowerShell may truncate output; use `Start-Process -Wait` with redirected stdout/stderr for full logs
+- PowerShell may truncate output; use `Start-Process -Wait` with redirected stdout/stderr for full logs. A native command whose stderr is merged inside a pipeline (`... 2>&1 | Select-Object -Last 5`) can report exit code 1 even when every test passed; redirect to a file first (`> "$env:TEMP\out.txt" 2>&1`) and only then read `$LASTEXITCODE`. This produced two false failures on September 23, 2026.
 - No end-to-end benchmark or live integration test suite exists
 
 ### Version Management
-- Version 2.2.0 in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json`, and `custom_nodes.json`; prepared locally, unpublished
-- A push to main changing pyproject.toml triggers the existing registry publish workflow; do not push without authorization
+- Version **2.3.0** in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json`, and `custom_nodes.json`; committed and tagged `v2.3.0` locally on September 24, 2026 with the repository owner's authorization. **The push to `main` is still pending**: the stored Git Credential Manager token belongs to the GitHub account `apexartistx`, which lacks write access to `ApexArtist/comfyui-apex-artist` and returns `403 Permission denied`
+- A push to main changing pyproject.toml triggers the existing registry publish workflow; do not push without authorization (the 2.3.0 release push is authorized; it publishes to the registry once a credential with write access completes the push)
 - No automated version update script; manual sync required
 - Restart ComfyUI for Python changes; hard-refresh browser for JavaScript
 

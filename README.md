@@ -14,7 +14,7 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 ### Models & Workflow
 - **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
 - **ApexJSON** — Look up text values in JSON data
-- **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, and Style categories
+- **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, Style, Color, and Camera Lens categories
 - **ApexCharacterPrompt** — Character prompts from 12 preset categories (gender, age, ethnicity, face, eye color, skin tone, hair, headwear, top, bottom, shoes, hand accessory) with 13 text outputs
   - Presets include **Square Eyes**: a soft oval face with distinctive horizontally elongated rectangular-shaped eyes and pale blue-grey irises
   - Presets include **Long Silver Blonde Wispy Bangs** (hair), **White Wireless Headphones** (headwear), and **Oversized Pale Blue Hoodie** (top)
@@ -32,10 +32,12 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 
 ### Apex Prompt — Factory and User Presets
 
-- **Save Preset…** saves editable text in one category: Environment, Lighting, Style, or Camera Lens. Use **Copy selected category text** or **Copy input text** to fill the editor explicitly; saving does not capture the entire combined prompt or node setup.
+- **Save Preset…** saves editable text in one category: Environment, Lighting, Style, Color, or Camera Lens. Use **Copy selected category text** or **Copy input text** to fill the editor explicitly; saving does not capture the entire combined prompt or node setup.
 - **Manage Presets…** provides search, category/source filters, Use, Save a Copy, and user-only Edit/Rename/Delete actions.
 - Save and Manage dialogs keep **Close** in a sticky top-right header, accessible while scrolling.
-- Factory presets remain read-only. The bundled JSON is preserved; Python defaults supply missing names without replacing existing JSON text. Existing factory names, node inputs, and five outputs stay unchanged.
+- **Apex Color** is a dedicated colour-grade slot with 68 bundled presets, split between standard colour styles (Full Natural Color, Rich Vibrant Color, Soft Pastel Palette, Warm Golden Grade, Cool Blue Grade, Jewel Tone Palette, Neon Color Pop, Duotone Two Color, Cross Processed Color, Bleach Bypass Steel, Sepia Antique Tone…) and industry looks (Teal and Orange Blockbuster, Film Print Emulation 2383, ACES Neutral Grade, Rec.709 Broadcast Color, Log Flat Ungraded, Technicolor Three Strip, Two Strip Technicolor, Day for Night Blue, Cold Cyan Thriller, Kodak Portra / Ektar / Ektachrome / Gold / Kodachrome / Vision3 250D and 500T, CineStill 800T, Fujifilm Eterna / Velvia / Pro 400H, Agfa, Polaroid, Lomo, Eighties VHS Color, Nineties Music Video Color, Y2K Digicam Color, False Color Infrared, Thermal Heat Map…). Colour is a deliberate choice: **Monochrome Noir**, Sepia, and the desaturated/Low Saturation presets are only reached when you pick them. `Random` draws one weighted preset like every other category.
+- Combined prompt order is input → environment → lighting → style → **color** → camera lens, so the colour grade is stated after the look. The node returns six STRING outputs: `combined_prompt`, `environment_text`, `lighting_text`, `style_text`, `camera_lens_text`, and the new `color_text`. The five original outputs keep their positions, and the new `color_preset` dropdown is appended last, so saved workflows keep their values and links.
+- Factory presets remain read-only. The bundled JSON is preserved; Python defaults supply missing names without replacing existing JSON text. Existing factory names and node inputs stay unchanged.
 - User presets appear as **User: Name** in the existing selectors. The same name can exist in both libraries without overriding a factory preset.
 - User data is stored at `apex_artist/prompt_presets.json` beneath ComfyUI's configured user directory, outside this extension's installation directory. **This library is installation-shared, not private to a ComfyUI user profile.** All clients with access to this server can manage it.
 - **Random** retains the original factory pool, order, and weights; saving a user preset does not alter seeded factory choices. User weights are stored for future user-random support; there is no user-random selector in this version.
@@ -47,12 +49,7 @@ A collection of efficient, easy-to-use nodes for ComfyUI that streamline image p
 
 **Scope:** concurrent clients of one ComfyUI server are supported. Do not run multiple server processes writing the same preset file; the write lock is process-local. Private per-profile libraries and whole-node setup presets are not implemented.
 
-Preset regression tests use temporary storage and do not modify your actual library:
 
-```powershell
-& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' -B 'F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes\comfyui-apex-artist\scripts\test_prompt_presets.py'
-node 'F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes\comfyui-apex-artist\scripts\test_prompt_presets.mjs'
-```
 
 ### LoRA Loader
 - Interactive modal browser with folder navigation
@@ -96,7 +93,7 @@ Add Node → Apex Artist → Models → Apex LoRA Loader
 
 ## 🚀 Changelog
 
-**v2.2.0** - 2026-09-21 — Local release preparation: character prompts, separate factory/user prompt libraries, improved preset dialogs, HDRI socket preview fixes, and LoRA path hardening. See `CHANGELOG.md` for validation and remaining release checks.
+**v2.3.0** - 2026-09-24 — First published release of the 2.x line: Apex Character Prompt (12 categories, 221 presets, 13 outputs), the new Apex Color colour-grade category (68 standard and industry presets) with a sixth Apex Prompt output, separate factory/user prompt libraries with atomic writes and Save/Manage dialogs, preset colour fixes that stop unwanted black-and-white renders, HDRI socket preview fixes, and LoRA path hardening. See `CHANGELOG.md` for validation and remaining release checks.
 
 **v2.1.2** - 2026-07-25 — LoRA thumbnail system fixes: automatic regeneration on image updates, browser cache-busting, improved back button
 **v2.1.1** - 2026-07-23 — Patch: version bump, removed stale ApexLoadModel references from metadata files

@@ -366,13 +366,13 @@
   },
   "Apex Character Face": {
     "Universal Beauty": {
-      "prompt": "Delicate youthful feminine face with a soft oval-to-tapered shape, gently rounded cheeks, softly defined high cheekbones, noticeably slim lower face, smooth narrow jawline curving inward gradually toward a small softly rounded chin, compact balanced mid-face proportions, large almond-shaped eyes with gently lifted outer corners and a large eye-to-face ratio, softly arched natural eyebrows, small delicate straight nose with a narrow bridge and softly rounded petite tip, softly full lips with a naturally defined Cupid's bow and slightly fuller lower lip, smooth rounded facial contours, delicate feminine bone structure, harmonious proportions, fair porcelain skin with a faint natural flush across the cheeks, realistic skin texture with visible pores and natural detail, naturally youthful appearance, serene gentle expression.",
-      "description": "Universal delicate beauty - merged Pale Porcelain structure with Micro Drama naturalism",
+      "prompt": "Delicate youthful feminine face with a compact, softly oval shape, balanced facial proportions with a slightly widened mid-face, gently rounded cheeks with soft full cheek volume, softly defined high cheekbones, a short lower face with a reduced vertical distance from the eyes to the chin, a measured forehead height that keeps the face compact, a smooth narrow jawline curving softly inward toward a small softly rounded chin, large almond-shaped eyes with gently lifted outer corners and a large eye-to-face ratio, softly arched natural eyebrows, small delicate straight nose with a narrow bridge and softly rounded petite tip, softly full lips with a naturally defined Cupid's bow and slightly fuller lower lip, smooth rounded facial contours, delicate feminine bone structure, harmonious compact proportions, fair porcelain skin with a subtle natural blush across the cheeks, realistic skin texture with visible pores and fine natural detail, naturally youthful appearance, serene gentle expression, anatomically realistic and natural.",
+      "description": "Universal delicate beauty - compact softly oval structure with full youthful cheeks",
       "tags": [
         "universal",
         "delicate",
         "porcelain",
-        "oval face",
+        "compact oval face",
         "almond eyes",
         "natural",
         "youthful",
@@ -381,7 +381,7 @@
       "weight": 1.3
     },
     "American Beauty": {
-      "prompt": "Small compact oval-to-heart-shaped face with distinctly youthful late-teen proportions, softly rounded upper cheeks, gentle natural cheek fullness, short soft midface, narrow lower face, clean delicately tapered jawline ending in a small refined chin, natural Caucasian-American facial characteristics with balanced understated proportions, large expressive almond-shaped to softly rounded eyes with youthful openness, naturally defined upper lashes, softly straight medium-dark eyebrows with a gentle low arch and naturally tapered ends, small refined Caucasian nose with a narrow-to-medium straight bridge, neat nostrils, softly defined nasal tip and natural subtle projection, naturally full rose-colored lips with a clearly defined Cupid's bow, slightly fuller lower lip, soft relaxed mouth, balanced near-symmetrical facial proportions, delicate features, gentle transitions between forehead, cheeks, nose, jaw and chin, youthful naturally realistic facial structure with understated realistic beauty, Euro-American Western facial structure, moderately narrow face width, soft rounded cheek volume, subtle softly blending cheekbones, softly curved facial contours, compact short face length, small narrow moderately projecting nose, rounded soft chin, proportionally natural eye size, clean bare-faced natural look, subtle natural facial modeling, realistic skin texture with visible fine pores and natural detail.",
+      "prompt": "Small compact softly oval face with distinctly youthful late-teen proportions, softly rounded upper cheeks, fuller natural cheek volume, a short soft mid-face with a reduced vertical distance from the eyes to the chin, slim lower face, smooth gently tapered jawline ending in a small softly rounded chin, natural Caucasian-American facial characteristics with balanced understated proportions, large expressive almond-shaped to softly rounded eyes with youthful openness, naturally defined upper lashes, softly straight medium-dark eyebrows with a gentle low arch and naturally tapered ends, small refined Caucasian nose with a narrow-to-medium straight bridge, neat nostrils, softly defined nasal tip and natural subtle projection, naturally full rose-colored lips with a clearly defined Cupid's bow, slightly fuller lower lip, soft relaxed mouth, balanced near-symmetrical facial proportions, delicate features, gentle transitions between forehead, cheeks, nose, jaw and chin, youthful naturally realistic facial structure with understated realistic beauty, Euro-American Western facial structure, softly balanced face width with a gently widened mid-face, full rounded cheek volume, subtle softly blending cheekbones, softly curved facial contours, compact short face length, small narrow moderately projecting nose, rounded soft chin, proportionally natural eye size, clean bare-faced natural look, subtle natural facial modeling, realistic skin texture with visible fine pores and natural detail.",
       "description": "American beauty - youthful classic Western look, delicate balanced proportions",
       "tags": [
         "american",
@@ -393,7 +393,7 @@
       "weight": 1.3
     },
     "K-Idol Soft": {
-      "prompt": "Korean idol beauty, soft rounded cheeks, softly straight dark brows, gentle monolid or softly creased eyes, gradient soft pink lips, delicate small nose, glass skin finish with subtle dewy highlighter, clean youthful features, elegant natural minimal makeup.",
+      "prompt": "Korean idol beauty with a compact softly oval face, fuller rounded cheek volume, softly straight dark brows, gentle monolid or softly creased eyes, gradient soft pink lips, delicate small nose, glass skin finish with subtle dewy highlighter, clean youthful features, elegant natural minimal makeup.",
       "description": "K-idol look with porcelain glass skin and gradient lips",
       "tags": [
         "k-beauty",
@@ -405,8 +405,8 @@
       "weight": 1.2
     },
     "Editorial High Fashion": {
-      "prompt": "High fashion editorial face, striking sculpted cheekbones, defined angular jawline, bold groomed eyebrows, deep-set dramatic eyes, matte flawless complexion, sharp elegant features, couture runway beauty, confident closed-lip expression, refined editorial makeup.",
-      "description": "Runway editorial beauty with sculpted features",
+      "prompt": "High fashion editorial face, softly sculpted cheekbones, gently defined jawline, bold groomed eyebrows, softly shadowed expressive eyes, matte flawless complexion, refined elegant features, harmonious compact proportions, couture runway beauty, confident closed-lip expression, refined editorial makeup.",
+      "description": "Runway editorial beauty with softly sculpted features",
       "tags": [
         "editorial",
         "fashion",
@@ -417,7 +417,7 @@
       "weight": 1.1
     },
     "Girl Next Door": {
-      "prompt": "Fresh natural girl next door beauty, light freckles across the nose, rosy cheeks, soft natural brows, subtle glossy pink lips, minimal clean makeup, approachable friendly expression, healthy realistic skin texture.",
+      "prompt": "Fresh natural girl next door beauty with a compact softly oval face and full soft cheeks, light freckles across the nose, rosy cheeks, soft natural brows, subtle glossy pink lips, minimal clean makeup, approachable friendly expression, healthy realistic skin texture.",
       "description": "Fresh approachable beauty with light freckles",
       "tags": [
         "natural",
@@ -429,7 +429,7 @@
       "weight": 1.2
     },
     "Hollywood Classic": {
-      "prompt": "Classic Hollywood cinematic beauty, elegantly arched defined eyebrows, deep expressive eyes with soft lashes, sculpted cheekbones, glossy deep red lips, smooth luminous complexion, glamorous timeless features, polished silver-screen elegance, refined vintage glamour.",
+      "prompt": "Classic Hollywood cinematic beauty, elegantly arched defined eyebrows, deep expressive eyes with soft lashes, softly sculpted cheekbones, glossy deep red lips, smooth luminous complexion, compact balanced facial proportions, glamorous timeless features, polished silver-screen elegance, refined vintage glamour.",
       "description": "Timeless silver-screen glamour with red lips",
       "tags": [
         "hollywood",
@@ -441,7 +441,7 @@
       "weight": 1.1
     },
     "Ethereal Elf": {
-      "prompt": "Ethereal elven beauty, subtly pointed graceful ears, large luminous eyes, softly feathered brows, delicate slender nose, soft petal lips, otherworldly serene expression, gentle fairy-like glow with faint luminous shimmer.",
+      "prompt": "Ethereal elven beauty with a compact softly oval face and soft rounded cheek volume, subtly pointed graceful ears, large luminous eyes, softly feathered brows, delicate slender nose, soft petal lips, otherworldly serene expression, gentle fairy-like glow with faint luminous shimmer.",
       "description": "Otherworldly elven beauty with luminous glow",
       "tags": [
         "ethereal",
@@ -453,7 +453,7 @@
       "weight": 1.0
     },
     "Nordic Cool": {
-      "prompt": "Nordic Scandinavian beauty, high soft cheekbones, light ash-blonde eyebrows, narrow straight nose, subtle natural rose lips, calm cool expression, fresh clean minimal makeup, wintery pale elegance.",
+      "prompt": "Nordic Scandinavian beauty with a compact softly oval face, softly high rounded cheekbones, light ash-blonde eyebrows, narrow straight nose, subtle natural rose lips, calm cool expression, fresh clean minimal makeup, wintery pale elegance.",
       "description": "Nordic cool beauty with delicate pale features",
       "tags": [
         "nordic",
@@ -465,7 +465,7 @@
       "weight": 1.1
     },
     "Mediterranean Warm": {
-      "prompt": "Mediterranean beauty, deep-set expressive eyes, strong dark well-defined eyebrows, straight sculpted nose, full glossy lips with warm rose tone, softly defined cheekbones, lively warm expression.",
+      "prompt": "Mediterranean beauty, deep-set expressive eyes, softly defined dark eyebrows, gently straight nose, full glossy lips with warm rose tone, softly defined cheekbones, full softly rounded cheeks, lively warm expression.",
       "description": "Sun-kissed Mediterranean warmth with deep expressive eyes",
       "tags": [
         "mediterranean",
@@ -477,7 +477,7 @@
       "weight": 1.1
     },
     "East Asian Delicate": {
-      "prompt": "Refined East Asian beauty, delicate oval face, softly almond-shaped eyes with subtle eyeliner, gently arched thin brows, small refined nose, softly tinted lips, smooth radiant complexion, elegant minimal makeup, graceful delicate features.",
+      "prompt": "Refined East Asian beauty with a delicate compact oval face and soft cheek fullness, softly almond-shaped eyes with subtle eyeliner, gently arched thin brows, small refined nose, softly tinted lips, smooth radiant complexion, elegant minimal makeup, graceful delicate features.",
       "description": "Refined East Asian beauty with delicate graceful features",
       "tags": [
         "east asian",
@@ -489,8 +489,8 @@
       "weight": 1.2
     },
     "Afrocentric Radiance": {
-      "prompt": "Radiant Afrocentric beauty, striking wide-set expressive eyes, full softly arched eyebrows, high elegant cheekbones, beautifully full lips, defined nose with soft rounded tip, vibrant confident features, healthy glowing skin with natural texture.",
-      "description": "Radiant beauty with full lips and strong cheekbones",
+      "prompt": "Radiant Afrocentric beauty, striking wide-set expressive eyes, full softly arched eyebrows, softly high elegant cheekbones, full softly rounded cheeks, beautifully full lips, softly defined nose with a softly rounded tip, vibrant confident features, healthy glowing skin with natural texture.",
+      "description": "Radiant beauty with full lips and softly defined cheekbones",
       "tags": [
         "afrocentric",
         "radiant",
@@ -501,7 +501,7 @@
       "weight": 1.1
     },
     "South Asian Grace": {
-      "prompt": "Graceful South Asian beauty, large expressive almond eyes with long lashes, strong sculpted eyebrows, softly defined cheekbones, elegant straight nose, full natural lips with warm rose tone, refined classic features, elegant graceful expression.",
+      "prompt": "Graceful South Asian beauty, large expressive almond eyes with long lashes, softly sculpted eyebrows, softly defined cheekbones, full softly rounded cheeks, elegant straight nose, full natural lips with warm rose tone, refined classic features, elegant graceful expression.",
       "description": "Graceful beauty with expressive almond eyes and full lips",
       "tags": [
         "south asian",
@@ -513,8 +513,8 @@
       "weight": 1.1
     },
     "Latina Spark": {
-      "prompt": "Vibrant Latina beauty, large expressive eyes, softly arched defined brows, prominent natural cheekbones, full glossy lips, softly rounded nose, lively confident expression, energetic warm beauty.",
-      "description": "Vibrant beauty with full lips and strong cheekbones",
+      "prompt": "Vibrant Latina beauty, large expressive eyes, softly arched defined brows, softly prominent natural cheekbones, full youthful cheeks, full glossy lips, softly rounded nose, lively confident expression, energetic warm beauty.",
+      "description": "Vibrant beauty with full lips and softly defined cheekbones",
       "tags": [
         "latina",
         "vivacious",
@@ -525,8 +525,8 @@
       "weight": 1.1
     },
     "Gothic Porcelain": {
-      "prompt": "Gothic porcelain beauty, sharp expressive eyes with heavy natural lashes, dark arched brows, delicate straight nose, deep plum or black lips, soft contrasting pale features, moody elegant alternative beauty.",
-      "description": "Gothic beauty with dark lips and sharp expressive eyes",
+      "prompt": "Gothic porcelain beauty, softly expressive eyes with heavy natural lashes, dark arched brows, delicate straight nose, deep plum or black lips, soft contrasting pale features, compact softly rounded facial contours, moody elegant alternative beauty.",
+      "description": "Gothic beauty with dark lips and softly expressive eyes",
       "tags": [
         "gothic",
         "pale",
@@ -537,7 +537,7 @@
       "weight": 1.0
     },
     "Freckled Fresh": {
-      "prompt": "Fresh freckled beauty, a warm scattering of freckles across the nose and cheeks, soft light brows, natural pink lips, healthy outdoor glow, natural bare skin texture, youthful lively expression.",
+      "prompt": "Fresh freckled beauty with soft rounded youthful cheeks, a warm scattering of freckles across the nose and cheeks, soft light brows, natural pink lips, healthy outdoor glow, natural bare skin texture, youthful lively expression.",
       "description": "Sun-kissed freckled look with a healthy outdoor glow",
       "tags": [
         "freckles",
@@ -561,7 +561,7 @@
       "weight": 1.0
     },
     "Athlete Sun-Kissed": {
-      "prompt": "Athletic sun-kissed beauty, healthy natural texture, bright clear eyes, straight clean eyebrows, defined jaw, softly balanced features, small natural athletic nose, neutral relaxed mouth, clean fresh-faced look, energetic healthy appearance.",
+      "prompt": "Athletic sun-kissed beauty, healthy natural texture, bright clear eyes, straight clean eyebrows, softly defined jawline, softly rounded youthful cheeks, softly balanced features, small natural athletic nose, neutral relaxed mouth, clean fresh-faced look, energetic healthy appearance.",
       "description": "Healthy athletic look with clean energetic features",
       "tags": [
         "athletic",

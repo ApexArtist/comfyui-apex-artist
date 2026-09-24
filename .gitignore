@@ -38,5 +38,4 @@ custom-node-list.json
 # Cline AI assistant tool config
 .clineignore
 
-# Generated HDRI test module (harness may leave it behind on failure)
-/scripts/_hdri_under_test.mjs
+

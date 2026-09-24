@@ -13,7 +13,7 @@ from pathlib import Path
 import tempfile
 import threading
 
-CATEGORIES = ("Apex Environment", "Apex Lighting", "Apex Style", "Apex Camera Lens")
+CATEGORIES = ("Apex Environment", "Apex Lighting", "Apex Style", "Apex Camera Lens", "Apex Color")
 USER_PREFIX = "User: "
 MAX_BYTES = 4 * 1024 * 1024
 MAX_PRESETS = 2000
@@ -70,7 +70,7 @@ def validate_preset(data):
 
 def validate_library(library):
     if not isinstance(library, dict) or any(c not in CATEGORIES for c in library):
-        raise PresetError("Use only the Environment, Lighting, Style and Camera Lens categories.")
+        raise PresetError("Use only the Environment, Lighting, Style, Camera Lens and Color categories.")
     result = {c: {} for c in CATEGORIES}
     count = 0
     for category, entries in library.items():

@@ -2,7 +2,7 @@ id: comfyui-apex-artist
 publisher_id: apex
 name: "Apex Artist Professional VFX Tools"
 description: "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
-version: "2.2.0"
+version: "2.3.0"
 license: "MIT"
 repository: "https://github.com/ApexArtist/comfyui-apex-artist"
 homepage: "https://github.com/ApexArtist/comfyui-apex-artist"
@@ -45,7 +45,7 @@ nodes:
     category: "Apex Artist/Image/Filters"
   - id: "ApexPromptPreset"
     display_name: "Apex Prompt"
-    description: "Factory and user presets across Environment, Lighting, Style, and Camera Lens categories"
+    description: "Factory and user presets across Environment, Lighting, Style, Color, and Camera Lens categories, with six text outputs"
     category: "Apex Artist/Text"
   - id: "ApexCharacterPrompt"
     display_name: "Apex Character Prompt"

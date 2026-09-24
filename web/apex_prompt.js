@@ -7,6 +7,7 @@ export const CATEGORY_WIDGETS = {
     "Apex Lighting": "lighting_preset",
     "Apex Style": "style_preset",
     "Apex Camera Lens": "camera_lens_preset",
+    "Apex Color": "color_preset",
 };
 const USER_PREFIX = "User: ";
 const nodes = new Set();

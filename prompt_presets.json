@@ -868,7 +868,7 @@
       "weight": 1.3
     },
     "Studio Professional": {
-      "prompt": "Professional studio lighting with carefully positioned key light and fill light, even illumination across face and body, subtle rim lighting highlighting edges, soft flattering light without harsh shadows, neutral white balance, perfect exposure.",
+      "prompt": "Professional studio lighting with carefully positioned key light and fill light, even illumination across face and body, subtle rim lighting highlighting edges, soft flattering light without harsh shadows, neutral white balance, true-to-life colors, perfect exposure.",
       "description": "Professional studio setup with even balanced light",
       "tags": [
         "studio",
@@ -1056,7 +1056,7 @@
       "weight": 1.2
     },
     "Silhouette Backlight": {
-      "prompt": "Strong dramatic backlight creating clean silhouettes, bright light source behind subject with minimal or no fill light, dark shadow details with bright rim light on edges, high contrast scene, atmospheric haze catching the backlight, moody and cinematic.",
+      "prompt": "Strong dramatic backlight creating clean silhouettes, bright light source behind subject with minimal or no fill light, deep shadow areas retaining rich color, bright colored rim light on edges, high contrast scene, atmospheric haze catching the backlight, moody and cinematic.",
       "description": "Dramatic backlight creating silhouettes",
       "tags": [
         "silhouette",
@@ -1068,7 +1068,7 @@
       "weight": 1.3
     },
     "Ring Light Beauty": {
-      "prompt": "Professional ring light beauty lighting, soft even illumination with characteristic circular catchlights in the eyes, minimal shadows behind the subject, flattering wraparound light on the face, clean bright beauty photography look, smooth skin rendering.",
+      "prompt": "Professional ring light beauty lighting, soft even illumination with characteristic circular catchlights in the eyes, minimal shadows behind the subject, flattering wraparound light on the face, clean bright beauty photography look, smooth skin rendering, natural true-to-life skin tones.",
       "description": "Flattering ring light beauty photography lighting",
       "tags": [
         "ring light",
@@ -1104,7 +1104,7 @@
       "weight": 1.2
     },
     "Dramatic Side Light": {
-      "prompt": "Strong side lighting creating bold contrast, light raking across the subject from one side, deep shadows on the opposite side, pronounced texture enhancement, sculptural quality revealing every surface detail, intense dramatic mood.",
+      "prompt": "Strong side lighting creating bold contrast, light raking across the subject from one side, deep shadows on the opposite side, pronounced texture enhancement, sculptural quality revealing every surface detail, intense dramatic mood, natural skin tones and rich color preserved.",
       "description": "Strong side light creating texture and contrast",
       "tags": [
         "side light",
@@ -1176,7 +1176,7 @@
       "weight": 1.2
     },
     "Film Noir Shadow": {
-      "prompt": "Classic film noir dramatic lighting with deep black shadows, high contrast venetian blind patterns casting dramatic stripes across scene, single source harsh key light, no fill light, chiaroscuro film aesthetic, mysterious noir atmosphere, stark black and white contrast.",
+      "prompt": "Classic film noir dramatic lighting with deep black shadows, high contrast venetian blind patterns casting dramatic stripes across scene, single source harsh key light, no fill light, chiaroscuro film aesthetic, mysterious noir atmosphere, stark shadow contrast kept in rich color, warm amber highlights and cool teal shadows.",
       "description": "Film noir with venetian blind shadow patterns",
       "tags": [
         "noir",
@@ -1200,7 +1200,7 @@
       "weight": 1.2
     },
     "Bounce Light Soft": {
-      "prompt": "Soft indirect bounce lighting, light reflected off walls and ceilings providing gentle fill, wraparound diffused illumination, no harsh direct light, photographic bounce card quality, flattering soft shadows, studio bounce lighting technique.",
+      "prompt": "Soft indirect bounce lighting, light reflected off walls and ceilings providing gentle fill, wraparound diffused illumination, no harsh direct light, photographic bounce card quality, flattering soft shadows, studio bounce lighting technique, true-to-life colors.",
       "description": "Soft indirect bounce light fill",
       "tags": [
         "bounce",
@@ -1224,7 +1224,7 @@
       "weight": 1.2
     },
     "Butterfly Beauty Light": {
-      "prompt": "Classic butterfly beauty lighting with light source directly above and in front of subject, small butterfly-shaped shadow under nose, symmetrical flattering illumination on face, glamour photography technique, soft even facial lighting, beauty portrait standard.",
+      "prompt": "Classic butterfly beauty lighting with light source directly above and in front of subject, small butterfly-shaped shadow under nose, symmetrical flattering illumination on face, glamour photography technique, soft even facial lighting, beauty portrait standard, natural true-to-life skin tones.",
       "description": "Classic butterfly beauty portrait lighting",
       "tags": [
         "butterfly",
@@ -1236,7 +1236,7 @@
       "weight": 1.2
     },
     "Split Lighting": {
-      "prompt": "Dramatic split lighting with light source 90 degrees to the side, exactly half of face illuminated and half in shadow, clean division down center of face, dramatic portrait technique, strong character lighting, theatrical facial sculpting.",
+      "prompt": "Dramatic split lighting with light source 90 degrees to the side, exactly half of face illuminated and half in shadow, clean division down center of face, dramatic portrait technique, strong character lighting, theatrical facial sculpting, natural skin tones preserved.",
       "description": "Split lighting with half face illuminated",
       "tags": [
         "split",
@@ -1248,7 +1248,7 @@
       "weight": 1.3
     },
     "Loop Lighting": {
-      "prompt": "Classic loop lighting portrait technique, light positioned 30-45 degrees to side and slightly above, small nose shadow looping down toward corner of mouth, flattering dimensional facial sculpting, professional portrait lighting standard, natural dimensional quality.",
+      "prompt": "Classic loop lighting portrait technique, light positioned 30-45 degrees to side and slightly above, small nose shadow looping down toward corner of mouth, flattering dimensional facial sculpting, professional portrait lighting standard, natural dimensional quality, true-to-life skin tones and rich color.",
       "description": "Loop lighting portrait with dimensional sculpting",
       "tags": [
         "loop",
@@ -1260,7 +1260,7 @@
       "weight": 1.2
     },
     "Broad Lighting": {
-      "prompt": "Broad lighting technique with illuminated side of face toward camera, fuller broader face appearance, light on near side of face, portrait photography technique making face appear wider, commercial portrait standard for narrow faces.",
+      "prompt": "Broad lighting technique with illuminated side of face toward camera, fuller broader face appearance, light on near side of face, portrait photography technique making face appear wider, commercial portrait standard for narrow faces, natural skin tones preserved.",
       "description": "Broad lighting for fuller face appearance",
       "tags": [
         "broad",
@@ -1272,7 +1272,7 @@
       "weight": 1.1
     },
     "Short Lighting": {
-      "prompt": "Short lighting technique with shadow side of face toward camera, slimming portrait effect, light on far side of face, narrow dimensional appearance, dramatic portrait technique, sculpted chiseled look, professional character lighting.",
+      "prompt": "Short lighting technique with shadow side of face toward camera, slimming portrait effect, light on far side of face, narrow dimensional appearance, dramatic portrait technique, sculpted chiseled look, professional character lighting, natural skin tones and rich color preserved.",
       "description": "Short lighting for slimming portrait effect",
       "tags": [
         "short",
@@ -1284,7 +1284,7 @@
       "weight": 1.2
     },
     "Clamshell Beauty": {
-      "prompt": "Clamshell beauty lighting with light above and reflector below, soft wraparound illumination on face, minimal shadows under chin and nose, fashion and beauty photography standard, even flattering facial lighting, professional beauty technique.",
+      "prompt": "Clamshell beauty lighting with light above and reflector below, soft wraparound illumination on face, minimal shadows under chin and nose, fashion and beauty photography standard, even flattering facial lighting, professional beauty technique, natural true-to-life skin tones.",
       "description": "Clamshell lighting for beauty photography",
       "tags": [
         "clamshell",
@@ -1296,7 +1296,7 @@
       "weight": 1.2
     },
     "Hard Midday Sun": {
-      "prompt": "Harsh overhead midday sunlight, strong direct sun from above creating deep shadows under eyes and nose, high contrast unforgiving light, bright hot highlights, documentary reality aesthetic, no diffusion, authentic harsh daylight.",
+      "prompt": "Harsh overhead midday sunlight, strong direct sun from above creating deep shadows under eyes and nose, high contrast unforgiving light, bright hot highlights, documentary reality aesthetic, no diffusion, authentic harsh daylight, rich saturated daylight color.",
       "description": "Harsh overhead midday sun with deep shadows",
       "tags": [
         "midday",
@@ -1320,7 +1320,7 @@
       "weight": 1.3
     },
     "Overcast Soft Box": {
-      "prompt": "Overcast sky acting as giant natural softbox, completely even diffused light from above, no visible shadows, soft neutral illumination, professional product photography quality, clean commercial lighting, perfect for even exposure throughout scene.",
+      "prompt": "Overcast sky acting as giant natural softbox, completely even diffused light from above, no visible shadows, soft neutral illumination, professional product photography quality, clean commercial lighting, perfect for even exposure throughout scene, true-to-life colors and natural skin tones.",
       "description": "Overcast sky natural softbox lighting",
       "tags": [
         "overcast",
@@ -1332,7 +1332,7 @@
       "weight": 1.1
     },
     "Spotlight Solo": {
-      "prompt": "Single dramatic spotlight in darkness, tight beam illuminating subject in void of black, theatrical stage lighting, hard spotlight edge, dramatic isolation technique, performance lighting aesthetic, subject emerging from darkness.",
+      "prompt": "Single dramatic spotlight in darkness, tight beam illuminating subject in void of black, theatrical stage lighting, hard spotlight edge, dramatic isolation technique, performance lighting aesthetic, subject emerging from darkness, rich colored spotlight with warm highlights.",
       "description": "Dramatic single spotlight in darkness",
       "tags": [
         "spotlight",
@@ -1344,7 +1344,7 @@
       "weight": 1.3
     },
     "Bounce Flash": {
-      "prompt": "Bounced camera flash off ceiling or wall, soft diffused flash lighting, no harsh direct flash shadows, natural-looking artificial light, photojournalism technique, realistic event lighting, subtle fill flash aesthetic.",
+      "prompt": "Bounced camera flash off ceiling or wall, soft diffused flash lighting, no harsh direct flash shadows, natural-looking artificial light, photojournalism technique, realistic event lighting, subtle fill flash aesthetic, true-to-life colors.",
       "description": "Soft bounced flash lighting technique",
       "tags": [
         "flash",
@@ -1356,7 +1356,7 @@
       "weight": 1.1
     },
     "Car Headlight Drama": {
-      "prompt": "Dramatic car headlight illumination at night, bright white beams cutting through darkness, fog and mist catching light, twin parallel light sources, automotive lighting aesthetic, urban night thriller atmosphere, harsh beam quality.",
+      "prompt": "Dramatic car headlight illumination at night, bright white beams cutting through darkness, fog and mist catching light, twin parallel light sources, automotive lighting aesthetic, urban night thriller atmosphere, harsh beam quality, warm amber and cool blue color accents.",
       "description": "Dramatic car headlight beams at night",
       "tags": [
         "headlight",
@@ -1368,7 +1368,7 @@
       "weight": 1.2
     },
     "Smoky Atmosphere": {
-      "prompt": "Heavy atmospheric smoke or haze illuminated by light sources, visible volumetric god rays through smoke, dramatic light shafts, mysterious atmosphere, concert and stage lighting effect, particles catching light, ethereal smoky ambiance.",
+      "prompt": "Heavy atmospheric smoke or haze illuminated by light sources, visible volumetric god rays through smoke, dramatic light shafts, mysterious atmosphere, concert and stage lighting effect, particles catching light, ethereal smoky ambiance with rich colored haze.",
       "description": "Volumetric smoky atmosphere with light rays",
       "tags": [
         "smoke",
@@ -1380,7 +1380,7 @@
       "weight": 1.3
     },
     "Window Frame Pattern": {
-      "prompt": "Window frame casting geometric shadow patterns across scene, architectural light and shadow interplay, mullion and frame shapes projected onto surfaces, natural window light creating graphic patterns, architectural photography aesthetic.",
+      "prompt": "Window frame casting geometric shadow patterns across scene, architectural light and shadow interplay, mullion and frame shapes projected onto surfaces, natural window light creating graphic patterns, architectural photography aesthetic, warm golden daylight color.",
       "description": "Window frame creating shadow patterns",
       "tags": [
         "window",
@@ -1392,7 +1392,7 @@
       "weight": 1.2
     },
     "Contre-Jour Silhouette": {
-      "prompt": "Contre-jour backlighting technique with subject silhouetted against bright background, minimal visible detail on subject, bright glowing rim light on edges, dramatic contour lighting, artistic high-contrast composition, subject as dark shape.",
+      "prompt": "Contre-jour backlighting technique with subject silhouetted against bright background, minimal visible detail on subject, bright glowing rim light on edges, dramatic contour lighting, artistic high-contrast composition, subject as a dark shape with rich colored light and natural skin tones where visible.",
       "description": "Contre-jour silhouette backlighting",
       "tags": [
         "contre-jour",
@@ -1404,7 +1404,7 @@
       "weight": 1.3
     },
     "Diffusion Filter Glow": {
-      "prompt": "Soft diffusion filter creating dreamy glow in highlights, gentle halation around bright areas, romantic soft-focus quality, bloom in light sources, vintage Hollywood glamour aesthetic, ethereal glowing highlights, delicate soft rendering.",
+      "prompt": "Soft diffusion filter creating dreamy glow in highlights, gentle halation around bright areas, romantic soft-focus quality, bloom in light sources, vintage Hollywood glamour aesthetic, ethereal glowing highlights, delicate soft rendering, true-to-life colors.",
       "description": "Diffusion filter creating soft glow effect",
       "tags": [
         "diffusion",
@@ -1474,7 +1474,7 @@
       "weight": 1.2
     },
     "Photorealistic": {
-      "prompt": "Photorealistic, hyperrealistic, ultra-detailed, realistic textures, physically based rendering, ray-traced lighting, photorealistic rendering, film-quality realism, 8K resolution, ultra sharp focus, masterpiece, best quality.",
+      "prompt": "Photorealistic, hyperrealistic, ultra-detailed, realistic textures, physically based rendering, ray-traced lighting, photorealistic rendering, film-quality realism, true-to-life colors, rich natural color palette, 8K resolution, ultra sharp focus, masterpiece, best quality.",
       "description": "Ultra-realistic photographic render",
       "tags": [
         "photorealistic",
@@ -1485,7 +1485,7 @@
       "weight": 1.3
     },
     "Luxury Album Cover": {
-      "prompt": "Ultra-realistic cinematic album cover, premium movie-poster quality, photorealistic, 8K, HDR, premium Future Bass aesthetic, emotional and uplifting, luxury music album artwork, professional Spotify and Apple Music promotional artwork, minimalist elegant composition.",
+      "prompt": "Ultra-realistic cinematic album cover, premium movie-poster quality, photorealistic, 8K, HDR, rich vibrant color grading, premium Future Bass aesthetic, emotional and uplifting, luxury music album artwork, professional Spotify and Apple Music promotional artwork, minimalist elegant composition.",
       "description": "Luxury music album artwork aesthetic",
       "tags": [
         "album",
@@ -1568,7 +1568,7 @@
       "weight": 1.3
     },
     "Documentary Realism": {
-      "prompt": "Documentary photojournalism style, authentic unposed moments, natural lighting preserved, reportage aesthetic, candid street photography, raw genuine emotion, unmanipulated realism, authentic human moments, photojournalistic integrity, real-world texture and grain.",
+      "prompt": "Documentary photojournalism style, authentic unposed moments, natural lighting preserved, reportage aesthetic, candid street photography, raw genuine emotion, unmanipulated realism, true-to-life natural colors, authentic human moments, photojournalistic integrity, real-world texture and grain.",
       "description": "Documentary photojournalism with authentic realism",
       "tags": [
         "documentary",
@@ -1580,7 +1580,7 @@
       "weight": 1.2
     },
     "Film Noir Classic": {
-      "prompt": "Classic film noir aesthetic, high contrast black and white, dramatic shadow play, hard-boiled detective atmosphere, 1940s cinematography style, venetian blind shadows, femme fatale lighting, classic Hollywood noir mood, stark chiaroscuro contrast.",
+      "prompt": "Classic film noir aesthetic, high contrast noir lighting kept in rich color, dramatic shadow play, hard-boiled detective atmosphere, 1940s cinematography style, venetian blind shadows, femme fatale lighting, classic Hollywood noir mood, stark chiaroscuro shadow contrast, warm amber highlights and cool teal shadows, full color noir palette.",
       "description": "Classic film noir with dramatic shadows",
       "tags": [
         "film noir",
@@ -1652,7 +1652,7 @@
       "weight": 1.2
     },
     "Art Deco Geometric": {
-      "prompt": "Art Deco style, geometric patterns and bold shapes, 1920s glamour aesthetic, luxurious metallic accents, streamlined modern elegance, jazz age sophistication, symmetrical geometric design, vintage luxury aesthetic, Great Gatsby era style.",
+      "prompt": "Art Deco style, geometric patterns and bold shapes, 1920s glamour aesthetic, luxurious metallic accents, bold jewel-toned color palette, streamlined modern elegance, jazz age sophistication, symmetrical geometric design, vintage luxury aesthetic, Great Gatsby era style.",
       "description": "Art Deco with geometric patterns and glamour",
       "tags": [
         "art deco",
@@ -1700,7 +1700,7 @@
       "weight": 1.2
     },
     "Gothic Dark Romance": {
-      "prompt": "Gothic romantic aesthetic, dark moody atmosphere, Victorian Gothic elegance, dramatic shadows and candlelight, romantic melancholy mood, baroque ornamental details, mysterious ethereal quality, dark romance atmosphere.",
+      "prompt": "Gothic romantic aesthetic, dark moody atmosphere in rich jewel-toned color, Victorian Gothic elegance, dramatic shadows and candlelight, romantic melancholy mood, baroque ornamental details, mysterious ethereal quality, dark romance atmosphere.",
       "description": "Gothic with dark romantic elegance",
       "tags": [
         "gothic",
@@ -1784,7 +1784,7 @@
       "weight": 1.1
     },
     "Cottagecore Pastoral": {
-      "prompt": "Cottagecore aesthetic, pastoral countryside romance, vintage homemade quality, natural botanical elements, soft romantic nostalgia, handcrafted artisan feel, rustic farmhouse charm, gentle rural beauty, cozy pastoral life.",
+      "prompt": "Cottagecore aesthetic, pastoral countryside romance, vintage homemade quality, natural botanical elements, soft romantic nostalgia, warm natural color palette of green and gold, handcrafted artisan feel, rustic farmhouse charm, gentle rural beauty, cozy pastoral life.",
       "description": "Cottagecore with pastoral romantic charm",
       "tags": [
         "cottagecore",
@@ -1820,7 +1820,7 @@
       "weight": 1.1
     },
     "Dieselpunk Industrial": {
-      "prompt": "Dieselpunk aesthetic, 1920s-1950s diesel technology, industrial machinery design, wartime retro-futurism, Art Deco meets industrial, oil and metal aesthetic, gritty mechanical atmosphere, alternate history technology, noir industrial mood.",
+      "prompt": "Dieselpunk aesthetic, 1920s-1950s diesel technology, industrial machinery design, wartime retro-futurism, Art Deco meets industrial, oil and metal aesthetic, warm rust-brass-and-copper color palette, gritty mechanical atmosphere, alternate history technology, noir industrial mood.",
       "description": "Dieselpunk with industrial retro-futurism",
       "tags": [
         "dieselpunk",
@@ -2372,6 +2372,756 @@
         "1970s"
       ],
       "weight": 1.2
+    }
+  },
+  "Apex Color": {
+    "Full Natural Color": {
+      "weight": 1.3,
+      "description": "Accurate natural color with no stylistic cast",
+      "tags": [
+        "natural",
+        "neutral",
+        "true-to-life",
+        "accurate"
+      ],
+      "prompt": "Full natural true-to-life color, accurate skin tones, balanced neutral palette, faithful color reproduction across the whole frame, no stylistic color cast."
+    },
+    "Neutral Studio Color": {
+      "weight": 1.2,
+      "description": "Neutral studio color with no cast",
+      "tags": [
+        "neutral",
+        "studio",
+        "balanced",
+        "accurate"
+      ],
+      "prompt": "Neutral studio color reproduction, accurate neutral white balance, faithful color with no cast, clean color separation, true neutral greys."
+    },
+    "Rich Vibrant Color": {
+      "weight": 1.3,
+      "description": "Saturated punchy palette",
+      "tags": [
+        "vibrant",
+        "saturated",
+        "punchy",
+        "rich"
+      ],
+      "prompt": "Rich vibrant colors, deeply saturated punchy palette, clean strong primaries, glossy color depth, lively color energy throughout the image."
+    },
+    "High Saturation Punch": {
+      "weight": 1.1,
+      "description": "Bold high-chroma commercial color",
+      "tags": [
+        "high saturation",
+        "bold",
+        "commercial",
+        "contrast"
+      ],
+      "prompt": "Highly saturated color, bold juicy hues, strong complementary color contrast, high chroma commercial palette, attention-grabbing vivid color."
+    },
+    "Soft Pastel Palette": {
+      "weight": 1.1,
+      "description": "Gentle powdery pastel color",
+      "tags": [
+        "pastel",
+        "soft",
+        "airy",
+        "gentle"
+      ],
+      "prompt": "Soft pastel color palette, gentle powdery hues, low contrast color wash, delicate light tints, dreamy airy color harmony."
+    },
+    "Low Saturation Calm": {
+      "weight": 1.1,
+      "description": "Restrained low-chroma color",
+      "tags": [
+        "low saturation",
+        "calm",
+        "restrained",
+        "muted"
+      ],
+      "prompt": "Gently desaturated color, restrained low-saturation palette, soft muted tones with natural healthy skin color, calm understated color mood."
+    },
+    "Muted Earthy Palette": {
+      "weight": 1.1,
+      "description": "Desaturated natural earth tones",
+      "tags": [
+        "muted",
+        "earthy",
+        "natural",
+        "understated"
+      ],
+      "prompt": "Muted earthy color palette, desaturated natural browns, olive greens and warm clay tones, understated organic color harmony."
+    },
+    "Warm Golden Grade": {
+      "weight": 1.2,
+      "description": "Warm amber and honey color grade",
+      "tags": [
+        "warm",
+        "golden",
+        "amber",
+        "cozy"
+      ],
+      "prompt": "Warm golden color grade, amber and honey tones, cozy warm white balance, sunlit warm cast with rich golden highlights."
+    },
+    "Cool Blue Grade": {
+      "weight": 1.1,
+      "description": "Crisp cyan and steel color grade",
+      "tags": [
+        "cool",
+        "blue",
+        "cyan",
+        "crisp"
+      ],
+      "prompt": "Cool blue color grade, crisp cyan and steel tones, cool white balance, calm clean color cast with icy blue shadows."
+    },
+    "Jewel Tone Palette": {
+      "weight": 1.1,
+      "description": "Deep gemstone saturation",
+      "tags": [
+        "jewel tones",
+        "deep",
+        "luxurious",
+        "saturated"
+      ],
+      "prompt": "Deep jewel tone color palette, emerald sapphire and ruby saturation, rich luxurious color depth, luminous gemstone hues."
+    },
+    "Neon Color Pop": {
+      "weight": 1.1,
+      "description": "Glowing electric neon hues",
+      "tags": [
+        "neon",
+        "electric",
+        "glowing",
+        "vivid"
+      ],
+      "prompt": "Electric neon color pop, glowing magenta cyan and lime hues, luminous high chroma neon accents against darker surroundings."
+    },
+    "Candy Pop Palette": {
+      "weight": 1.1,
+      "description": "Playful bright candy colors",
+      "tags": [
+        "candy",
+        "playful",
+        "bright",
+        "high key"
+      ],
+      "prompt": "Bright candy pop color palette, playful bubblegum pink mint and lemon hues, cheerful high key saturated color."
+    },
+    "Autumnal Palette": {
+      "weight": 1.1,
+      "description": "Burnt orange and russet foliage tones",
+      "tags": [
+        "autumn",
+        "warm",
+        "foliage",
+        "seasonal"
+      ],
+      "prompt": "Autumnal color palette, burnt orange, russet red and amber gold foliage tones, warm seasonal color harmony."
+    },
+    "Tropical Color Palette": {
+      "weight": 1.1,
+      "description": "Vivid turquoise, palm green and coral",
+      "tags": [
+        "tropical",
+        "vivid",
+        "sunlit",
+        "saturated"
+      ],
+      "prompt": "Tropical color palette, vivid turquoise water, saturated palm green and coral orange, bright sunlit holiday color."
+    },
+    "Nordic Cool Palette": {
+      "weight": 1.1,
+      "description": "Restrained Scandinavian cool minimalism",
+      "tags": [
+        "nordic",
+        "cool",
+        "minimal",
+        "slate"
+      ],
+      "prompt": "Nordic cool color palette, pale grey blue, soft white and muted slate tones, restrained Scandinavian color minimalism."
+    },
+    "HDR Rich Color": {
+      "weight": 1.1,
+      "description": "Wide tonal color depth",
+      "tags": [
+        "hdr",
+        "rich",
+        "wide gamut",
+        "deep"
+      ],
+      "prompt": "HDR rich color, wide gamut highlights with deeply saturated color held in the shadows, extended tonal color depth."
+    },
+    "Monochromatic Tint": {
+      "weight": 1.1,
+      "description": "Single-hue unified colour wash",
+      "tags": [
+        "monochromatic",
+        "tint",
+        "unified",
+        "tonal"
+      ],
+      "prompt": "Monochromatic single hue color treatment, one dominant hue washing the whole frame with rich tonal variations, unified color scheme."
+    },
+    "Split Tone Teal Amber": {
+      "weight": 1.2,
+      "description": "Cool shadows against warm highlights",
+      "tags": [
+        "split tone",
+        "teal",
+        "amber",
+        "cinematic"
+      ],
+      "prompt": "Split toned color grade, cool teal shadows against warm amber highlights, dual tone color separation across the full tonal range."
+    },
+    "Duotone Two Color": {
+      "weight": 1.0,
+      "description": "Two-color graphic palette",
+      "tags": [
+        "duotone",
+        "two color",
+        "graphic",
+        "poster"
+      ],
+      "prompt": "Duotone color treatment, two color palette of deep navy and bright gold, graphic poster style color simplification."
+    },
+    "Cross Processed Color": {
+      "weight": 1.1,
+      "description": "Analogue chemical colour shift",
+      "tags": [
+        "cross process",
+        "analogue",
+        "shifted",
+        "green cyan"
+      ],
+      "prompt": "Cross processed color look, shifted color casts, green cyan shadows with yellow highlights, unpredictable analogue color chemistry."
+    },
+    "Bleach Bypass Steel": {
+      "weight": 1.1,
+      "description": "Silver retention metallic desaturation",
+      "tags": [
+        "bleach bypass",
+        "silver",
+        "desaturated",
+        "metallic"
+      ],
+      "prompt": "Bleach bypass color treatment, silver retention desaturation, crushed blacks and metallic steel color, hard industrial color contrast."
+    },
+    "Sepia Antique Tone": {
+      "weight": 1.0,
+      "description": "Warm brown archival toning",
+      "tags": [
+        "sepia",
+        "antique",
+        "brown",
+        "archival"
+      ],
+      "prompt": "Warm sepia antique tone, brown toned color, aged photographic warmth, archival vintage color character."
+    },
+    "Desaturated Cinematic": {
+      "weight": 1.2,
+      "description": "Restrained silvery low-chroma film color",
+      "tags": [
+        "desaturated",
+        "cinematic",
+        "muted",
+        "silvery"
+      ],
+      "prompt": "Desaturated cinematic color, muted low chroma palette, restrained color with silvery midtones, serious filmic color restraint."
+    },
+    "Warm Retro Fade": {
+      "weight": 1.1,
+      "description": "Sun-faded warm retro color",
+      "tags": [
+        "faded",
+        "retro",
+        "warm",
+        "lifted blacks"
+      ],
+      "prompt": "Sun faded retro color, milky lifted blacks, warm yellowed highlights, gentle analogue desaturation, nostalgic color fade."
+    },
+    "Cold Bleak Grey": {
+      "weight": 1.0,
+      "description": "Almost monochrome cold grey palette",
+      "tags": [
+        "grey",
+        "cold",
+        "bleak",
+        "minimal"
+      ],
+      "prompt": "Cold bleak grey color palette, almost monochrome grey tones with a faint blue cast, overcast despairing color mood."
+    },
+    "High Contrast Punchy": {
+      "weight": 1.1,
+      "description": "Bold clash of bright light and saturated color",
+      "tags": [
+        "high contrast",
+        "punchy",
+        "bold",
+        "vivid"
+      ],
+      "prompt": "Punchy high contrast color, deep saturated shadows against bright clean highlights, bold vibrant color separation."
+    },
+    "Soft High Key Color": {
+      "weight": 1.1,
+      "description": "Bright airy high-key pastel light",
+      "tags": [
+        "high key",
+        "bright",
+        "airy",
+        "soft"
+      ],
+      "prompt": "Soft high key color, bright airy pastel light, delicate washed tints, low contrast cheerful color lift."
+    },
+    "Low Key Moody Color": {
+      "weight": 1.1,
+      "description": "Dark deep-shadow color with rich darks",
+      "tags": [
+        "low key",
+        "moody",
+        "dark",
+        "deep"
+      ],
+      "prompt": "Low key moody color, deep shadow tonality with rich saturated color held in the darks, dramatic dark color atmosphere."
+    },
+    "Selective Color Accent": {
+      "weight": 1.0,
+      "description": "Desaturated frame with one vivid accent hue",
+      "tags": [
+        "selective color",
+        "accent",
+        "graphic",
+        "desaturated"
+      ],
+      "prompt": "Selective color treatment, desaturated monochrome frame with a single vivid accent hue kept on the subject, graphic color isolation."
+    },
+    "Monochrome Noir": {
+      "weight": 1.0,
+      "description": "Explicit black-and-white opt-in",
+      "tags": [
+        "monochrome",
+        "black and white",
+        "grayscale",
+        "noir"
+      ],
+      "prompt": "Monochrome black and white image, high contrast grayscale tonality, absolutely no color, deep blacks and clean bright whites."
+    },
+    "Kodak Portra Color": {
+      "weight": 1.2,
+      "description": "Warm gentle editorial film color",
+      "tags": [
+        "kodak",
+        "portra",
+        "film",
+        "editorial"
+      ],
+      "prompt": "Kodak Portra 400 color rendition, softly warm flattering skin tones, gentle creamy pastel color, natural highlight rolloff, editorial film color."
+    },
+    "Kodak Ektar Color": {
+      "weight": 1.1,
+      "description": "Punchy ultra-clean film color",
+      "tags": [
+        "kodak",
+        "ektar",
+        "saturated",
+        "clean"
+      ],
+      "prompt": "Kodak Ektar 100 color rendition, punchy saturated color, vivid blues and deep reds, ultra clean fine grain film color."
+    },
+    "Kodak Ektachrome Color": {
+      "weight": 1.1,
+      "description": "Cool crisp slide film color",
+      "tags": [
+        "ektachrome",
+        "slide film",
+        "cool",
+        "crisp"
+      ],
+      "prompt": "Kodak Ektachrome slide film color, crisp cool blues, clean saturated transparency color, sharp color separation and clarity."
+    },
+    "Kodak Gold Cast": {
+      "weight": 1.1,
+      "description": "Nostalgic sunny consumer film warmth",
+      "tags": [
+        "kodak gold",
+        "nostalgic",
+        "warm",
+        "sunny"
+      ],
+      "prompt": "Kodak Gold 200 color rendition, nostalgic warm yellow amber cast, sunny consumer film color, soft nostalgic palette."
+    },
+    "Kodachrome Vintage": {
+      "weight": 1.2,
+      "description": "Dense vintage saturated reds",
+      "tags": [
+        "kodachrome",
+        "vintage",
+        "saturated",
+        "dense"
+      ],
+      "prompt": "Kodachrome 64 color rendition, dense saturated reds, deep rich blacks, mid century vintage film color palette."
+    },
+    "Kodak Vision3 250D": {
+      "weight": 1.2,
+      "description": "Natural daylight cinema film color",
+      "tags": [
+        "vision3",
+        "cinema",
+        "daylight",
+        "filmic"
+      ],
+      "prompt": "Kodak Vision3 250D daylight film color, natural cinematic color science, gentle highlight rolloff, accurate daylight balance."
+    },
+    "Kodak Vision3 500T": {
+      "weight": 1.2,
+      "description": "Tungsten night cinema warmth",
+      "tags": [
+        "vision3",
+        "tungsten",
+        "night",
+        "cinema"
+      ],
+      "prompt": "Kodak Vision3 500T tungsten film color, warm amber interiors, rich practical light color, filmic tungsten balance for night scenes."
+    },
+    "CineStill 800T Color": {
+      "weight": 1.1,
+      "description": "Halated neon tungsten night color",
+      "tags": [
+        "cinestill",
+        "tungsten",
+        "halation",
+        "neon"
+      ],
+      "prompt": "CineStill 800T tungsten color, halated red glow around light sources, cool blue night shadows, neon drenched urban film color."
+    },
+    "Fujifilm Eterna Color": {
+      "weight": 1.2,
+      "description": "Soft restrained green-leaning cinema color",
+      "tags": [
+        "fuji",
+        "eterna",
+        "cinema",
+        "restrained"
+      ],
+      "prompt": "Fujifilm Eterna cinema color, softly muted green leaning palette, low contrast filmic color, elegant restrained cinema tone."
+    },
+    "Fujifilm Velvia Color": {
+      "weight": 1.1,
+      "description": "Intense landscape slide film color",
+      "tags": [
+        "velvia",
+        "saturated",
+        "landscape",
+        "slide film"
+      ],
+      "prompt": "Fujifilm Velvia slide film color, intensely saturated deep greens and crimson reds, dramatic landscape slide film color."
+    },
+    "Fujifilm Pro 400H Color": {
+      "weight": 1.1,
+      "description": "Cool mint pastel editorial film color",
+      "tags": [
+        "fuji",
+        "400h",
+        "pastel",
+        "airy"
+      ],
+      "prompt": "Fujifilm Pro 400H color rendition, cool mint leaning pastel greens, delicate soft color, airy bright editorial film tone."
+    },
+    "Agfa Vintage Color": {
+      "weight": 1.0,
+      "description": "Warm European film cast",
+      "tags": [
+        "agfa",
+        "vintage",
+        "warm",
+        "european"
+      ],
+      "prompt": "Agfa vintage film color, warm yellow green cast, soft contrast European film palette, small format analogue color."
+    },
+    "Polaroid Instant Color": {
+      "weight": 1.0,
+      "description": "Washed soft instant film color",
+      "tags": [
+        "polaroid",
+        "instant",
+        "soft",
+        "nostalgic"
+      ],
+      "prompt": "Polaroid instant film color, soft washed pastel tones, slight warm cyan shift, nostalgic instant photo color character."
+    },
+    "Lomo Analogue Punch": {
+      "weight": 1.0,
+      "description": "Toy-camera saturation with vignette tint",
+      "tags": [
+        "lomo",
+        "saturated",
+        "analogue",
+        "vignette"
+      ],
+      "prompt": "Lomo toy camera color, heavy analogue saturation with green cyan vignette tint, punchy unpredictable analogue color."
+    },
+    "Teal and Orange Blockbuster": {
+      "weight": 1.3,
+      "description": "Warm skin tones against cool teal backgrounds",
+      "tags": [
+        "teal and orange",
+        "blockbuster",
+        "hollywood",
+        "commercial"
+      ],
+      "prompt": "Teal and orange blockbuster color grade, warm orange skin tones against cool teal backgrounds, big budget Hollywood action color contrast."
+    },
+    "Film Print Emulation 2383": {
+      "weight": 1.2,
+      "description": "Kodak print film depth and rolloff",
+      "tags": [
+        "2383",
+        "print film",
+        "cinema",
+        "deep blacks"
+      ],
+      "prompt": "Kodak 2383 film print emulation, rich filmic color depth, deep blacks, gentle highlight rolloff, cinema print color."
+    },
+    "ACES Neutral Grade": {
+      "weight": 1.1,
+      "description": "Wide-gamut faithful modern pipeline color",
+      "tags": [
+        "aces",
+        "neutral",
+        "accurate",
+        "modern"
+      ],
+      "prompt": "ACES neutral color grade, accurate wide gamut color, faithful tones with balanced contrast, modern ACES color pipeline."
+    },
+    "Rec.709 Broadcast Color": {
+      "weight": 1.0,
+      "description": "Compliant neutral broadcast color",
+      "tags": [
+        "rec709",
+        "broadcast",
+        "neutral",
+        "television"
+      ],
+      "prompt": "Rec.709 broadcast color standard, accurate neutral color for television, no stylistic cast, clean compliant color."
+    },
+    "Log Flat Ungraded": {
+      "weight": 1.0,
+      "description": "Flat low-contrast ungraded log color",
+      "tags": [
+        "log",
+        "flat",
+        "ungraded",
+        "lifted"
+      ],
+      "prompt": "Flat log color profile, low contrast washed color, wide dynamic range ungraded look, lifted blacks and muted flat color."
+    },
+    "Technicolor Three Strip": {
+      "weight": 1.2,
+      "description": "Luscious golden-age Technicolor",
+      "tags": [
+        "technicolor",
+        "saturated",
+        "golden age",
+        "glamour"
+      ],
+      "prompt": "Three strip Technicolor color, luscious saturated reds and greens, glossy golden age musical color, rich Technicolor glamour."
+    },
+    "Two Strip Technicolor": {
+      "weight": 1.0,
+      "description": "Restricted early colour range",
+      "tags": [
+        "two strip",
+        "technicolor",
+        "vintage",
+        "limited"
+      ],
+      "prompt": "Two strip Technicolor color, limited red orange and blue green palette, early sound era color, restricted vintage color range."
+    },
+    "Day for Night Blue": {
+      "weight": 1.1,
+      "description": "Cool moonlit night illusion",
+      "tags": [
+        "day for night",
+        "blue",
+        "moonlight",
+        "cinematic"
+      ],
+      "prompt": "Day for night color grade, cool moonlit blue tones, underexposed night illusion, cinematic blue night color."
+    },
+    "Cold Cyan Thriller": {
+      "weight": 1.1,
+      "description": "Clinical cyan-green thriller grade",
+      "tags": [
+        "cyan",
+        "thriller",
+        "cold",
+        "clinical"
+      ],
+      "prompt": "Cold cyan and green thriller color grade, desaturated shadowy palette, clinical cool color, precise modern thriller look."
+    },
+    "Muted Steel Drama": {
+      "weight": 1.1,
+      "description": "Cool restrained large-format color",
+      "tags": [
+        "steel",
+        "muted",
+        "cool",
+        "drama"
+      ],
+      "prompt": "Cool steel color grade, muted cold palette with clean bright highlights, restrained large format cinematic color."
+    },
+    "Pastel Storybook Palette": {
+      "weight": 1.1,
+      "description": "Curated flat pastel colour harmony",
+      "tags": [
+        "pastel",
+        "storybook",
+        "flat",
+        "quirky"
+      ],
+      "prompt": "Symmetrical pastel storybook color palette, candy pink mustard yellow and mint, flat even color, whimsical curated color harmony."
+    },
+    "Warm Retro Seventies": {
+      "weight": 1.1,
+      "description": "Golden amber interiors with red accents",
+      "tags": [
+        "70s",
+        "warm",
+        "retro",
+        "amber"
+      ],
+      "prompt": "Warm retro 1970s color, golden amber interiors with saturated red accents, grainy vintage studio color."
+    },
+    "Sun Scorched Orange Turquoise": {
+      "weight": 1.1,
+      "description": "Extreme desert complementary clash",
+      "tags": [
+        "orange",
+        "turquoise",
+        "desert",
+        "high contrast"
+      ],
+      "prompt": "Sun blasted hot orange and turquoise color grade, scorched sand tones, extreme complementary color clash, desert apocalypse color palette."
+    },
+    "Surveillance Green Tint": {
+      "weight": 1.0,
+      "description": "Sickly fluorescent monochromatic green",
+      "tags": [
+        "green tint",
+        "surveillance",
+        "monochromatic",
+        "cyber"
+      ],
+      "prompt": "Green tinted color grade, sickly fluorescent green cast, cool cyberspace color, monochromatic green palette."
+    },
+    "Parisian Golden Green": {
+      "weight": 1.0,
+      "description": "Warm red-green romantic palette",
+      "tags": [
+        "golden green",
+        "romantic",
+        "warm",
+        "saturated"
+      ],
+      "prompt": "Warm golden green color grade, red and green romantic palette, saturated nostalgic warmth, whimsical Parisian color."
+    },
+    "Neon Amber Noir": {
+      "weight": 1.1,
+      "description": "Dense amber and magenta glow",
+      "tags": [
+        "neon",
+        "amber",
+        "magenta",
+        "noir"
+      ],
+      "prompt": "Neon amber and magenta color grade, dense atmospheric glow, smoke diffused colored light, hi tech noir city color palette."
+    },
+    "Cyberpunk Magenta Cyan": {
+      "weight": 1.1,
+      "description": "Hard neon cyber palette",
+      "tags": [
+        "cyberpunk",
+        "magenta",
+        "cyan",
+        "futuristic"
+      ],
+      "prompt": "Cyberpunk magenta and cyan color grade, hard neon color contrast, holographic color spill on wet surfaces, futuristic chromatic palette."
+    },
+    "Saturated Crimson Romance": {
+      "weight": 1.0,
+      "description": "Moody deep-red romantic color",
+      "tags": [
+        "crimson",
+        "saturated",
+        "moody",
+        "romantic"
+      ],
+      "prompt": "Saturated deep red color grade, moody jewel toned shadows, lush romantic color with intense crimson accents."
+    },
+    "Eighties VHS Color": {
+      "weight": 1.0,
+      "description": "Analogue tape chroma artifacts",
+      "tags": [
+        "80s",
+        "vhs",
+        "chroma",
+        "retro"
+      ],
+      "prompt": "1980s VHS color, chroma bleed and color fringing, over saturated magenta and green, analogue tape color artifacts."
+    },
+    "Nineties Music Video Color": {
+      "weight": 1.0,
+      "description": "Punchy stage-lit chromatic look",
+      "tags": [
+        "90s",
+        "music video",
+        "punchy",
+        "stage lit"
+      ],
+      "prompt": "1990s music video color, high contrast saturated color with cool shadows, punchy stage lit chromatic look."
+    },
+    "Y2K Digicam Color": {
+      "weight": 1.0,
+      "description": "Cool chrome digital flash color",
+      "tags": [
+        "y2k",
+        "digicam",
+        "cool",
+        "flash"
+      ],
+      "prompt": "Y2K digicam color, slightly cool chrome blue cast, flash lit saturated color, early digital camera color character."
+    },
+    "False Color Infrared": {
+      "weight": 1.0,
+      "description": "Surreal pink foliage and cyan skies",
+      "tags": [
+        "infrared",
+        "false color",
+        "surreal",
+        "dreamlike"
+      ],
+      "prompt": "False color infrared look, foliage rendered in surreal pink and red, cyan skies, dreamlike infrared color palette."
+    },
+    "Thermal Heat Map": {
+      "weight": 1.0,
+      "description": "Heat-signature false colour encoding",
+      "tags": [
+        "thermal",
+        "heat map",
+        "false color",
+        "scientific"
+      ],
+      "prompt": "Thermal imaging false color palette, hot orange and yellow against deep blue violet, heat map color encoding."
+    },
+    "Anaglyph Stereo Color": {
+      "weight": 1.0,
+      "description": "Red-cyan stereo print color",
+      "tags": [
+        "anaglyph",
+        "stereo",
+        "red cyan",
+        "retro"
+      ],
+      "prompt": "Anaglyph stereo color look, red and cyan channel separation, retro 3D glasses color fringing, printed stereo color character."
     }
   }
 }

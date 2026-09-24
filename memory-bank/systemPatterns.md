@@ -4,7 +4,7 @@
 - **Node modules**: apex_*.py files define node classes with INPUT_TYPES/FUNCTION/RETURN_TYPES contracts
 - **API modules**: apex_*_api.py files register HTTP routes via PromptServer
 - **Registration**: __init__.py exports NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS, WEB_DIRECTORY
-- **Frontend**: ComfyUI auto-loads web/*.js; scripts/ contains tests/utilities; preset JSON files are editable data stores
+- **Frontend**: ComfyUI auto-loads web/*.js; scripts/ contains the character preset generator (test scripts removed 2026-09-23); preset JSON files are editable data stores
 - **Assets**: lens/ contains source images; lens_previews/ serves generated assets (preserve both)
 
 ## Key Technical Decisions
@@ -28,7 +28,9 @@
 - Path validation: resolve all components, check against loras root
 
 ### Preset System
-- Four categories: Environment, Lighting, Style, Camera
+- Five categories: Environment, Lighting, Style, Color, Camera Lens (Color is the dedicated colour-grade slot; the seed offsets are +1/+2/+3/+4/+5 and the combined order is input → environment → lighting → style → color → camera lens)
+- Six STRING outputs: combined_prompt, environment_text, lighting_text, style_text, camera_lens_text, color_text (the original five keep their positions; the new `color_preset` widget is appended last so `widgets_values` stay positionally valid)
+- `CATEGORIES` in `apex_prompt_store.py` governs validation, the user library and the per-category API routes; `web/apex_prompt.js` maps category → widget for Save/Manage
 - Seeded random selection returns (name, text) tuples
 - Bracket expansion for variations
 - Prompt factory JSON is read-only; Python defaults supplement missing names. User entries use `User: ` tokens, preventing factory shadowing.
@@ -58,7 +60,7 @@
 - Nodes consume apex_utils for shared image operations
 - APIs serve preset/thumbnail data to frontend modules
 - Frontend modules enhance nodes with interactive UI
-- Tests validate nodes without full ComfyUI runtime (synthetic package)
+- Former synthetic-package harness validated nodes without a full ComfyUI runtime; the suite was removed September 23, 2026 (recoverable from git)
 
 ## Critical Implementation Details
 - **Blocking I/O**: HDRI decode/render and LoRA scans currently block async handlers

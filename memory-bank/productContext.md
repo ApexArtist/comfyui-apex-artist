@@ -4,7 +4,7 @@
 ComfyUI users need convenient image processing and prompt management without external tools or long node chains. This package provides professional-grade image effects, flexible prompt systems, and efficient LoRA workflows directly in the ComfyUI interface.
 
 ## How It Should Work
-Users add nodes from the "Apex Artist" category, configure parameters through native ComfyUI widgets, and connect them in workflows. LoRA selection happens through an interactive browser with thumbnails. Prompt presets offer categorized options (Environment, Lighting, Style, Camera) with seeded randomization. Image processing nodes handle batched tensors with device-aware operations.
+Users add nodes from the "Apex Artist" category, configure parameters through native ComfyUI widgets, and connect them in workflows. LoRA selection happens through an interactive browser with thumbnails. Prompt presets offer categorized options (Environment, Lighting, Style, Color, Camera Lens) with seeded randomization. Image processing nodes handle batched tensors with device-aware operations.
 
 ## User Experience Goals
 - Discoverable through ComfyUI's native add-node menu
