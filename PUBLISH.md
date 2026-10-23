@@ -1,307 +1,36 @@
-# Publishing Guide for ComfyUI Apex Artist
+# Publishing Apex Artist
 
-This document outlines the complete workflow for publishing new versions of the ComfyUI Apex Artist custom nodes package.
+## Release 2.4.0
 
-## Pre-Publish Checklist
+**2.4.0 — 2026-10-23.** The owner authorized committing, tagging and pushing this release. See CHANGELOG.md for changes and validation limits. Confirm publication through the GitHub Action and registry; a pushed tag alone does not establish activation.
 
-### Current release: 2.3.0 (September 24, 2026)
-- Version metadata and release notes prepared; see `CHANGELOG.md`.
-- Push to `main` and registry publication authorized by the repository owner on 2026-09-24.
-- **Push completed 2026-09-24:** an initial attempt returned `403 Permission denied` because the stored Git Credential Manager credential (`apexartistx`) lacked write access to `ApexArtist/comfyui-apex-artist`. After write access was granted, commit `1c3eaa4` and tag `v2.3.0` pushed successfully, and Actions run #29 (https://github.com/ApexArtist/comfyui-apex-artist/actions/runs/35989797563) finished with `success`. Registry version 2.3.0 exists (createdAt 2026-09-24T10:53:22Z) with status `NodeVersionStatusPending` at first verification — wait for it to activate before expecting 2.3.0 as the latest version in ComfyUI Manager (5–10 minute refresh noted below).
-- Automated pre-publish verification passed (version consistency, character preset store sync, prompt store and node behaviour, frontend syntax). Live browser and clean-install checks remain pending.
-- **Important:** the existing GitHub workflow publishes on a push to `main` that changes `pyproject.toml`; the release push is a publishing action, not just a backup.
+A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publish_action.yml` and publishes to the ComfyUI registry. Treat the release push as publication and obtain owner approval for each release.
 
-Before publishing a new version, ensure all of the following are complete:
+## Before committing
 
-### Code Quality
-- [ ] All new features are fully implemented and tested
-- [ ] Code follows project conventions and patterns
-- [ ] No debug code, console logs, or temporary hacks remain
-- [ ] All TODO comments are addressed or documented
-- [ ] Error handling is comprehensive and user-friendly
+- Review `git status`, `git diff` and untracked runtime files. Include all Audio/Timeline Python and frontend modules, the portable regression test and release documentation.
+- Exclude Python/test caches, generated previews, temporary media, local credentials and build output. Preserve bundled `lens/` and `lens_previews/` assets. Never delete project media as repository cleanup.
+- Run `python -m unittest discover -s tests` and `python scripts/generate_character_presets.py --check` with the ComfyUI environment. Parse Python, JSON and TOML files and run `node --check` for each frontend module.
+- Confirm all eleven registered nodes are described in metadata. Align the package version in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json` and `custom_nodes.json`; do not change `manifest_version`.
+- Review README, CHANGELOG, dependencies and minimum versions. Document any API changes and checks that remain unperformed.
+- Restart ComfyUI from the owner's CMD window and hard-refresh the browser. Smoke-test Audio trim/preview, Timeline capture/playback/export, preset saving, LoRA selection and HDRI preview. A clean installation and GPU-specific checks remain separate from CPU tests.
+- Run `git diff --check`. Review the explicit staged file list with `git diff --cached --stat`; avoid staging unrelated changes.
 
-### Testing
-- [ ] Manual testing of all modified nodes in ComfyUI
-- [ ] Test workflows with various configurations
-- [ ] Verify backward compatibility with existing workflows
-- [ ] Check for memory leaks or performance issues
-- [ ] Test on clean ComfyUI installation if possible
-- [ ] Verify preset store is in sync: `python scripts\generate_character_presets.py --check`
-- [ ] Confirm `git status` shows no temp or derived files before staging
-- [ ] Syntax check frontend: `node --check web\<filename>.js` for each file
+## Commit and publish
 
-### Documentation
-- [ ] README.md is up to date with new features
-- [ ] Code comments are clear and accurate
-- [ ] API changes are documented
-- [ ] Example workflows are included if relevant
-- [ ] Memory bank files reflect current state
+After approval, commit the reviewed changes with a short, direct message, for example:
 
-### Version Files
-- [ ] All version numbers are consistent across files
-- [ ] Release notes prepared
-- [ ] comfyui.yaml metadata is accurate
-- [ ] pyproject.toml metadata is current
-- [ ] __init__.py NODE_VERSION matches
-
----
-
-## Version Update Process
-
-### 1. Determine Version Increment
-
-Follow [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
-
-- **PATCH** (0.0.x): Bug fixes, minor tweaks, no breaking changes
-- **MINOR** (0.x.0): New features, backward compatible
-- **MAJOR** (x.0.0): Breaking changes, major overhaul
-
-### 2. Update Version Numbers Manually
-
-This project does not currently include an automated version-update script. Update version numbers manually in these files:
-
-- `__init__.py` — `NODE_VERSION = "x.y.z"`
-- `comfyui.yaml` — `version: "x.y.z"`
-- `pyproject.toml` — `version = "x.y.z"`
-- `manifest.json` and `custom_nodes.json` — package `version` fields (not `manifest_version`)
-
-### 3. Verify Version Consistency
-
-After updating, verify that version numbers match across:
-- `__init__.py` (NODE_VERSION)
-- `pyproject.toml` (version field)
-- `comfyui.yaml` (version field)
-- `manifest.json` and `custom_nodes.json` (package version fields)
-
----
-
-## Git Workflow
-
-### 1. Stage Changes
-
-Review and stage all modified files:
-
-```bash
-# Review changes
-git status
-git diff
-
-# Stage version-related files
-git add __init__.py manifest.json pyproject.toml comfyui.yaml
-
-# Stage all other changes
-git add .
-```
-
-### 2. Commit Changes
-
-Use a clear, descriptive commit message:
-
-```bash
-# Version bump commit
-git commit -m "chore: bump version to v1.2.3"
-
-# Or feature/fix commit
-git commit -m "feat: add new lens simulation node"
-git commit -m "fix: resolve LoRA stack memory leak"
-```
-
-**Commit Message Conventions:**
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `chore:` Maintenance tasks (version bumps, dependency updates)
-- `refactor:` Code refactoring
-- `perf:` Performance improvements
-- `test:` Testing changes
-
-### 3. Create Git Tag
-
-Tag the release with the version number:
-
-```bash
-# Create annotated tag
-git tag -a v1.2.3 -m "Release version 1.2.3"
-
-# Verify tag
-git tag -l
-git show v1.2.3
-```
-
-### 4. Push to Remote
-
-Push both commits and tags:
-
-```bash
-# Push commits
+```sh
+git commit -m "Add audio and timeline editing and fix node reliability"
+git tag -a v2.4.0 -m "Release 2.4.0"
 git push origin main
-
-# Push tags
-git push origin --tags
-
-# Or push both at once
-git push origin main --tags
+git push origin v2.4.0
 ```
 
----
+Inspect the current branch and remote state before pushing. Push only the intended release tag. Do not force-push, replace an existing release tag or rebase unrelated work to bypass a rejection; inspect the cause first.
 
-## Post-Push Verification
+## Verify publication
 
-### 1. Verify GitHub
+Check the pushed commit/tag and the registry publishing Action. A successful Action does not establish registry activation: verify the version becomes available, then test installation through ComfyUI Manager. Do not overwrite an existing published version; use a new version for subsequent changes.
 
-- [ ] Check that commits appear on GitHub
-- [ ] Verify that tags are visible in the Releases section
-- [ ] Confirm GitHub Actions workflows complete successfully (if configured)
-
-### 2. ComfyUI Registry
-
-If publishing to ComfyUI Registry:
-
-- [ ] Verify package appears with correct version
-- [ ] Test installation via ComfyUI Manager
-- [ ] Check that metadata displays correctly
-- [ ] Verify download count starts tracking
-
-### 3. User Testing
-
-- [ ] Install the package in a clean ComfyUI instance
-- [ ] Verify all nodes load correctly
-- [ ] Test basic functionality of key nodes
-- [ ] Check for any import errors or missing dependencies
-
----
-
-## Troubleshooting
-
-### Version Mismatch Errors
-
-**Problem:** Version numbers differ across files after update.
-
-**Solution:**
-```bash
-# Inspect the five version files listed above and manually align them.
-# There is no update_version.py script in this repository.
-```
-
-### Git Push Rejected
-
-**Problem:** `git push` fails with "Updates were rejected".
-
-**Solution:**
-```bash
-# Pull latest changes first
-git pull origin main --rebase
-
-# Resolve any conflicts
-# Then push again
-git push origin main --tags
-```
-
-### Tag Already Exists
-
-**Problem:** Tag already exists locally or remotely.
-
-**Solution:**
-```bash
-# Delete local tag
-git tag -d v1.2.3
-
-# Delete remote tag
-git push origin :refs/tags/v1.2.3
-
-# Create tag again with correct commit
-git tag -a v1.2.3 -m "Release version 1.2.3"
-git push origin v1.2.3
-```
-
-### ComfyUI Registry Not Updating
-
-**Problem:** New version doesn't appear in ComfyUI Manager.
-
-**Solution:**
-- Check that `comfyui.yaml` or `manifest.json` has correct version
-- Ensure the repository is properly registered with ComfyUI Registry
-- Wait 5-10 minutes for registry to refresh
-- Clear ComfyUI Manager cache if needed
-
-### Missing Dependencies
-
-**Problem:** Users report import errors after installation.
-
-**Solution:**
-- Verify `requirements.txt` includes all dependencies
-- Test installation in clean Python environment:
-  ```bash
-  pip install -r requirements.txt
-  ```
-- Update documentation with manual installation steps if needed
-
----
-
-## Quick Reference
-
-### Complete Publishing Command Sequence
-
-```bash
-# 1. Manually update the five version files and CHANGELOG.md
-
-# 2. Review changes
-git status
-git diff
-
-# 3. Stage and commit
-git add .
-git commit -m "chore: bump version to v1.2.3"
-
-# 4. Create tag
-git tag -a v1.2.3 -m "Release version 1.2.3"
-
-# 5. Push everything
-git push origin main --tags
-```
-
-### Local preparation only
-
-Stop after the commit when a push has not been authorized. Leave the release tag
-and publication until the remaining checks pass and publication is requested.
-
----
-
-## Release Notes Template
-
-When creating release notes or CHANGELOG entries:
-
-```markdown
-## [1.2.3] - 2024-01-15
-
-### Added
-- New feature descriptions
-
-### Changed
-- Modified behaviors or improvements
-
-### Fixed
-- Bug fixes and corrections
-
-### Deprecated
-- Features marked for future removal
-
-### Removed
-- Removed features
-
-### Security
-- Security fixes
-```
-
----
-
-## Additional Resources
-
-- [Semantic Versioning Specification](https://semver.org/)
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- [ComfyUI Custom Nodes Documentation](https://docs.comfy.org/custom-nodes)
-- [Git Tagging Documentation](https://git-scm.com/book/en/v2/Git-Basics-Tagging)
-
----
-
-**Last Updated:** 2026-09-24
+Record verified publication results without treating an unconfirmed registry state as active. Keep release history in CHANGELOG rather than repeating run logs across documentation.

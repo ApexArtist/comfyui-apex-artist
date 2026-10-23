@@ -11,6 +11,7 @@
  *   });
  */
 
+import { app } from "../../../scripts/app.js";
 import { api } from "../../../scripts/api.js";
 
 /**
@@ -70,8 +71,9 @@ export const BUTTON_STYLES = {
  * Preset manager bound to a single API store (e.g. /apex/character_presets).
  */
 export class ApexPresetManager {
-    constructor({ apiPath, title = "Apex Preset Manager", onUse = null, useLabel = "Use" }) {
+    constructor({ apiPath, title = "Apex Preset Manager", onUse = null, useLabel = "Use", onSaved = null }) {
         this.apiPath = apiPath;
+        this.revision = null; this.onSaved = onSaved;
         this.title = title;
         this.onUse = onUse;
         this.useLabel = useLabel;
@@ -83,22 +85,12 @@ export class ApexPresetManager {
     }
 
     async loadPresets() {
-        try {
-            const response = await api.fetchApi(this.apiPath);
-            if (response.ok) {
-                const data = await response.json();
-                if (data && !data.error) {
-                    this.presets = data;
-                }
-            } else {
-                console.error("[Apex Preset Manager] Failed to load presets:", response.status);
-            }
-        } catch (error) {
-            console.error("[Apex Preset Manager] Error loading presets:", error);
-        }
+        const response = await api.fetchApi(this.apiPath);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not load character presets.");
+        this.presets = data; this.revision = response.headers.get("ETag");
     }
 
-    /** Load presets and open the dialog. */
     async open() {
         ensurePresetStyles();
         await this.loadPresets();
@@ -107,7 +99,7 @@ export class ApexPresetManager {
     }
 
     createDialog() {
-        const dialog = $el("div.comfy-modal", [
+        const dialog = $el("dialog.apex-character-preset-dialog", [
             $el("div.comfy-modal-content", { style: { maxWidth: "900px", width: "90%" } }, [
                 $el("h2", { textContent: this.title }),
 
@@ -170,6 +162,8 @@ export class ApexPresetManager {
         this.presetListElement = dialog.querySelector(".apex-preset-list");
         this.updatePresetList();
         document.body.appendChild(dialog);
+        dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+        dialog.showModal();
         return dialog;
     }
 
@@ -289,7 +283,7 @@ export class ApexPresetManager {
 
     usePreset(category, name) {
         if (this.onUse) {
-            this.onUse(category, name);
+            try { this.onUse(category, name); } catch (error) { alert(error.message); }
         }
     }
 
@@ -297,7 +291,8 @@ export class ApexPresetManager {
         this.showEditPresetDialog(category, name, data, false);
     }
 
-    deletePreset(category, name) {
+    async deletePreset(category, name) {
+        const before = structuredClone(this.presets);
         if (!confirm(`Delete the preset "${name}" from "${category}"?`)) return;
 
         delete this.presets[category][name];
@@ -306,12 +301,12 @@ export class ApexPresetManager {
             delete this.presets[category];
         }
 
-        this.savePresets();
-        this.refreshCategoryOptions();
-        this.updatePresetList();
+        try { await this.savePresets(); }
+        catch (error) { this.presets = before; alert(error.message); }
+        this.refreshCategoryOptions(); this.updatePresetList();
     }
 
-    /** Rebuild the category dropdown after presets/categories change. */
+
     refreshCategoryOptions() {
         const select = this.categorySelect || (this.dialog && this.dialog.querySelector("select"));
         if (!select) return;
@@ -345,7 +340,7 @@ export class ApexPresetManager {
     }
 
     showEditPresetDialog(category, name, data, isNew = false) {
-        const dialog = $el("div.comfy-modal", [
+        const dialog = $el("dialog.apex-character-preset-dialog", [
             $el("div.comfy-modal-content", { style: { maxWidth: "640px", width: "90%" } }, [
                 $el("h3", { textContent: isNew ? "Add New Preset" : "Edit Preset" }),
 
@@ -415,8 +410,8 @@ export class ApexPresetManager {
                     $el("button", {
                         textContent: isNew ? "Add" : "Save",
                         style: { ...BUTTON_STYLES.primary, marginLeft: "10px", padding: "8px 16px", border: "none", borderRadius: "3px", cursor: "pointer" },
-                        onclick: () => {
-                            if (this.savePresetFromDialog(dialog, isNew ? null : { category, name })) {
+                        onclick: async () => {
+                            if (await this.savePresetFromDialog(dialog, isNew ? null : { category, name })) {
                                 dialog.remove();
                             }
                         }
@@ -426,20 +421,31 @@ export class ApexPresetManager {
         ]);
 
         document.body.appendChild(dialog);
+        dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+        dialog.showModal();
         return dialog;
     }
 
-    savePresetFromDialog(dialog, original) {
+    async savePresetFromDialog(dialog, original) {
+        const before = structuredClone(this.presets);
         const category = dialog.querySelector("#apex-preset-category").value.trim();
         const name = dialog.querySelector("#apex-preset-name").value.trim();
         const description = dialog.querySelector("#apex-preset-description").value.trim();
         const prompt = dialog.querySelector("#apex-preset-prompt").value.trim();
         const tags = dialog.querySelector("#apex-preset-tags").value.split(",").map((t) => t.trim()).filter((t) => t);
-        const weight = parseFloat(dialog.querySelector("#apex-preset-weight").value) || 1.0;
+        const weight = Number(dialog.querySelector("#apex-preset-weight").value);
 
         if (!category || !name || !prompt) {
             alert("Category, name, and prompt are required!");
             return false;
+        }
+
+        if (!Number.isFinite(weight) || weight <= 0 || weight > 1000) {
+            alert("Weight must be greater than zero and at most 1000."); return false;
+        }
+        const same = original && original.category === category && original.name === name;
+        if (!same && this.presets[category]?.[name]) {
+            alert("A preset with that name already exists. Choose another name."); return false;
         }
 
         // Remove the original entry when the name or category changed
@@ -456,25 +462,21 @@ export class ApexPresetManager {
 
         this.presets[category][name] = { prompt, description, tags, weight };
 
-        this.savePresets();
-        this.refreshCategoryOptions();
-        this.updatePresetList();
+        try { await this.savePresets(); }
+        catch (error) { this.presets = before; alert(error.message); return false; }
+        this.refreshCategoryOptions(); this.updatePresetList();
         return true;
     }
 
     async savePresets() {
-        try {
-            const response = await api.fetchApi(this.apiPath, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(this.presets)
-            });
-            if (!response.ok) {
-                console.error("[Apex Preset Manager] Error saving presets:", response.status);
-            }
-        } catch (error) {
-            console.error("[Apex Preset Manager] Error saving presets:", error);
-        }
+        const response = await api.fetchApi(this.apiPath, {
+            method:"POST", headers:{"Content-Type":"application/json", "If-Match":this.revision || ""},
+            body:JSON.stringify(this.presets),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not save character presets.");
+        this.revision = response.headers.get("ETag");
+        this.onSaved?.(this.presets);
     }
 
     exportPresets() {
@@ -500,7 +502,8 @@ export class ApexPresetManager {
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
+                const before = structuredClone(this.presets);
                 try {
                     const imported = JSON.parse(event.target.result);
 
@@ -509,14 +512,19 @@ export class ApexPresetManager {
                         if (!this.presets[category]) {
                             this.presets[category] = {};
                         }
-                        Object.assign(this.presets[category], presets);
+                        for (const [name,data] of Object.entries(presets)) {
+                            const current=this.presets[category][name];
+                            if(current && JSON.stringify(current)!==JSON.stringify(data)) throw new Error(`Import conflicts with ${category}: ${name}. Rename it first.`);
+                            this.presets[category][name]=data;
+                        }
                     });
 
-                    this.savePresets();
+                    await this.savePresets();
                     this.refreshCategoryOptions();
                     this.updatePresetList();
                     alert("Presets imported successfully!");
                 } catch (error) {
+                    this.presets = before; this.refreshCategoryOptions(); this.updatePresetList();
                     alert("Error importing presets: " + error.message);
                 }
             };
@@ -536,6 +544,10 @@ export function ensurePresetStyles() {
     const style = document.createElement("style");
     style.id = "apex-preset-manager-styles";
     style.textContent = `
+        .apex-character-preset-dialog { width:min(940px,95vw); max-height:85vh; overflow:auto; background:var(--comfy-menu-bg,#222); color:var(--input-text,#ddd); border:1px solid #66778a; border-radius:8px; padding:20px; font:14px system-ui; }
+        .apex-character-preset-dialog::backdrop { background:#0009; }
+        .apex-character-preset-dialog>.comfy-modal-content { margin:auto; }
+        .apex-character-preset-dialog button { color:inherit; background:var(--comfy-input-bg,#343940); border:1px solid #66778a; border-radius:4px; padding:5px 8px; cursor:pointer; }
         .apex-preset-controls {
             display: flex;
             align-items: center;
@@ -578,3 +590,41 @@ export function openPresetManager(options) {
     const manager = new ApexPresetManager(options);
     return manager.open();
 }
+
+const characterNodes = new Set();
+const characterWidgets = ["gender_preset","age_preset","ethnicity_preset","face_preset","eye_color_preset","skin_tone_preset","hair_preset","headwear_preset","top_preset","bottom_preset","shoes_preset","hand_accessory_preset"];
+const characterCategories = ["Gender","Age","Ethnicity","Face","Eye Color","Skin Tone","Hair","Headwear","Top","Bottom","Shoes","Hand Accessory"].map(name=>"Apex Character " + name);
+function refreshCharacters(presets) {
+    for (const node of characterNodes) characterWidgets.forEach((name,index)=>{
+        const widget=node.widgets.find(w=>w.name===name); if(!widget)return;
+        const values=["Disabled","Random",...Object.keys(presets[characterCategories[index]] || {})];
+        if(!values.includes(widget.value))values.push(widget.value);
+        widget.options={...widget.options,values}; node.setDirtyCanvas?.(true,true);
+    });
+}
+app.registerExtension({
+    name:"Apex.CharacterPresetManager",
+    setup() {
+        api.addEventListener("apex-character-presets-changed",async()=>{
+            const response=await api.fetchApi("/apex/character_presets");
+            if(response.ok)refreshCharacters(await response.json());
+        });
+    },
+    async beforeRegisterNodeDef(nodeType,nodeData) {
+        if(nodeData.name!=="ApexCharacterPrompt")return;
+        const created=nodeType.prototype.onNodeCreated,removed=nodeType.prototype.onRemoved;
+        nodeType.prototype.onNodeCreated=function(...args) {
+            const result=created?.apply(this,args);characterNodes.add(this);
+            this.addWidget("button","Manage Character Presets…",null,async()=>{
+                const manager=new ApexPresetManager({apiPath:"/apex/character_presets",title:"Character Presets",onSaved:refreshCharacters,
+                    onUse:(category,name)=>{
+                        const widget=this.widgets.find(w=>w.name===characterWidgets[characterCategories.indexOf(category)]);
+                        if(this.inputs?.some(input=>input.widget?.name===widget?.name && input.link!=null))throw new Error("Disconnect the category input before selecting a preset.");
+                        if(widget){widget.value=name;widget.callback?.(name);app.graph?.change?.();}
+                    }});
+                try{await manager.open();}catch(error){alert(error.message);}
+            },{serialize:false});return result;
+        };
+        nodeType.prototype.onRemoved=function(...args){characterNodes.delete(this);return removed?.apply(this,args);};
+    },
+});

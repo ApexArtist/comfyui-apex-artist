@@ -1,77 +1,31 @@
-# Technical Context
+# Technical context
 
-## Technologies Used
-- **Python**: 3.8+ with torch 2.13.0+cu130, numpy, Pillow, aiohttp, aiofiles, opencv-python>=4.8.0
-- **ComfyUI**: Minimum version 0.1.0 declared in metadata (not tested on all versions)
-- **Frontend**: JavaScript (browser native), Node.js for test harness
-- **Platform**: Windows 10/11, PowerShell, VS Code
+## Runtime
 
-## Development Setup
-- **Workspace**: `F:\AI\ComfyUI Sandbox\ComfyUI\custom_nodes\comfyui-apex-artist`
-- **Python**: `F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe`
-- **CUDA**: Available via torch+cu130
-- **Dependencies**: requirements.txt (opencv-python>=4.8.0) needs reconciliation with pyproject.toml/comfyui.yaml before release
+- Python 3.10+; ComfyUI 0.42.1+ is the tested declared minimum.
+- Core provides torch, numpy, Pillow, aiohttp and PyAV. Extra requirements: opencv-python>=4.8.0 and aiofiles>=23.2.1.
+- Native VIDEO APIs and V3 autogrowing inputs are required by Timeline. FFmpeg must be on PATH.
+- Frontend uses browser JavaScript without a build step. Node.js is used for development syntax checks only.
 
-## Project Structure
-```
-comfyui-apex-artist/
-├── apex_*.py              # Node implementations
-├── apex_*_api.py          # API route handlers
-├── apex_utils.py          # Shared utilities
-├── __init__.py            # ComfyUI registration
-├── web/                   # Frontend modules (4 files, 1 unregistered)
-├── lens/                  # Source images for presets
-├── lens_previews/         # Generated preview assets
-├── scripts/               # Preset generator only (test scripts removed 2026-09-23)
-├── memory-bank/           # Context documentation (6 core files)
-├── presets/               # JSON data stores
-├── pyproject.toml         # Python package metadata
-├── comfyui.yaml           # ComfyUI registry metadata
-└── README.md, PUBLISH.md  # Documentation
+## Layout
+
+- `apex_*.py`: nodes, stores and APIs; `__init__.py`: eleven-node registration.
+- `web/`: frontend modules and Timeline helpers.
+- `prompt_presets.json`, `character_presets.json`: bundled factory libraries.
+- `lens/`, `lens_previews/`: shipped assets; preserve them.
+- `scripts/generate_character_presets.py`: factory-library generator/checker.
+- `tests/test_regressions.py`: portable CPU regression suite.
+- `memory-bank/`: concise project context; release history lives in CHANGELOG.md.
+
+## Development checks
+
+Use the same Python environment as ComfyUI:
+
+```sh
+python -m unittest discover -s tests
+python scripts/generate_character_presets.py --check
 ```
 
-## Technical Constraints
-- Must support batched IMAGE tensors with variable batch sizes
-- Must handle device migration (CPU/CUDA) transparently
-- Must validate file paths against ComfyUI security model
-- Frontend limited to browser-native APIs (no build step)
-- HDRI/LoRA operations currently block async handlers (needs fixing)
+Parse Python without creating bytecode, validate JSON/TOML and run `node --check` for every web module. Keep fixture media, test logs, caches and backups outside the package. Tests use synthetic package loading to avoid starting ComfyUI.
 
-## Tool Usage Patterns
-### Tests — removed September 23, 2026
-
-September 23, 2026: the development test suite (core, prompt-store, HDRI socket, character validator, plus the obsolete diagnostics) was removed from `scripts/` — it is dev-only and not required for ComfyUI to load this pack. All deleted scripts remain recoverable from git (`git show HEAD:scripts/<name>`). The only script kept is `scripts/generate_character_presets.py`, which `apex_character_prompt.py` names as the regeneration path for the shipped `character_presets.json`.
-
-Last full-suite run before removal (September 23, 2026): 7 core tests (3.5 s), 6 HDRI backend tests (1.6 s), 10 prompt-store tests (1.3 s), 105 character checks, 11 HDRI frontend checks, the prompt frontend harness, and `character_presets.json` synchronization all passed — roughly 10 seconds total. This records the last passing state, not a runnable suite: verification is now manual (browser/ComfyUI) plus the `node --check` syntax check below.
-```powershell
-# Automated Python tests were removed September 23, 2026 (see note above); only the preset generator remains:
-& 'F:\AI\ComfyUI Sandbox\ComfyUI\.venv\Scripts\python.exe' scripts\generate_character_presets.py --check
-
-# Recovery example — deleted scripts are still in git HEAD:
-#   git show HEAD:scripts\test_project_core.py
-
-# Recovery examples for the HDRI/prompt tests:
-#   git show HEAD:scripts\test_hdri_socket.mjs
-#   git show HEAD:scripts\test_hdri_socket.py
-
-# JavaScript syntax check
-node --check web\<filename>.js
-```
-
-### Important Notes on Testing
-- Core tests use synthetic ComfyUI package; don't require full runtime
-- The legacy HDRI diagnostics (`test_hdri_viewer_preview.mjs`, `test_ground_height_visual.py`) and the entire test suite were removed September 23, 2026 as dev-only material; the socket contract now lives in systemPatterns.md and deleted scripts are recoverable from git.
-- Syntax tests pass ≠ ComfyUI/browser integration working
-- PowerShell may truncate output; use `Start-Process -Wait` with redirected stdout/stderr for full logs. A native command whose stderr is merged inside a pipeline (`... 2>&1 | Select-Object -Last 5`) can report exit code 1 even when every test passed; redirect to a file first (`> "$env:TEMP\out.txt" 2>&1`) and only then read `$LASTEXITCODE`. This produced two false failures on September 23, 2026.
-- No end-to-end benchmark or live integration test suite exists
-
-### Version Management
-- Version **2.3.0** in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json`, and `custom_nodes.json`; committed as `1c3eaa4`, tagged `v2.3.0`, and pushed to `main` on September 24, 2026 with the repository owner's authorization. The first push attempt returned `403 Permission denied` because the stored Git Credential Manager credential (`apexartistx`) lacked write access to `ApexArtist/comfyui-apex-artist`; after that was resolved the push succeeded
-- A push to main changing pyproject.toml triggers the existing registry publish workflow; do not push without authorization (the 2.3.0 release push was authorized, and Actions run #29 succeeded on 2026-09-24: https://github.com/ApexArtist/comfyui-apex-artist/actions/runs/35989797563 — it created registry version 2.3.0 at 10:53:22Z, status `NodeVersionStatusPending` at first check)
-- No automated version update script; manual sync required
-- Restart ComfyUI for Python changes; hard-refresh browser for JavaScript
-
-## Development Dependencies
-- **Runtime**: All in requirements.txt
-- **Testing**: unittest (Python stdlib), Node.js for JS tests
-- **No build tools**: Frontend uses browser-native JavaScript
+A manual ComfyUI restart loads Python changes; Ctrl+Shift+R loads frontend changes. The owner manages this process. Version fields in five files must match. The publish workflow runs when a push to main changes pyproject.toml; see PUBLISH.md.

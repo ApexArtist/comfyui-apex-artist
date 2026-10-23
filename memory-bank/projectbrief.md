@@ -1,17 +1,9 @@
-# Project Brief
+# Project brief
 
-## What This Project Does
-ComfyUI Apex Artist provides 9 custom nodes for ComfyUI: image processing (blur, sharpen, blend, depth-to-normal), panorama viewing (HDRI viewer), LoRA loading with browser UI, prompt presets with categories, and JSON lookup utilities.
+Apex Artist provides eleven ComfyUI nodes: Blur, Sharpen, Layer Blend, Depth to Normal, HDRI Viewer, LoRA Loader, Prompt, Character Prompt, JSON Lookup, Audio and Timeline Editor.
 
-## Core Requirements
-- Integrate with native ComfyUI conventions (graph, tensors, folder_paths, previews)
-- Maintain backward compatibility with existing workflows
-- Support batched images and device-aware tensor processing
-- Keep dependencies minimal; verification is manual (browser/ComfyUI plus `node --check`) — the automated test scripts were removed September 23, 2026 as dev-only material
+Use native ComfyUI connections, ordinary numeric controls and existing graph nodes. Create additional custom nodes only when the owner authorizes them. Preserve saved widget order, socket identity, prompt text and source media.
 
-## Current State
-- Version 2.3.0 committed as `1c3eaa4`, tagged `v2.3.0`, and pushed to main on September 24, 2026 (9 registered nodes); publish workflow run #29 succeeded and created registry version 2.3.0 (status `NodeVersionStatusPending` at first check; 2.1.3 remains latest until the registry activates it)
-- Core image processing functional and tested
-- HDRI socket preview repaired and regression-tested; live browser smoke test pending
-- Character prompt node and API registered; isolated storage/random selection verified by the character validator (removed 2026-09-23)
-- Not release-ready due to HDRI and metadata validation gaps
+Keep processing device-aware, dependencies small, previews bounded and disk work off the server event loop. Timeline projects persist outside the extension directory; external media stays linked. Never start or interrupt the owner's ComfyUI process.
+
+Version 2.4.0 includes Audio/Timeline sources and reliability fixes. The owner authorized release on 2026-10-23. See CHANGELOG.md for history and PUBLISH.md for the publication trigger.

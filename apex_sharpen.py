@@ -77,6 +77,11 @@ class ApexSharpen:
         
         # Validate inputs
         validate_image_tensor(image, "image")
+        if image.ndim == 3:
+            image = image.unsqueeze(0)
+        output_dtype = image.dtype
+        if image.dtype in (torch.float16, torch.bfloat16):
+            image = image.float()
         radius = validate_radius(radius, min_val=0.1, max_val=10.0)
         
         device = image.device
@@ -115,7 +120,7 @@ class ApexSharpen:
         if threshold > 0:
             info += f" | Threshold: {threshold:.2f}"
         
-        return (torch.clamp(result, 0, 1), info)
+        return (torch.clamp(result, 0, 1).to(dtype=output_dtype), info)
     
     def _unsharp_mask(self, image, strength, radius, threshold):
         """Classic unsharp mask sharpening"""
@@ -159,9 +164,9 @@ class ApexSharpen:
         
         # Sobel edge detection
         sobel_x = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], 
-                              device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 8.0
+                              device=device, dtype=image.dtype).unsqueeze(0).unsqueeze(0) / 8.0
         sobel_y = torch.tensor([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], 
-                              device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 8.0
+                              device=device, dtype=image.dtype).unsqueeze(0).unsqueeze(0) / 8.0
         
         gray_reshaped = gray.permute(0, 3, 1, 2)
         edges_x = F.conv2d(gray_reshaped, sobel_x, padding=1)
@@ -177,7 +182,7 @@ class ApexSharpen:
             [0, -1, 0], 
             [-1, 5, -1], 
             [0, -1, 0]
-        ], device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        ], device=device, dtype=image.dtype).unsqueeze(0).unsqueeze(0)
         
         batch, height, width, channels = image.shape
         img_reshaped = image.permute(0, 3, 1, 2).reshape(-1, 1, height, width)
@@ -197,7 +202,8 @@ class ApexSharpen:
         
         # Calculate local variance to identify texture vs smooth areas
         kernel_size = max(3, int(radius * 2) + 1)
-        kernel = torch.ones(1, 1, kernel_size, kernel_size, device=device) / (kernel_size**2)
+        kernel_size += 1 - kernel_size % 2
+        kernel = torch.ones(1, 1, kernel_size, kernel_size, device=device, dtype=image.dtype) / (kernel_size**2)
         
         # Convert to grayscale for structure analysis
         gray = calculate_luminance(image)
@@ -231,7 +237,7 @@ class ApexSharpen:
             [0, -1, 0], 
             [-1, 4, -1], 
             [0, -1, 0]
-        ], device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0) * fine_detail
+        ], device=device, dtype=image.dtype).unsqueeze(0).unsqueeze(0) * fine_detail
         
         batch, height, width, channels = image.shape
         img_reshaped = image.permute(0, 3, 1, 2).reshape(-1, 1, height, width)
@@ -252,7 +258,7 @@ class ApexSharpen:
         scale3 = self._unsharp_mask(image, strength * 0.2, 3.0, 0.0)  # Large details
         
         # Combine scales with fine detail control
-        result = image * 0.4 + scale1 * 0.3 * fine_detail + scale2 * 0.2 + scale3 * 0.1
+        result = image + (scale1 - image) * 0.3 * fine_detail + (scale2 - image) * 0.2 + (scale3 - image) * 0.1
         
         return result
     

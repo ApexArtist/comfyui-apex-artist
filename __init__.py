@@ -1,4 +1,4 @@
-NODE_VERSION = "2.3.0"
+NODE_VERSION = "2.4.0"
 
 from .apex_depth_to_normal import ApexDepthToNormal
 from .apex_layer_blend import ApexLayerBlend
@@ -9,6 +9,8 @@ from .apex_character_prompt import ApexCharacterPrompt
 from .apex_lora_loader import ApexLoraLoader
 from .apex_hdri_viewer import ApexHDRIViewer
 from .apex_json_node import ApexJSON
+from .apex_timeline import ApexTimelineEditor
+from .apex_audio import ApexAudio
 
 # Import API servers to initialize routes
 try:
@@ -36,6 +38,16 @@ try:
 except ImportError:
     print("Warning: Could not import apex_hdri_preview_api")
 
+try:
+    from . import apex_timeline_api
+except ImportError:
+    print("Warning: Could not import apex_timeline_api")
+
+try:
+    from . import apex_audio_api
+except ImportError:
+    print("Warning: Could not import apex_audio_api")
+
 NODE_CLASS_MAPPINGS = {
     "ApexDepthToNormal": ApexDepthToNormal,
     "ApexLayerBlend": ApexLayerBlend,
@@ -46,6 +58,8 @@ NODE_CLASS_MAPPINGS = {
     "ApexLoraLoader": ApexLoraLoader,
     "ApexHDRIViewer": ApexHDRIViewer,
     "ApexJSON": ApexJSON,
+    "ApexTimelineEditor": ApexTimelineEditor,
+    "ApexAudio": ApexAudio,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -58,6 +72,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexLoraLoader": "Apex LoRA Loader",
     "ApexHDRIViewer": "Apex HDRI Viewer",
     "ApexJSON": "Apex JSON Lookup",
+    "ApexTimelineEditor": "Apex Timeline Editor",
+    "ApexAudio": "Apex Audio",
 }
 
 WEB_DIRECTORY = "./web"

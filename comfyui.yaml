@@ -2,7 +2,7 @@ id: comfyui-apex-artist
 publisher_id: apex
 name: "Apex Artist Professional VFX Tools"
 description: "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
-version: "2.3.0"
+version: "2.4.0"
 license: "MIT"
 repository: "https://github.com/ApexArtist/comfyui-apex-artist"
 homepage: "https://github.com/ApexArtist/comfyui-apex-artist"
@@ -17,11 +17,14 @@ tags:
   - "normal-maps"
   - "color-grading"
   - "layer-blending"
+  - "video"
+  - "timeline"
   - "ai-tools"
-python_version: ">=3.8"
-comfyui_version: ">=0.1.0"
+python_version: ">=3.10"
+comfyui_version: ">=0.42.1"
 dependencies:
   - "opencv-python>=4.8.0"
+  - "aiofiles>=23.2.1"
 nodes:
   - id: "ApexLoraLoader"
     display_name: "Apex LoRA Loader"
@@ -59,7 +62,12 @@ nodes:
     display_name: "Apex JSON Lookup"
     description: "Look up text values in JSON data"
     category: "Apex Artist/Text"
-author:
-  name: "Apex Artist"
-  email: "apex@artist.dev"
-  github: "ApexArtist"
+  - id: "ApexTimelineEditor"
+    display_name: "Apex Timeline Editor"
+    description: "Persistently capture native video clips into autogrowing timeline layers"
+    category: "Apex Artist/Video"
+
+  - id: "ApexAudio"
+    display_name: "Apex Audio"
+    description: "Load or connect audio, trim, adjust volume, preview and read metadata"
+    category: "Apex Artist/Audio"

@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.4.0 — 2026-10-23
+
+### Added
+
+- Apex Audio: file or standard AUDIO input, waveform selection, sample-based trimming, 0–200% gain, selection preview and metadata outputs.
+- Apex Timeline Editor: embedded video/audio tracks, native VIDEO inputs, append/start/offset placement, thumbnails, linked external clips, trims, split, persistent undo/redo, gain, fades, snapping, scrubbing and missing-source relinking. Standard VIDEO/IMAGE/AUDIO/FPS outputs connect to downstream save/combine nodes; no separate Timeline Render node is registered.
+
+### Fixed
+
+- Depth Blur covers the full depth range; fractional motion/sharpen radii keep image dimensions; half-precision filters use safe computation; RGBA depth produces RGB normals. Dissolve follows opacity and zero-strength Multi Scale Sharpen preserves brightness.
+- Blur, blend and LoRA failures report errors instead of silently passing inputs through.
+- Character presets use validated atomic user-folder saves with revision conflicts. The manager preserves failed-save drafts and rejects accidental name collisions; missing selections fail explicitly. Character API writes now require the read response's ETag in If-Match.
+- LoRA browsing supports all configured roots, prevents stale previews and refreshes changed thumbnails. HDRI views reuse unchanged frames; heavy preview/scan work runs off the event loop.
+- Saved timeline exports prune unused input loaders. Clear video cache removes regenerable MP4s only with an idle queue and preserves source media.
+
+### Requirements and upgrade
+
+- Python 3.10+ and ComfyUI 0.42.1+ are the declared tested minimums. Explicit extra requirements are opencv-python>=4.8.0 and aiofiles>=23.2.1. Timeline uses FFmpeg on PATH.
+- Restart ComfyUI and hard-refresh the browser. Back up custom libraries before updating. Character edits now live under the configured user directory at apex_artist/character_presets.json; existing bundled edits seed the first user save. Timeline projects persist under the configured output directory at Apex/timelines.
+
+### Validation
+
+- Passed: 71 targeted CPU checks, eight portable regressions, isolated API/browser checks, all eleven node schemas, twenty-seed character-output compatibility, a five-second CPU export at 24 FPS and native loops for 6, 25.25 and 60 seconds with exact audio crops and placement.
+- Loop checks used CPU placeholder frames, not AI sampling. No GPU render was run. Owner live smoke testing and a clean installation remain unverified; these results do not establish complete release readiness.
+- Documentation and release metadata were consolidated. The owner authorized the 2.4.0 commit, release tag and publication on 2026-10-23.
+
 ## 2.3.0 — 2026-09-24
 
 First published release of the 2.x line. It covers everything prepared since v2.1.3, including the 2.2.0 work that was prepared locally on 2026-09-21 and never published.

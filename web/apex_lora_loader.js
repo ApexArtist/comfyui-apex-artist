@@ -19,7 +19,7 @@ async function fetchLoraPreview(loraName) {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.preview_path ?? null;
+    return data.preview_path ? {path:data.preview_path, version:data.preview_version || 0} : null;
 }
 
 function refreshNodePreview(node) {
@@ -63,7 +63,7 @@ function createFloatingBrowser(node) {
 
     const breadcrumb = document.createElement("div");
     breadcrumb.style.cssText = "flex: 1; display: flex; align-items: center; gap: 5px;";
-    
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "✕";
     closeBtn.style.cssText = `
@@ -77,7 +77,7 @@ function createFloatingBrowser(node) {
         line-height: 1;
     `;
     closeBtn.onclick = () => closeBrowser(node);
-    
+
     header.appendChild(breadcrumb);
     header.appendChild(closeBtn);
 
@@ -187,7 +187,7 @@ function createFloatingBrowser(node) {
 
 function makeDraggable(element, handle) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
+
     handle.onmousedown = dragMouseDown;
 
     function dragMouseDown(e) {
@@ -221,7 +221,7 @@ function openBrowser(node) {
     if (s.browserOpen || s._floatingPanel) return;
 
     s.browserOpen = true;
-    
+
     // Create floating panel
     const panel = createFloatingBrowser(node);
     s._floatingPanel = panel;
@@ -268,16 +268,16 @@ function positionPanelNearNode(node, panel) {
     // Get node position on canvas
     const canvasRect = app.canvas.canvas.getBoundingClientRect();
     const scale = app.canvas.ds.scale;
-    
+
     // Convert node position to screen coordinates
     const nodeX = (node.pos[0] * scale) + canvasRect.left + app.canvas.ds.offset[0] * scale;
     const nodeY = (node.pos[1] * scale) + canvasRect.top + app.canvas.ds.offset[1] * scale;
     const nodeWidth = node.size[0] * scale;
-    
+
     // Position to the right of node, or centered if not enough space
     let left = nodeX + nodeWidth + 20;
     let top = nodeY;
-    
+
     // Check if panel would go off-screen
     if (left + 600 > window.innerWidth) {
         left = Math.max(20, (window.innerWidth - 600) / 2);
@@ -285,7 +285,7 @@ function positionPanelNearNode(node, panel) {
     if (top + 500 > window.innerHeight) {
         top = Math.max(20, (window.innerHeight - 500) / 2);
     }
-    
+
     panel.style.left = left + "px";
     panel.style.top = top + "px";
 }
@@ -310,7 +310,7 @@ async function scanThumbnails(node) {
         const res = await api.fetchApi("/apex/lora_scan_thumbnails", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ folder_path: s.currentFolder || "" })
+            body: JSON.stringify({ folder_path: s.currentFolder || "", root_index:s.rootIndex })
         });
 
         if (!res.ok) {
@@ -326,21 +326,21 @@ async function scanThumbnails(node) {
         }
 
         const data = await res.json();
-        
+
         // Show result
         if (data.status === "success") {
-            const summary = data.generated > 0 
+            const summary = data.generated > 0
                 ? `✅ Generated ${data.generated} thumbnail${data.generated > 1 ? 's' : ''}!`
                 : `✅ All thumbnails already exist`;
-            
+
             scanButton.textContent = summary;
-            
+
             // If thumbnails were generated, refresh the folder to show them
             if (data.generated > 0) {
                 // Refresh folder contents immediately to show new thumbnails
                 await loadBrowserFolder(node, s.currentFolder || "");
             }
-            
+
             // Reset button after showing result
             setTimeout(() => {
                 const btn = panel._scanButton; // Re-get reference in case panel refreshed
@@ -381,6 +381,7 @@ function setupLoraLoaderNode(node) {
     // Per-instance state
     node._loraState = {
         currentFolder: "",
+        rootIndex: 0, folderRequest: 0, previewRequest: 0, removed: false,
         selectedLora: loraWidget.value || "",
         selectedLoraPreview: null,
         currentPage: 0,
@@ -426,6 +427,7 @@ function setupLoraLoaderNode(node) {
     // Store original onRemoved to cleanup
     const origOnRemoved = node.onRemoved;
     node.onRemoved = function() {
+        s.removed = true; s.previewRequest++; s.folderRequest++;
         closeBrowser(node);
         if (origOnRemoved) origOnRemoved.apply(this, arguments);
     };
@@ -439,6 +441,7 @@ function setupLoraLoaderNode(node) {
 
 async function loadBrowserFolder(node, folderPath) {
     const s = node._loraState;
+    const token = ++s.folderRequest;
     const panel = s._floatingPanel;
     if (!panel) return;
 
@@ -449,7 +452,7 @@ async function loadBrowserFolder(node, folderPath) {
         const res = await api.fetchApi("/apex/lora_list_folder", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ folder_path: folderPath })
+            body: JSON.stringify({ folder_path: folderPath, root_index:s.rootIndex })
         });
 
         if (!res.ok) {
@@ -458,7 +461,9 @@ async function loadBrowserFolder(node, folderPath) {
         }
 
         const data = await res.json();
+        if (s.removed || token !== s.folderRequest || s._floatingPanel !== panel) return;
         s.loras = data.loras;
+        s.roots = data.roots;
 
         updateBreadcrumb(node, panel, folderPath, data.parent_folder);
         updateFolders(node, panel, data.folders, data.parent_folder);
@@ -475,6 +480,13 @@ function updateBreadcrumb(node, panel, folderPath, parentFolder) {
     const breadcrumb = panel._breadcrumb;
     breadcrumb.innerHTML = "";
 
+    for (const root of node._loraState.roots || []) {
+        const button = document.createElement("button");
+        button.textContent = `Root ${root.index + 1}`; button.title = root.path;
+        button.disabled = root.index === node._loraState.rootIndex;
+        button.onclick = () => {node._loraState.rootIndex = root.index; loadBrowserFolder(node, "");};
+        breadcrumb.append(button);
+    }
     const homeBtn = document.createElement("span");
     homeBtn.textContent = "🏠";
     homeBtn.style.cssText = "cursor:pointer;color:#4a9eff;padding:2px 5px;";
@@ -600,15 +612,15 @@ function createLoraItem(node, lora) {
         margin-bottom: 6px;
     `;
 
-    if (lora.has_preview) {
+    if (lora.has_preview && !lora.shadowed) {
         const img = document.createElement("img");
         img.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;";
         fetchLoraPreview(lora.relative_path)
-            .then(path => { 
-                if (path) {
-                    // Add timestamp to prevent browser caching old thumbnails
-                    const cacheBuster = Date.now();
-                    img.src = `/apex/lora_image?path=${encodeURIComponent(path)}&t=${cacheBuster}`;
+            .then(preview => {
+                if (preview) {
+                    // File version changes only when the preview changes.
+
+                    img.src = api.apiURL(`/apex/lora_image?path=${encodeURIComponent(preview.path)}&v=${preview.version}`);
                 }
             })
             .catch(() => {});
@@ -641,7 +653,9 @@ function createLoraItem(node, lora) {
     item.appendChild(thumbnail);
     item.appendChild(label);
 
+    if (lora.shadowed) {item.title = "This relative name is supplied by an earlier configured root."; item.style.opacity = ".45";}
     item.onclick = () => {
+        if (lora.shadowed) return;
         const loraWidget = node.widgets?.find(w => w.name === "lora_name");
         if (loraWidget) {
             loraWidget.value = lora.relative_path;
@@ -703,43 +717,48 @@ function updatePagination(node, panel) {
 function onLoraChanged(node, loraName) {
     const s = node._loraState;
     if (!s || !loraName) return;
-    
+
     s.selectedLora = loraName;
+    const token = ++s.previewRequest;
+    const current = () => !s.removed && token === s.previewRequest && s.selectedLora === loraName;
     s.selectedLoraPreview = "loading";
     node.imgs = [];
-    
+
     // Fetch and display preview
     fetchLoraPreview(loraName)
-        .then(path => {
-            if (!path) {
+        .then(preview => {
+            if (!current()) return;
+            if (!preview) {
                 s.selectedLoraPreview = null;
                 s._previewImage = null;
                 node.imgs = [];
                 refreshNodePreview(node);
                 return;
             }
-            
-            s.selectedLoraPreview = path;
-            
+
+            s.selectedLoraPreview = preview.path;
+
             // Load image
             const img = new Image();
             img.onload = () => {
+                if (!current()) return;
                 s._previewImage = img;
                 node.imgs = [img];
                 node.imageIndex = 0;
                 refreshNodePreview(node);
             };
             img.onerror = () => {
+                if (!current()) return;
                 s.selectedLoraPreview = null;
                 s._previewImage = null;
                 node.imgs = [];
                 refreshNodePreview(node);
             };
-            // Add timestamp to prevent browser caching old thumbnails
-            const cacheBuster = Date.now();
-            img.src = `/apex/lora_image?path=${encodeURIComponent(path)}&t=${cacheBuster}`;
+            // File version changes only when the preview changes.
+            img.src = api.apiURL(`/apex/lora_image?path=${encodeURIComponent(preview.path)}&v=${preview.version}`);
         })
         .catch(() => {
+            if (!current()) return;
             s.selectedLoraPreview = null;
             s._previewImage = null;
             node.imgs = [];

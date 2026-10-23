@@ -1,120 +1,111 @@
-# ComfyUI Apex Artist — Efficient Nodes to Make ComfyUI Convenient
+# ComfyUI Apex Artist
 
-A collection of efficient, easy-to-use nodes for ComfyUI that streamline image processing and prompt management.
+Image processing, prompt presets, audio selection and a video timeline editor inside ComfyUI.
 
-## 🎨 Available Nodes
+## Nodes
 
-### Image Processing
-- **ApexBlur** — 9 blur algorithms (Gaussian, Motion, Radial, Lens, Spin, Zoom, etc.)
-- **ApexSharpen** — 8 sharpening methods (Unsharp Mask, High Pass, Clarity, etc.)
-- **ApexLayerBlend** — 25+ blend modes for layer compositing
-- **ApexDepthToNormal** — Convert depth maps to normal maps
-- **ApexHDRIViewer** — Load HDRI/360° panoramas, aim a camera view, and output the captured image
+| Node | Purpose |
+| --- | --- |
+| Apex Blur | Nine blur methods, including Gaussian, motion, lens and depth blur |
+| Apex Sharpen | Eight sharpening methods |
+| Apex Layer Blend | Layer compositing with 25+ blend modes |
+| Apex Depth to Normal | Convert depth maps to RGB normal maps |
+| Apex HDRI Viewer | Aim a camera into a panorama and output front/back views |
+| Apex LoRA Loader | Browse configured LoRA folders with thumbnail previews |
+| Apex Prompt | Environment, Lighting, Style, Color and Camera Lens presets |
+| Apex Character Prompt | Twelve character categories with separate and combined text outputs |
+| Apex JSON Lookup | Read text values from JSON data |
+| Apex Audio | Load or connect audio, trim, adjust gain, preview and read metadata |
+| Apex Timeline Editor | Edit persistent video/audio tracks and output standard ComfyUI media |
 
-### Models & Workflow
-- **ApexLoraLoader** — Interactive browser with folder navigation and thumbnail preview support
-- **ApexJSON** — Look up text values in JSON data
-- **ApexPromptPreset** — Professional prompt presets across Environment, Lighting, Style, Color, and Camera Lens categories
-- **ApexCharacterPrompt** — Character prompts from 12 preset categories (gender, age, ethnicity, face, eye color, skin tone, hair, headwear, top, bottom, shoes, hand accessory) with 13 text outputs
-  - Presets include **Square Eyes**: a soft oval face with distinctive horizontally elongated rectangular-shaped eyes and pale blue-grey irises
-  - Presets include **Long Silver Blonde Wispy Bangs** (hair), **White Wireless Headphones** (headwear), and **Oversized Pale Blue Hoodie** (top)
+## Installation
 
-## ✨ Key Features
+Requires **Python 3.10+**, **ComfyUI 0.42.1+**, and the dependencies in `requirements.txt`. Timeline rendering also needs FFmpeg available on PATH. PyTorch, PyAV, Pillow and the native audio/video APIs come from ComfyUI.
 
-### Apex Character Prompt
+Clone this repository into ComfyUI's `custom_nodes` folder:
 
-- 12 category selectors (gender, age, ethnicity, face, eye color, skin tone, hair, headwear, top, bottom, shoes, hand accessory) and 13 STRING outputs.
-- Optional free-text input leads the combined prompt without changing the individual category outputs.
-- Resolution order is gender → age → ethnicity → face → eye color → skin tone → hair → headwear → top → bottom → shoes → hand accessory; combine with the downstream prompt node.
-- Each category supports `Disabled`, `Random`, or an explicit preset. Random selection is seed-deterministic and weighted.
-- `character_presets.json` may be edited to add or rename presets. When a category in that file is non-empty it becomes authoritative; otherwise the built-in library is used.
-- A missing or malformed store never prevents the node from loading — it falls back to the built-in library and leaves the damaged file untouched for repair.
-
-### Apex Prompt — Factory and User Presets
-
-- **Save Preset…** saves editable text in one category: Environment, Lighting, Style, Color, or Camera Lens. Use **Copy selected category text** or **Copy input text** to fill the editor explicitly; saving does not capture the entire combined prompt or node setup.
-- **Manage Presets…** provides search, category/source filters, Use, Save a Copy, and user-only Edit/Rename/Delete actions.
-- Save and Manage dialogs keep **Close** in a sticky top-right header, accessible while scrolling.
-- **Apex Color** is a dedicated colour-grade slot with 68 bundled presets, split between standard colour styles (Full Natural Color, Rich Vibrant Color, Soft Pastel Palette, Warm Golden Grade, Cool Blue Grade, Jewel Tone Palette, Neon Color Pop, Duotone Two Color, Cross Processed Color, Bleach Bypass Steel, Sepia Antique Tone…) and industry looks (Teal and Orange Blockbuster, Film Print Emulation 2383, ACES Neutral Grade, Rec.709 Broadcast Color, Log Flat Ungraded, Technicolor Three Strip, Two Strip Technicolor, Day for Night Blue, Cold Cyan Thriller, Kodak Portra / Ektar / Ektachrome / Gold / Kodachrome / Vision3 250D and 500T, CineStill 800T, Fujifilm Eterna / Velvia / Pro 400H, Agfa, Polaroid, Lomo, Eighties VHS Color, Nineties Music Video Color, Y2K Digicam Color, False Color Infrared, Thermal Heat Map…). Colour is a deliberate choice: **Monochrome Noir**, Sepia, and the desaturated/Low Saturation presets are only reached when you pick them. `Random` draws one weighted preset like every other category.
-- Combined prompt order is input → environment → lighting → style → **color** → camera lens, so the colour grade is stated after the look. The node returns six STRING outputs: `combined_prompt`, `environment_text`, `lighting_text`, `style_text`, `camera_lens_text`, and the new `color_text`. The five original outputs keep their positions, and the new `color_preset` dropdown is appended last, so saved workflows keep their values and links.
-- Factory presets remain read-only. The bundled JSON is preserved; Python defaults supply missing names without replacing existing JSON text. Existing factory names and node inputs stay unchanged.
-- User presets appear as **User: Name** in the existing selectors. The same name can exist in both libraries without overriding a factory preset.
-- User data is stored at `apex_artist/prompt_presets.json` beneath ComfyUI's configured user directory, outside this extension's installation directory. **This library is installation-shared, not private to a ComfyUI user profile.** All clients with access to this server can manage it.
-- **Random** retains the original factory pool, order, and weights; saving a user preset does not alter seeded factory choices. User weights are stored for future user-random support; there is no user-random selector in this version.
-- Saves refresh open nodes and invalidate backend output caches. Existing missing selections are not silently replaced; restore/import the preset or select another before running.
-- Export backs up the **user** library only. Import accepts a version-1 export or a legacy category dictionary and adds entries as user presets. Conflicting user names are rejected without partial writes; rename the incoming entry or edit the existing one explicitly.
-- Saving uses a revision check and same-directory atomic replacement. A stale editor stays open with its draft; refresh its revision and review before retrying. Corrupt user files are reported and left untouched.
-
-**Upgrade:** restart ComfyUI, then hard-refresh the browser. No factory-file migration or rewrite occurs. If you previously customized the bundled JSON, copy those entries into the user library and export a backup before updating/reinstalling the extension. Workflow files reference preset names; share the user-library export alongside workflows that use them.
-
-**Scope:** concurrent clients of one ComfyUI server are supported. Do not run multiple server processes writing the same preset file; the write lock is process-local. Private per-profile libraries and whole-node setup presets are not implemented.
-
-
-
-### LoRA Loader
-- Interactive modal browser with folder navigation
-- Optimized 256x256 thumbnails (100-200x faster loading)
-- Smart preview detection (multiple formats: PNG, JPG, WebP, GIF, BMP, TIFF)
-
-- Original images can be deleted after thumbnail creation to save space
-- Handles large collections (1000+ LoRAs efficiently)
-
-## 📦 Installation
-
-1. Navigate to ComfyUI custom_nodes directory
-2. Clone the repository:
-   ```bash
-   git clone https://github.com/ApexArtist/comfyui-apex-artist.git
-   ```
-3. Restart ComfyUI
-4. Nodes appear under "Apex Artist" in the Add Node menu
-
-## 📚 Documentation
-
-See `CHANGELOG.md` for release notes, `PUBLISH.md` for release preparation, and `memory-bank/systemPatterns.md` for architecture notes.
-
-## 🚀 Quick Start
-
-### LoRA Loader
-```
-Add Node → Apex Artist → Models → Apex LoRA Loader
-- Click "Click to browse LoRAs" button
-- Navigate folders with breadcrumb
-- Click thumbnail to select
+```sh
+git clone https://github.com/ApexArtist/comfyui-apex-artist.git
 ```
 
-## 📊 Performance (RTX 3080, 1024×1024)
+Using the Python environment that runs ComfyUI, install `requirements.txt`. Restart ComfyUI and hard-refresh the browser. Find the nodes under **Apex Artist** in the Add Node menu.
 
-- **ApexBlur**: 15-80ms depending on type
-- **ApexSharpen**: 18-25ms
-- **ApexLayerBlend**: 2-25ms depending on mode
-- **ApexDepthToNormal**: 12ms
-- **ApexHDRIViewer**: depends on output resolution and batch size
+## Prompt presets
 
-## 🚀 Changelog
+**Apex Prompt** combines input text → environment → lighting → style → color → camera lens. It returns the combined prompt and five category texts. Each selector accepts Disabled, Random or a named preset. Random choices are deterministic for the seed.
 
-**v2.3.0** - 2026-09-24 — First published release of the 2.x line: Apex Character Prompt (12 categories, 221 presets, 13 outputs), the new Apex Color colour-grade category (68 standard and industry presets) with a sixth Apex Prompt output, separate factory/user prompt libraries with atomic writes and Save/Manage dialogs, preset colour fixes that stop unwanted black-and-white renders, HDRI socket preview fixes, and LoRA path hardening. See `CHANGELOG.md` for validation and remaining release checks.
+**Save Preset…** saves text for one category. **Manage Presets…** supports search, copying factory presets, editing user presets and import/export. Factory entries stay read-only; user entries appear as `User: Name`. Saving user entries does not change the seeded factory Random pool. Share a library export with workflows that reference its names.
 
-**v2.1.2** - 2026-07-25 — LoRA thumbnail system fixes: automatic regeneration on image updates, browser cache-busting, improved back button
-**v2.1.1** - 2026-07-23 — Patch: version bump, removed stale ApexLoadModel references from metadata files
-**v2.0.3** - 2026-07-19 — Project cleanup: removed ApexLoRAExtract, ApexLoRAMerge, and ApexModelQuantizer to focus on core VFX features
-**v2.0.2** - 2026-07-16 — Brand refresh: repositioned as efficient nodes to make ComfyUI convenient, removed VFX branding
-**v2.0.1** - 2026-07-16 — Security fixes, performance optimizations, code deduplication (apex_utils.py)
+**Apex Character Prompt** has twelve selectors: gender, age, ethnicity, face, eye color, skin tone, hair, headwear, top, bottom, shoes and hand accessory. Its thirteen outputs contain the combined prompt and individual category texts. Optional input text leads the combined output. **Manage Character Presets…** edits the character library, with import/export and Use controls. Missing named presets raise an error instead of disappearing silently.
 
-## 📦 Requirements
+Both libraries save atomically beneath ComfyUI's configured user directory:
 
-- ComfyUI (latest stable)
-- Python 3.8+
-- PyTorch (as provided by ComfyUI)
-- Pillow (PIL) with image format support (provided by ComfyUI)
-- OpenCV (`opencv-python`) for true `.hdr` / `.exr` HDRI loading
+```text
+apex_artist/prompt_presets.json
+apex_artist/character_presets.json
+```
 
-**Note on WebP support:** WebP thumbnail generation requires Pillow to be compiled with libwebp support. If WebP processing fails, the system will gracefully fall back to serving the original WebP image directly. Most modern Pillow installations include WebP support by default.
+These libraries are shared by clients of the same server. Revision checks reject stale saves and keep the editor draft. Character API reads return an ETag; writes require it in `If-Match`. One writing ComfyUI process is supported. Export custom libraries before reinstalling or moving installations. Existing bundled character edits seed the library until its first user save; later edits use the user copy.
 
-## 📄 License
+## Audio
 
-MIT License - See LICENSE file for details
+Load/upload a file or connect standard `AUDIO`; a connection takes priority. Drag the waveform handles or enter start and duration in seconds. Duration 0 selects the remaining source. Gain ranges from 0–200%, with 100% unchanged. Preview plays the selection. Outputs are `AUDIO`, selected duration, sample rate, channels and sample count.
 
-## 🤝 Contributing
+Source files remain unchanged. No resampling or normalization is applied. Disable Preview to skip waveform generation and connected-input preview encoding; connected previews become available after execution.
 
-Issues and feature requests welcome on GitHub!
+## Timeline editor
+
+The editor is embedded in the node. Resize it for more space. It outputs **VIDEO, IMAGE, AUDIO and FPS**, followed by project metadata. Connect VIDEO to native **Save Video**, or IMAGE/AUDIO/FPS to a video-combine node. IMAGE materializes frames only when connected; video-only exports keep frames on disk. Final saving uses the downstream node's encoding settings.
+
+### Capture and placement
+
+- Each VIDEO input maps to the same numbered video lane: Video 1 → V1, Video 2 → V2. Repeated captures append to that lane.
+- `placement_start = -1` appends at each receiving track's end. A non-negative value sets an explicit start. `placement_offset` adds seconds to that computed start for each incoming clip; 0 adds no gap.
+- **New Results Only** rejects identical media already captured on the same track. The target defaults to 180 seconds; overflow is retained in the review bin.
+- Native loop/math nodes can drive ordinary inputs. Connect a loop's `is_last` to `prepare_outputs` to assemble only its final iteration. Loops retain the editor's persistent project identity.
+- **+ Track** exposes its VIDEO socket. Connecting the last socket grows a matching lane/socket, up to sixteen tracks. Disconnecting keeps edits intact. V1 is permanent; other lanes have a small minus button with deletion confirmation and undo support.
+
+### Editing and playback
+
+Drag clips between tracks, trim edges, set numeric positions/source trims, split, duplicate or delete. Undo/redo persists. Higher video tracks cover lower tracks. Gaps show black; enabled audio lanes mix independently of the visible video layer.
+
+Video audio receives linked audio placements. The optional master AUDIO input becomes an editable clip on A1. Disable `capture_clip_audio` when the master should supply the soundtrack. Timing edits affect linked video/audio until unlinked. Audio lanes support mute and gain: drag the thin waveform line from 0–200%, double-click to reset to 100%, or focus it and use Up/Down/Home. Waveform height follows gain.
+
+Project FPS defaults to 24. Scrub the ruler/playhead; Space toggles playback, Left/Right steps frames and Home/End jumps to boundaries while the editor has focus. Text and numeric fields retain their normal keys. **Fit** sits beside zoom. Clip actions are before **Export**. Wheel input scrolls editing panels and reaches canvas zoom over the preview/background.
+
+Video/audio edge handles control fades. Zero duration means full opacity/gain. SNAP stops edits at clip boundaries; disabling SNAP allows overlap and automatic join fades. Preview preloads the next visible clip for hard cuts. Mixed sizes and frame rates are normalized during rendering, leaving linked originals unchanged.
+
+### Storage and export
+
+Projects and captured assets persist under:
+
+```text
+<ComfyUI output>/Apex/timelines/<project>/
+```
+
+Legacy projects under `user/apex_artist/timelines` are copied on first open; originals remain. **Link clips** and external drag/drop reference original absolute paths without copying. If the browser hides a dropped path, use the local source picker. Audio files can be linked directly to audio lanes.
+
+Missing sources remain red with their edits intact. Right-click to locate one or search a folder, optionally including subfolders. Ambiguous matches stay unresolved. Missing media blocks export until repaired.
+
+**Export** queues the connected save path using saved placements, fades, mute and gain. It does not regenerate source clips or reload the original audio loader. **Clear video cache** removes regenerable MP4 cache files only while the ComfyUI queue is idle. Source media stays intact. Audio/waveform caches have count limits; video caches are cleared explicitly.
+
+## LoRA and HDRI previews
+
+The LoRA browser lists all configured roots and generates 256×256 JPEG thumbnails. Changed source previews regenerate thumbnails; asynchronous results stay matched to the selected model. Duplicate relative names follow ComfyUI's earlier-root precedence. Keep original preview images if you need their full quality.
+
+The HDRI viewer uses source panorama metadata for its interactive preview. Connect IMAGE and execute once for a socket preview; the bounded 8-bit preview approximates the source while final outputs retain tensor dynamic range. Drag to aim, Shift-drag to roll and scroll to change FOV. Unchanged views reuse the rendered frame. OpenCV provides HDR/EXR decoding; panoramas cannot reveal unseen geometry or true parallax.
+
+## Development and release
+
+Version **2.4.0** adds Apex Audio, Timeline Editor and node reliability fixes. See [CHANGELOG.md](CHANGELOG.md) for changes and validation limits, [PUBLISH.md](PUBLISH.md) for release steps, and [system patterns](memory-bank/systemPatterns.md) for architecture.
+
+Run the portable CPU regressions with the ComfyUI Python environment:
+
+```sh
+python -m unittest discover -s tests
+python scripts/generate_character_presets.py --check
+```
+
+Check each `web/*.js` with `node --check`. These checks do not replace a live ComfyUI smoke test or clean-install test. No GPU performance benchmark is claimed.
+
+MIT licensed; see [license.md](license.md). Issues and contributions are welcome on [GitHub](https://github.com/ApexArtist/comfyui-apex-artist/issues).

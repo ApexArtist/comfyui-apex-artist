@@ -1,70 +1,35 @@
-# System Patterns
+# System patterns
 
-## System Architecture
-- **Node modules**: apex_*.py files define node classes with INPUT_TYPES/FUNCTION/RETURN_TYPES contracts
-- **API modules**: apex_*_api.py files register HTTP routes via PromptServer
-- **Registration**: __init__.py exports NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS, WEB_DIRECTORY
-- **Frontend**: ComfyUI auto-loads web/*.js; scripts/ contains the character preset generator (test scripts removed 2026-09-23); preset JSON files are editable data stores
-- **Assets**: lens/ contains source images; lens_previews/ serves generated assets (preserve both)
+## Registration and boundaries
 
-## Key Technical Decisions
-- **Native ComfyUI integration**: Use folder_paths for path management, native upload/preview APIs, standard tensor shapes
-- **Security model**: Validate paths using resolved component checks against storage roots, not string prefixes; recheck after user selection
-- **Preview pattern**: Use node.imgs=[img], node.imageIndex=0, setDirtyCanvas() for LoRA thumbnails; don't resize node per image change
-- **Shared utilities**: apex_utils.py provides Gaussian blur (separable convolution), device/dtype-aware masks, luminance/HSL conversion
-- **Error handling**: Varies per node (raise/pass-through/placeholder); no universal contract established
-- **RNG management**: Seed local generators, never modify global random state
+`__init__.py` exposes NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS and WEB_DIRECTORY. Keep V3 nodes in the existing mapping alongside legacy nodes; do not add an exclusive root comfy_entrypoint. APIs register with PromptServer; frontend files enhance existing nodes. Preserve hooks, saved widget order and stable socket indices.
 
-## Design Patterns in Use
-### Image Processing Nodes
-- **Tensor shape**: IMAGE=[batch, H, W, channels], MASK=[batch, H, W]
-- **Device/dtype**: Match mask to image device/dtype before operations
-- **Gaussian blur**: Separable 1D convolutions preserve existing sigma/padding behavior; float64 kernels for accuracy
+## Image processing
 
-### LoRA System
-- Modal browser with folder navigation
-- Generate 256×256 JPEG thumbnails on demand
-- Display using native node.imgs preview (no custom canvas)
-- Path validation: resolve all components, check against loras root
+IMAGE is batch × height × width × channels; MASK is batch × height × width. Shared utilities provide separable Gaussian blur, masks and color conversions. Masks/kernels follow image device and compute dtype. Half-precision filters compute in float32 and restore input dtype. Invalid processing raises a clear node error; avoid silently returning original inputs. Use local RNGs rather than resetting global seeds.
 
-### Preset System
-- Five categories: Environment, Lighting, Style, Color, Camera Lens (Color is the dedicated colour-grade slot; the seed offsets are +1/+2/+3/+4/+5 and the combined order is input → environment → lighting → style → color → camera lens)
-- Six STRING outputs: combined_prompt, environment_text, lighting_text, style_text, camera_lens_text, color_text (the original five keep their positions; the new `color_preset` widget is appended last so `widgets_values` stay positionally valid)
-- `CATEGORIES` in `apex_prompt_store.py` governs validation, the user library and the per-category API routes; `web/apex_prompt.js` maps category → widget for Save/Manage
-- Seeded random selection returns (name, text) tuples
-- Bracket expansion for variations
-- Prompt factory JSON is read-only; Python defaults supplement missing names. User entries use `User: ` tokens, preventing factory shadowing.
-- Shared `apex_prompt_store.py` backs prompt API, INPUT_TYPES and execution. User store under configured ComfyUI user root, `apex_artist/prompt_presets.json`; installation-shared, not per-profile.
-- Prompt writes serialize the full read/check/write transaction with RLock and atomically replace a same-directory temp file after fsync. Revision conflicts reject stale clients. Multi-process writers are not supported.
-- Prompt execution reloads snapshots; IS_CHANGED returns content/order revision. Websocket events refresh tracked frontend nodes without replacing selections or resizing them.
-- Legacy Random uses original JSON order/pool; user additions and fallback-only factory names do not enter it. Character preset API has not adopted these changes. Character node is a standalone class borrowing only stateless text helpers; it must not inherit prompt-store methods. Character execution reloads its own JSON and IS_CHANGED hashes that file. `ApexCharacterPrompt` mirrors Apex Prompt's `input_text` convention (empty multiline STRING, comma-joined ahead of the preset categories, `[option a, option b]` bracket support), but its widget is appended last in INPUT_TYPES because ComfyUI maps `widgets_values` positionally and reordering would corrupt saved workflows.
+## Presets
 
-### HDRI Viewer
-- **Backend**: PyTorch grid_sample reprojection, camera forward=-Z/up=+Y, R=Ry@Rx@Rz
-- **Coordinates**: lon=atan2(x,-z), lat=asin(y) for equirectangular
-- **Socket contract**: `ui.hdri_source` contains a bounded first-frame source PNG descriptor; `hdri_source_scale` restores its normalized HDR range before exposure. `ui.images` is exclusively projected outputs. Never decode node.imgs as the panorama.
-- **Lifetime/cache**: UUID temporary previews; per-node load tokens/timers with removal guards; native ComfyUI dependency caching rather than sampled tensor IS_CHANGED.
-- **Preview source**: Must preview original panorama, not projected output
-- **Interaction**: Drag yaw/pitch, Shift-drag roll, wheel FOV (when working)
+`apex_prompt_store.py` owns validation, revision checks, process-local locking and atomic same-directory replacement. Both libraries live under the configured user root in `apex_artist/`; the bundled JSON stays untouched by UI saves. Multiple server processes writing one library are unsupported.
 
-### DOM Widget Patterns
-- Start optional widgets collapsed
-- Defer visibility setup 2 RAFs until wrappers exist (ComfyUI wrapping behavior)
-- Hide with display:none + pointer-events:none on both widget.element AND wrapper parent
-- Restore only owned styles when showing
-- Clean up listeners, timers, pending async on removal
-- Guard image loads against stale results/cross-node interference
-- Preserve existing hooks with original arguments/receiver
+Apex Prompt adds `User: ` names without altering the factory Random pool. Its combined order is input → environment → lighting → style → color → camera lens. Outputs retain their original positions, with color_text last. Character has twelve categories and thirteen outputs; input_text is appended in the widget schema but leads the combined text. Character user storage contains a complete library and keeps ordinary names. Missing selected presets fail explicitly. Its API uses ETag/If-Match; frontend save conflicts retain the draft.
 
-## Component Relationships
-- Nodes consume apex_utils for shared image operations
-- APIs serve preset/thumbnail data to frontend modules
-- Frontend modules enhance nodes with interactive UI
-- Former synthetic-package harness validated nodes without a full ComfyUI runtime; the suite was removed September 23, 2026 (recoverable from git)
+## LoRA and HDRI
 
-## Critical Implementation Details
-- **Blocking I/O**: HDRI decode/render and LoRA scans currently block async handlers
-- **Frontend state**: HDRI refresh timers/load tokens are isolated per node
-- **Cache invalidation**: Sampled IS_CHANGED hashing misses changes outside samples
-- **Python output authoritative**: JS preview must match backend lens/orientation math
-- **Manual testing required**: Syntax tests ≠ ComfyUI/browser integration tests
+LoRA APIs validate resolved paths within configured roots. Duplicate relative filenames follow core first-root precedence. Thumbnail generation uses 256×256 JPEGs, regenerates when source previews change and runs outside the event loop. Request tokens prevent stale folder/preview results. Native node.imgs displays previews without forcing node size.
+
+HDRI backend reprojection uses grid_sample, forward −Z/up +Y and R=Ry@Rx@Rz. Equirectangular longitude is atan2(x,−z), latitude asin(y). `ui.hdri_source` is the bounded source panorama; hdri_source_scale restores its HDR range. `ui.images` contains projected outputs and must never be treated as the panorama. Per-node load tokens and render keys prevent stale loads/repeated frames; removal clears owned state. HTTP decode/render runs in a worker.
+
+## Timeline and audio
+
+Project JSON, captured assets and render_cache live beneath `<output>/Apex/timelines`. Legacy user-folder projects are copied on first open without deleting originals. Per-project locks, revisions and atomic replacement protect edits. Assets and placements are separate; placements hold track, start, source-in, duration, gain and fades.
+
+VIDEO socket suffixes map to stable V lanes. Disconnecting never deletes edits. Autogrow supports up to sixteen tracks; V1 remains. `placement_start=-1` appends per receiving track; placement_offset adds seconds to each computed start. Capture deduplicates identical media on the same track in New Results Only mode. External media is linked by original path; captured/generated assets are persisted.
+
+Higher video lanes cover lower lanes; audio lanes mix independently. Linked video/audio placements share timing until unlinked. Zero fades mean full opacity/gain. SNAP rejects overlap; disabling it permits automatic join fades. Missing clips retain edits and block export until repaired.
+
+Native file-backed VIDEO avoids materializing full frame batches unless IMAGE is requested. Render normalizes mixed sizes/rates; downstream nodes own final saving. Export uses Read Saved and prunes unused generation/placement/audio-loader links. Audio/waveform caches have count limits. Clear video cache removes regenerable MP4s only with an idle queue, retaining originals.
+
+## Frontend lifecycle
+
+Keep UI state on the owning node, clean up listeners/timers/media on removal and guard asynchronous results. Avoid unrelated canvas resize/scroll changes during edits. Preview retains active layers plus the next clip. Only editor-focused keyboard events control playback; numeric fields keep native behavior. Source and tests take precedence over historical completion notes.

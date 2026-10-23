@@ -5,7 +5,6 @@ Supports all major blend modes with proper algorithms
 """
 import torch
 import torch.nn.functional as F
-import numpy as np
 from .apex_utils import (
     rgb_to_hsl, hsl_to_rgb, calculate_luminance
 )
@@ -97,10 +96,10 @@ class ApexLayerBlend:
                 overlay_image = self._resize_to_match(overlay_image, base_image)
             
             # Apply blend mode
-            blended = self._apply_blend_mode(base_image, overlay_image, blend_mode)
+            blended = self._apply_blend_mode(base_image, overlay_image, blend_mode, opacity)
             
             # Apply opacity
-            if opacity < 1.0:
+            if opacity < 1.0 and blend_mode != "dissolve":
                 blended = base_image + opacity * (blended - base_image)
             
             # Apply mask if provided
@@ -126,7 +125,7 @@ class ApexLayerBlend:
             
         except Exception as e:
             print(f"Layer blend error: {str(e)}")
-            return (base_image, f"Error: {str(e)}")
+            raise RuntimeError(f"{blend_mode} blend failed: {e}") from e
 
     def _resize_to_match(self, source, target):
         """Resize source image to match target dimensions"""
@@ -146,12 +145,12 @@ class ApexLayerBlend:
             return resized.permute(0, 2, 3, 1)
         return source
 
-    def _apply_blend_mode(self, base, overlay, mode):
+    def _apply_blend_mode(self, base, overlay, mode, opacity=1.0):
         """Apply the specified blend mode"""
         if mode == "normal":
             return overlay
         elif mode == "dissolve":
-            return self._blend_dissolve(base, overlay)
+            return self._blend_dissolve(base, overlay, opacity)
         
         # Darken group
         elif mode == "darken":
@@ -217,10 +216,10 @@ class ApexLayerBlend:
             return overlay  # Default to normal
 
     # Blend mode implementations
-    def _blend_dissolve(self, base, overlay):
+    def _blend_dissolve(self, base, overlay, opacity):
         """Dissolve blend mode using noise"""
-        noise = torch.rand_like(base)
-        mask = noise < 0.5
+        noise = torch.rand_like(base[..., :1])
+        mask = noise < opacity
         return torch.where(mask, overlay, base)
 
     def _blend_color_burn(self, base, overlay):

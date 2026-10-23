@@ -68,10 +68,10 @@ def validate_preset(data):
     return {"prompt": prompt, "description": description, "tags": tags, "weight": weight}
 
 
-def validate_library(library):
-    if not isinstance(library, dict) or any(c not in CATEGORIES for c in library):
-        raise PresetError("Use only the Environment, Lighting, Style, Camera Lens and Color categories.")
-    result = {c: {} for c in CATEGORIES}
+def validate_library(library, categories=CATEGORIES):
+    if not isinstance(library, dict) or any(c not in categories for c in library):
+        raise PresetError("Unknown preset category.")
+    result = {c: {} for c in categories}
     count = 0
     for category, entries in library.items():
         if not isinstance(entries, dict):
@@ -85,10 +85,12 @@ def validate_library(library):
 
 
 class PromptPresetStore:
-    def __init__(self, factory_path, user_path, defaults):
+    def __init__(self, factory_path, user_path, defaults, categories=CATEGORIES, complete_library=False):
         self.factory_path = Path(factory_path)
         self.user_path = Path(user_path)
         self.defaults = defaults
+        self.categories = categories
+        self.complete_library = complete_library
         self.lock = threading.RLock()
 
     def _factory(self):
@@ -99,22 +101,28 @@ class PromptPresetStore:
             raw = defaults
         except (OSError, ValueError, UnicodeError) as exc:
             raise PresetStorageError("Cannot read the factory library; restore its JSON file. " + str(exc)) from exc
-        if not isinstance(raw, dict) or any(not isinstance(raw.get(c, {}), dict) for c in CATEGORIES):
+        if not isinstance(raw, dict) or any(not isinstance(raw.get(c, {}), dict) for c in self.categories):
             raise PresetStorageError("The factory preset library has an invalid structure.")
+        if self.complete_library:
+            factory = validate_library(raw, self.categories)
+            for category in self.categories:
+                if category not in raw:
+                    factory[category] = copy.deepcopy(defaults.get(category, {}))
+            return factory, {c: list(factory[c]) for c in self.categories}
         factory = copy.deepcopy(raw)
-        for category in CATEGORIES:
+        for category in self.categories:
             entries = factory.setdefault(category, {})
             for name, data in defaults.get(category, {}).items():
                 entries.setdefault(name, data)
         # The legacy Random pool is deliberately NOT expanded by reconciliation.
-        return factory, {c: list(raw.get(c, {})) for c in CATEGORIES}
+        return factory, {c: list(raw.get(c, {})) for c in self.categories}
 
     def _users(self):
         try:
             with self.user_path.open("rb") as stream:
                 content = stream.read(MAX_BYTES + 1)
         except FileNotFoundError:
-            return {c: {} for c in CATEGORIES}
+            return {c: {} for c in self.categories}
         except OSError as exc:
             raise PresetStorageError("Cannot read user presets: " + str(exc)) from exc
         try:
@@ -123,7 +131,7 @@ class PromptPresetStore:
             document = json.loads(content.decode("utf-8"))
             if not isinstance(document, dict) or document.get("schema_version") != 1:
                 raise PresetError("Unsupported user preset schema; expected schema_version 1.")
-            return validate_library(document.get("presets"))
+            return validate_library(document.get("presets"), self.categories)
         except (ValueError, UnicodeError) as exc:
             raise PresetStorageError(
                 "User presets are invalid. The original file was left untouched; repair or restore "
@@ -134,8 +142,13 @@ class PromptPresetStore:
         with self.lock:
             factory, random_names = self._factory()
             user = self._users()
-            merged = {c: dict(factory[c]) for c in CATEGORIES}
-            for category in CATEGORIES:
+            if self.complete_library:
+                if not self.user_path.exists():
+                    user = copy.deepcopy(factory)
+                return {"schema_version": 1, "revision": digest(user), "scope": "installation",
+                        "factory": factory, "user": user, "presets": user, "random_names": random_names}
+            merged = {c: dict(factory[c]) for c in self.categories}
+            for category in self.categories:
                 for name, data in user[category].items():
                     token = USER_PREFIX + name
                     if token in merged[category]:
@@ -148,7 +161,7 @@ class PromptPresetStore:
                     "random_names": random_names}
 
     def _write(self, user):
-        user = validate_library(user)
+        user = validate_library(user, self.categories)
         data = json.dumps({"schema_version": 1, "presets": user}, indent=2,
                           ensure_ascii=False, allow_nan=False).encode("utf-8")
         if len(data) > MAX_BYTES:
@@ -176,22 +189,25 @@ class PromptPresetStore:
             if payload.get("revision") != snapshot["revision"]:
                 raise PresetConflict("The library changed. Refresh the manager before saving again.")
             user = snapshot["user"]
+            if operation == "replace" and self.complete_library:
+                self._write(payload.get("presets"))
+                return self.snapshot()
             if operation == "import":
                 document = payload.get("document")
                 if isinstance(document, dict) and "schema_version" in document:
                     if document["schema_version"] != 1:
                         raise PresetError("Unsupported import schema.")
                     document = document.get("presets")
-                imported = validate_library(document)
+                imported = validate_library(document, self.categories)
                 # Import is all-or-nothing; never silently replace existing entries.
-                for category in CATEGORIES:
+                for category in self.categories:
                     for name, data in imported[category].items():
                         if name in user[category] and user[category][name] != data:
                             raise PresetConflict("Import conflicts with user preset: " + name + ". Rename it before importing.")
                         user[category][name] = data
             else:
                 category = payload.get("category")
-                if category not in CATEGORIES:
+                if category not in self.categories:
                     raise PresetError("Unknown preset category.")
                 name = validate_name(payload.get("name"))
                 if payload.get("source") != "user":
@@ -199,7 +215,7 @@ class PromptPresetStore:
                 if operation == "save":
                     original = payload.get("original")
                     if original is not None:
-                        if (not isinstance(original, dict) or original.get("category") not in CATEGORIES
+                        if (not isinstance(original, dict) or original.get("category") not in self.categories
                                 or not isinstance(original.get("name"), str)
                                 or original.get("name") not in user[original["category"]]):
                             raise PresetNotFound("The original user preset no longer exists.")
@@ -216,7 +232,7 @@ class PromptPresetStore:
                     del user[category][name]
                 else:
                     raise PresetError("Unknown operation.")
-            for category in CATEGORIES:
+            for category in self.categories:
                 if any(USER_PREFIX + name in snapshot["factory"][category] for name in user[category]):
                     raise PresetConflict("A factory entry already uses this reserved user name. Choose another name.")
             self._write(user)
@@ -239,3 +255,20 @@ def get_store():
                 ApexPromptPreset.get_default_presets,
             )
         return _store
+
+_character_store = None
+
+
+def get_character_store():
+    global _character_store
+    with _store_lock:
+        if _character_store is None:
+            import folder_paths
+            from .apex_character_prompt import ApexCharacterPrompt
+            _character_store = PromptPresetStore(
+                Path(__file__).with_name("character_presets.json"),
+                Path(folder_paths.get_user_directory()) / "apex_artist" / "character_presets.json",
+                ApexCharacterPrompt.get_default_presets,
+                categories=ApexCharacterPrompt.CHARACTER_CATEGORIES, complete_library=True,
+            )
+        return _character_store

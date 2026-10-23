@@ -74,7 +74,7 @@ class ApexLoraLoader:
         
         if lora_path is None:
             print(f"[Apex LoRA Loader] Warning: LoRA file not found: {lora_name}")
-            return (model, clip)
+            raise FileNotFoundError(f"LoRA file not found: {lora_name}")
         
         try:
             # Load the LoRA
@@ -103,10 +103,10 @@ class ApexLoraLoader:
             
         except Exception as e:
             print(f"[Apex LoRA Loader] Error loading LoRA '{lora_name}': {e}")
-            return (model, clip)
+            raise RuntimeError(f"Could not load LoRA {lora_name}: {e}") from e
     
     @staticmethod
-    def get_preview_path(lora_name):
+    def get_preview_path(lora_name, include_thumbnail=True):
         """
         Find the preview image for a LoRA file
         
@@ -134,7 +134,7 @@ class ApexLoraLoader:
         thumbnails_dir = os.path.join(lora_dir, ".thumbnails")
         thumbnail_path = os.path.join(thumbnails_dir, f"{base_name}.jpg")
         
-        if os.path.exists(thumbnail_path):
+        if include_thumbnail and os.path.exists(thumbnail_path):
             return thumbnail_path
         
         # PRIORITY 2: Search for original preview images

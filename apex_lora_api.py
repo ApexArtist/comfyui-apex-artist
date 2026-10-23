@@ -4,8 +4,7 @@ Handles LoRA preview image serving via HTTP endpoints with optimized thumbnail g
 """
 
 import os
-import hashlib
-import aiofiles
+import asyncio
 from aiohttp import web
 from server import PromptServer
 import folder_paths
@@ -153,97 +152,142 @@ class ApexLoraAPI:
             print(f"[Apex LoRA API] Error in get_thumbnail_path: {e}")
             return original_path
 
+
+    def _list_lora_folder(self, data):
+        folder_path = data.get('folder_path', '')
+        lora_folders = folder_paths.get_folder_paths('loras')
+        if not lora_folders:
+            return web.json_response({'error': 'No loras folder configured'}, status=500)
+        root_index = int(data.get('root_index', 0))
+        if not 0 <= root_index < len(lora_folders):
+            raise ValueError('Unknown LoRA root.')
+        loras_root = lora_folders[root_index]
+        if folder_path:
+            full_path = os.path.join(loras_root, folder_path)
+        else:
+            full_path = loras_root
+        full_path_real = os.path.realpath(full_path)
+        loras_root_real = os.path.realpath(loras_root)
+        if not self._is_within_directory(full_path_real, loras_root_real):
+            return web.json_response({'error': 'Invalid path'}, status=403)
+        full_path = full_path_real
+        if not os.path.exists(full_path):
+            return web.json_response({'error': 'Folder not found'}, status=404)
+        folders = []
+        loras = []
+        try:
+            entries = os.listdir(full_path)
+            for entry in sorted(entries):
+                entry_path = os.path.join(full_path, entry)
+                if os.path.isdir(entry_path):
+                    if entry != '.thumbnails':
+                        folders.append(entry)
+                elif entry.endswith(('.safetensors', '.ckpt', '.pt', '.pth')):
+                    if folder_path:
+                        lora_relative = os.path.join(folder_path, entry).replace('\\', '/')
+                    else:
+                        lora_relative = entry
+                    preview_path = ApexLoraLoader.get_preview_path(lora_relative)
+                    has_preview = preview_path is not None
+                    loras.append({'name': entry, 'relative_path': lora_relative, 'has_preview': has_preview, 'shadowed': os.path.normcase(os.path.realpath(folder_paths.get_full_path('loras', lora_relative) or '')) != os.path.normcase(os.path.realpath(entry_path)), 'size': os.path.getsize(entry_path)})
+        except Exception as e:
+            print(f'[Apex LoRA API] Error reading folder: {e}')
+            return web.json_response({'error': str(e)}, status=500)
+        parent_folder = None
+        if folder_path:
+            parent_parts = folder_path.replace('\\', '/').split('/')
+            if len(parent_parts) > 1:
+                parent_folder = '/'.join(parent_parts[:-1])
+            else:
+                parent_folder = ''
+        return web.json_response({'current_folder': folder_path, 'parent_folder': parent_folder, 'root_index': root_index, 'roots': [{'index': index, 'path': path} for index, path in enumerate(lora_folders)], 'folders': folders, 'loras': loras, 'total_loras': len(loras)})
+
+    def _scan_thumbnails(self, data):
+        folder_path = data.get('folder_path', '')
+        if not PIL_AVAILABLE:
+            return web.json_response({'error': 'Pillow not available, cannot generate thumbnails'}, status=500)
+        lora_folders = folder_paths.get_folder_paths('loras')
+        if not lora_folders:
+            return web.json_response({'error': 'No loras folder configured'}, status=500)
+        root_index = int(data.get('root_index', 0))
+        if not 0 <= root_index < len(lora_folders):
+            raise ValueError('Unknown LoRA root.')
+        loras_root = lora_folders[root_index]
+        if folder_path:
+            full_path = os.path.join(loras_root, folder_path)
+        else:
+            full_path = loras_root
+        full_path_real = os.path.realpath(full_path)
+        loras_root_real = os.path.realpath(loras_root)
+        if not self._is_within_directory(full_path_real, loras_root_real):
+            return web.json_response({'error': 'Invalid path'}, status=403)
+        if not os.path.exists(full_path_real):
+            return web.json_response({'error': 'Folder not found'}, status=404)
+        total = 0
+        generated = 0
+        skipped = 0
+        errors = []
+        try:
+            entries = os.listdir(full_path_real)
+            for entry in entries:
+                if not entry.endswith(('.safetensors', '.ckpt', '.pt', '.pth')):
+                    continue
+                total += 1
+                if folder_path:
+                    lora_relative = os.path.join(folder_path, entry).replace('\\', '/')
+                else:
+                    lora_relative = entry
+                preview_path = ApexLoraLoader.get_preview_path(lora_relative, include_thumbnail=False)
+                if not preview_path or not os.path.exists(preview_path):
+                    skipped += 1
+                    continue
+                if '.thumbnails' in preview_path:
+                    skipped += 1
+                    continue
+                source_dir = os.path.dirname(preview_path)
+                thumbnails_dir = os.path.join(source_dir, '.thumbnails')
+                if not os.path.exists(thumbnails_dir):
+                    try:
+                        os.makedirs(thumbnails_dir)
+                    except Exception as e:
+                        errors.append(f'{entry}: Failed to create thumbnails directory - {str(e)}')
+                        skipped += 1
+                        continue
+                base_name = os.path.splitext(os.path.basename(preview_path))[0]
+                thumbnail_path = os.path.join(thumbnails_dir, f'{base_name}.jpg')
+                should_generate = True
+                if os.path.exists(thumbnail_path):
+                    try:
+                        original_mtime = os.path.getmtime(preview_path)
+                        thumbnail_mtime = os.path.getmtime(thumbnail_path)
+                        if thumbnail_mtime >= original_mtime:
+                            should_generate = False
+                            skipped += 1
+                    except Exception as e:
+                        should_generate = True
+                if should_generate:
+                    if self.generate_thumbnail(preview_path, thumbnail_path):
+                        generated += 1
+                        print(f'[Apex LoRA API] Scanned: Generated thumbnail for {entry}')
+                    else:
+                        errors.append(f'{entry}: Thumbnail generation failed')
+                        skipped += 1
+            return web.json_response({'status': 'success', 'total': total, 'generated': generated, 'skipped': skipped, 'errors': errors if errors else None})
+        except Exception as e:
+            print(f'[Apex LoRA API] Error scanning thumbnails: {e}')
+            return web.json_response({'error': str(e)}, status=500)
+
     def setup_routes(self):
         """Setup API routes for LoRA preview management"""
         
-        @PromptServer.instance.routes.post("/apex/lora_list_folder")
+        @PromptServer.instance.routes.post('/apex/lora_list_folder')
         async def list_lora_folder(request):
             """List folders and LoRAs in a specific folder"""
             try:
-                data = await request.json()
-                folder_path = data.get("folder_path", "")  # Relative to loras root
-                
-                # Get loras root directories
-                lora_folders = folder_paths.get_folder_paths("loras")
-                if not lora_folders:
-                    return web.json_response({"error": "No loras folder configured"}, status=500)
-                
-                # Use first loras folder as base
-                loras_root = lora_folders[0]
-                
-                # Build full path
-                if folder_path:
-                    full_path = os.path.join(loras_root, folder_path)
-                else:
-                    full_path = loras_root
-                
-                # Security check: resolve symlinks and ensure path is within loras directory
-                full_path_real = os.path.realpath(full_path)
-                loras_root_real = os.path.realpath(loras_root)
-                
-                if not self._is_within_directory(full_path_real, loras_root_real):
-                    return web.json_response({"error": "Invalid path"}, status=403)
-                
-                # Use the resolved path for operations
-                full_path = full_path_real
-                
-                if not os.path.exists(full_path):
-                    return web.json_response({"error": "Folder not found"}, status=404)
-                
-                # List directory contents
-                folders = []
-                loras = []
-                
-                try:
-                    entries = os.listdir(full_path)
-                    for entry in sorted(entries):
-                        entry_path = os.path.join(full_path, entry)
-                        
-                        if os.path.isdir(entry_path):
-                            # Skip .thumbnails folder (hidden cache directory)
-                            if entry != ".thumbnails":
-                                folders.append(entry)
-                        elif entry.endswith(('.safetensors', '.ckpt', '.pt', '.pth')):
-                            # Build relative path for this LoRA
-                            if folder_path:
-                                lora_relative = os.path.join(folder_path, entry).replace('\\', '/')
-                            else:
-                                lora_relative = entry
-                            
-                            # Get preview path
-                            preview_path = ApexLoraLoader.get_preview_path(lora_relative)
-                            has_preview = preview_path is not None
-                            
-                            loras.append({
-                                "name": entry,
-                                "relative_path": lora_relative,
-                                "has_preview": has_preview,
-                                "size": os.path.getsize(entry_path)
-                            })
-                except Exception as e:
-                    print(f"[Apex LoRA API] Error reading folder: {e}")
-                    return web.json_response({"error": str(e)}, status=500)
-                
-                # Determine parent folder
-                parent_folder = None
-                if folder_path:
-                    parent_parts = folder_path.replace('\\', '/').split('/')
-                    if len(parent_parts) > 1:
-                        parent_folder = '/'.join(parent_parts[:-1])
-                    else:
-                        parent_folder = ""
-                
-                return web.json_response({
-                    "current_folder": folder_path,
-                    "parent_folder": parent_folder,
-                    "folders": folders,
-                    "loras": loras,
-                    "total_loras": len(loras)
-                })
-                
+                return await asyncio.to_thread(self._list_lora_folder, await request.json())
             except Exception as e:
-                print(f"[Apex LoRA API] Error listing folder: {e}")
-                return web.json_response({"error": str(e)}, status=500)
+                print(f'[Apex LoRA API] Error listing folder: {e}')
+                return web.json_response({'error': str(e)}, status=500)
         
         @PromptServer.instance.routes.post("/apex/lora_preview")
         async def get_lora_preview(request):
@@ -259,7 +303,7 @@ class ApexLoraAPI:
                 preview_path = ApexLoraLoader.get_preview_path(lora_name)
                 
                 if preview_path and os.path.exists(preview_path):
-                    return web.json_response({"preview_path": preview_path})
+                    return web.json_response({"preview_path": preview_path, "preview_version": os.stat(preview_path).st_mtime_ns})
                 else:
                     return web.json_response({"preview_path": None})
                     
@@ -267,127 +311,14 @@ class ApexLoraAPI:
                 print(f"[Apex LoRA API] Error getting preview: {e}")
                 return web.json_response({"error": str(e)}, status=500)
 
-        @PromptServer.instance.routes.post("/apex/lora_scan_thumbnails")
+        @PromptServer.instance.routes.post('/apex/lora_scan_thumbnails')
         async def scan_thumbnails(request):
             """Scan folder and generate missing thumbnails"""
             try:
-                data = await request.json()
-                folder_path = data.get("folder_path", "")
-                
-                if not PIL_AVAILABLE:
-                    return web.json_response({
-                        "error": "Pillow not available, cannot generate thumbnails"
-                    }, status=500)
-                
-                # Get loras root directories
-                lora_folders = folder_paths.get_folder_paths("loras")
-                if not lora_folders:
-                    return web.json_response({"error": "No loras folder configured"}, status=500)
-                
-                loras_root = lora_folders[0]
-                
-                # Build full path
-                if folder_path:
-                    full_path = os.path.join(loras_root, folder_path)
-                else:
-                    full_path = loras_root
-                
-                # Security check
-                full_path_real = os.path.realpath(full_path)
-                loras_root_real = os.path.realpath(loras_root)
-                
-                if not self._is_within_directory(full_path_real, loras_root_real):
-                    return web.json_response({"error": "Invalid path"}, status=403)
-                
-                if not os.path.exists(full_path_real):
-                    return web.json_response({"error": "Folder not found"}, status=404)
-                
-                # Scan for LoRAs with preview images
-                total = 0
-                generated = 0
-                skipped = 0
-                errors = []
-                
-                try:
-                    entries = os.listdir(full_path_real)
-                    for entry in entries:
-                        if not entry.endswith(('.safetensors', '.ckpt', '.pt', '.pth')):
-                            continue
-                        
-                        total += 1
-                        
-                        # Build relative path
-                        if folder_path:
-                            lora_relative = os.path.join(folder_path, entry).replace('\\', '/')
-                        else:
-                            lora_relative = entry
-                        
-                        # Get preview path (will check .thumbnails first)
-                        preview_path = ApexLoraLoader.get_preview_path(lora_relative)
-                        
-                        if not preview_path or not os.path.exists(preview_path):
-                            skipped += 1
-                            continue
-                        
-                        # Skip if it's already a thumbnail
-                        if ".thumbnails" in preview_path:
-                            skipped += 1
-                            continue
-                        
-                        # Generate thumbnail
-                        source_dir = os.path.dirname(preview_path)
-                        thumbnails_dir = os.path.join(source_dir, ".thumbnails")
-                        
-                        # Create .thumbnails directory if needed
-                        if not os.path.exists(thumbnails_dir):
-                            try:
-                                os.makedirs(thumbnails_dir)
-                            except Exception as e:
-                                errors.append(f"{entry}: Failed to create thumbnails directory - {str(e)}")
-                                skipped += 1
-                                continue
-                        
-                        base_name = os.path.splitext(os.path.basename(preview_path))[0]
-                        thumbnail_path = os.path.join(thumbnails_dir, f"{base_name}.jpg")
-                        
-                        # Check if thumbnail exists and is newer than original
-                        should_generate = True
-                        if os.path.exists(thumbnail_path):
-                            try:
-                                original_mtime = os.path.getmtime(preview_path)
-                                thumbnail_mtime = os.path.getmtime(thumbnail_path)
-                                # If thumbnail is newer than original, skip
-                                if thumbnail_mtime >= original_mtime:
-                                    should_generate = False
-                                    skipped += 1
-                            except Exception as e:
-                                # If we can't check times, regenerate to be safe
-                                should_generate = True
-                        
-                        if should_generate:
-                            # Generate thumbnail
-                            if self.generate_thumbnail(preview_path, thumbnail_path):
-                                generated += 1
-                                print(f"[Apex LoRA API] Scanned: Generated thumbnail for {entry}")
-                            else:
-                                errors.append(f"{entry}: Thumbnail generation failed")
-                                skipped += 1
-                    
-                    return web.json_response({
-                        "status": "success",
-                        "total": total,
-                        "generated": generated,
-                        "skipped": skipped,
-                        "errors": errors if errors else None
-                    })
-                    
-                except Exception as e:
-                    print(f"[Apex LoRA API] Error scanning thumbnails: {e}")
-                    return web.json_response({"error": str(e)}, status=500)
-                
+                return await asyncio.to_thread(self._scan_thumbnails, await request.json())
             except Exception as e:
-                print(f"[Apex LoRA API] Error in scan_thumbnails: {e}")
-                return web.json_response({"error": str(e)}, status=500)
+                print(f'[Apex LoRA API] Error in scan_thumbnails: {e}')
+                return web.json_response({'error': str(e)}, status=500)
 
         @PromptServer.instance.routes.get("/apex/lora_image")
         async def serve_lora_image(request):
@@ -455,17 +386,9 @@ class ApexLoraAPI:
                     '.tif': 'image/tiff',
                 }.get(ext, 'application/octet-stream')
                 
-                # Read and serve the file using aiofiles for async I/O
-                async with aiofiles.open(image_path, 'rb') as f:
-                    image_data = await f.read()
-                
-                return web.Response(
-                    body=image_data,
-                    content_type=content_type,
-                    headers={
-                        'Cache-Control': 'public, max-age=86400',  # Cache for 24 hours
-                    }
-                )
+                return web.FileResponse(image_path, headers={
+                    'Content-Type': content_type, 'Cache-Control': 'public, max-age=86400',
+                })
                 
             except Exception as e:
                 print(f"[Apex LoRA API] Error serving image: {e}")

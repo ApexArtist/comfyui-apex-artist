@@ -3,7 +3,7 @@
 Generate character_presets.json from the built-in library in apex_character_prompt.py.
 
 The built-in library inside apex_character_prompt.py is the source of truth; this script
-snapshots it to the on-disk store that the manager UI and API edit.
+snapshots it to the bundled factory JSON. Manager/API edits use the separate user library.
 
 Usage (always use the ComfyUI virtual environment Python):
     & "F:\\AI\\ComfyUI Sandbox\\ComfyUI\\.venv\\Scripts\\python.exe" scripts\\generate_character_presets.py

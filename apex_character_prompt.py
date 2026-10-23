@@ -12,21 +12,18 @@ This module provides:
   and the character preset API
 """
 
-import json
-import os
-import hashlib
 import random
-import threading
 from typing import Any, Dict, List
 
 from .apex_prompt import ApexPromptPreset
+from .apex_prompt_store import get_character_store
 
 
 class ApexCharacterPrompt:
     """
     Character prompt generator with independent preset storage.
 
-    Reuses only stateless text helpers from ApexPromptPreset. Character storage and
+    Reuses text helpers and the preset store implementation. Character storage and
     selection stay independent of the environment/lighting/style user library.
     """
 
@@ -61,12 +58,8 @@ class ApexCharacterPrompt:
 
     PRESET_FILE_NAME = "character_presets.json"
 
-    # mtime-keyed cache of the on-disk store (used to populate the dropdowns)
-    _store_cache = {"mtime": None, "data": {}}
-    _store_cache_lock = threading.Lock()
 
     def __init__(self):
-        self.presets_file = os.path.join(os.path.dirname(__file__), self.PRESET_FILE_NAME)
         self.presets = self.load_presets()
 
     process_random_brackets = ApexPromptPreset.process_random_brackets
@@ -74,12 +67,7 @@ class ApexCharacterPrompt:
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        path = os.path.join(os.path.dirname(__file__), cls.PRESET_FILE_NAME)
-        try:
-            with open(path, "rb") as stream:
-                return hashlib.sha256(stream.read()).hexdigest()
-        except FileNotFoundError:
-            return "character-defaults"
+        return get_character_store().snapshot()["revision"]
 
     def get_preset_data(self, category, preset_name):
         return self.presets.get(category, {}).get(preset_name)
@@ -98,25 +86,29 @@ class ApexCharacterPrompt:
             return self.get_random_preset(category, seed_offset)
         if preset_name in ("Disabled", "None"):
             return (preset_name, "")
-        return (preset_name, (self.get_preset_data(category, preset_name) or {}).get("prompt", ""))
+        data = self.get_preset_data(category, preset_name)
+        if data is None:
+            raise ValueError(f"Missing character preset in {category}: {preset_name}. Select another entry or restore it.")
+        return (preset_name, data.get("prompt", ""))
 
     @classmethod
     def INPUT_TYPES(cls):
+        presets = cls._store_data()
         return {
             "required": {
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                "gender_preset": (cls._combo_options(cls.CATEGORY_GENDER), {"default": "Random"}),
-                "age_preset": (cls._combo_options(cls.CATEGORY_AGE), {"default": "Random"}),
-                "ethnicity_preset": (cls._combo_options(cls.CATEGORY_ETHNICITY), {"default": "Random"}),
-                "face_preset": (cls._combo_options(cls.CATEGORY_FACE), {"default": "Random"}),
-                "eye_color_preset": (cls._combo_options(cls.CATEGORY_EYE_COLOR), {"default": "Random"}),
-                "skin_tone_preset": (cls._combo_options(cls.CATEGORY_SKIN_TONE), {"default": "Random"}),
-                "hair_preset": (cls._combo_options(cls.CATEGORY_HAIR), {"default": "Random"}),
-                "headwear_preset": (cls._combo_options(cls.CATEGORY_HEADWEAR), {"default": "Random"}),
-                "top_preset": (cls._combo_options(cls.CATEGORY_TOP), {"default": "Random"}),
-                "bottom_preset": (cls._combo_options(cls.CATEGORY_BOTTOM), {"default": "Random"}),
-                "shoes_preset": (cls._combo_options(cls.CATEGORY_SHOES), {"default": "Random"}),
-                "hand_accessory_preset": (cls._combo_options(cls.CATEGORY_HAND), {"default": "Random"}),
+                "gender_preset": (cls._combo_options(cls.CATEGORY_GENDER, presets), {"default": "Random"}),
+                "age_preset": (cls._combo_options(cls.CATEGORY_AGE, presets), {"default": "Random"}),
+                "ethnicity_preset": (cls._combo_options(cls.CATEGORY_ETHNICITY, presets), {"default": "Random"}),
+                "face_preset": (cls._combo_options(cls.CATEGORY_FACE, presets), {"default": "Random"}),
+                "eye_color_preset": (cls._combo_options(cls.CATEGORY_EYE_COLOR, presets), {"default": "Random"}),
+                "skin_tone_preset": (cls._combo_options(cls.CATEGORY_SKIN_TONE, presets), {"default": "Random"}),
+                "hair_preset": (cls._combo_options(cls.CATEGORY_HAIR, presets), {"default": "Random"}),
+                "headwear_preset": (cls._combo_options(cls.CATEGORY_HEADWEAR, presets), {"default": "Random"}),
+                "top_preset": (cls._combo_options(cls.CATEGORY_TOP, presets), {"default": "Random"}),
+                "bottom_preset": (cls._combo_options(cls.CATEGORY_BOTTOM, presets), {"default": "Random"}),
+                "shoes_preset": (cls._combo_options(cls.CATEGORY_SHOES, presets), {"default": "Random"}),
+                "hand_accessory_preset": (cls._combo_options(cls.CATEGORY_HAND, presets), {"default": "Random"}),
                 # Free-text box for your own prompt (same idea as the Apex Prompt input box).
                 # Appended last so existing workflows keep their positional widget values.
                 "input_text": ("STRING", {"multiline": True, "default": ""}),
@@ -146,73 +138,20 @@ class ApexCharacterPrompt:
                    "with an optional free-text input box leading the combined prompt.")
 
     @classmethod
-    def _combo_options(cls, category: str) -> List[str]:
+    def _combo_options(cls, category: str, presets) -> List[str]:
         """Dropdown options for a category: Disabled, Random, then every preset name."""
-        return ["Disabled", "Random"] + cls.get_all_presets_in_category(category)
+        return ["Disabled", "Random"] + list(presets.get(category, {}))
 
     @classmethod
-    def _store_data(cls) -> Dict[str, Any]:
-        """Read character_presets.json, cached until the file changes."""
-        path = os.path.join(os.path.dirname(__file__), cls.PRESET_FILE_NAME)
-        try:
-            mtime = os.path.getmtime(path)
-        except OSError:
-            return {}
-
-        with cls._store_cache_lock:
-            if mtime == cls._store_cache["mtime"]:
-                return cls._store_cache["data"]
-
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except (OSError, ValueError) as e:
-            print(f"[Apex Character Prompt] Error loading {cls.PRESET_FILE_NAME}: {e}")
-            return {}
-
-        if not isinstance(data, dict):
-            return {}
-
-        with cls._store_cache_lock:
-            cls._store_cache["mtime"] = mtime
-            cls._store_cache["data"] = data
-        return data
+    def _store_data(cls):
+        return get_character_store().snapshot()["presets"]
 
     @classmethod
-    def get_all_presets_in_category(cls, category: str) -> List[str]:
-        """Preset names for a category dropdown.
+    def get_all_presets_in_category(cls, category):
+        return list(cls._store_data().get(category, {}))
 
-        The on-disk store is authoritative when it defines a non-empty category, so presets
-        added, renamed, or deleted in the manager UI appear immediately. The built-in library
-        is the fallback before character_presets.json exists.
-        """
-        store = cls._store_data()
-        stored_category = store.get(category)
-        if isinstance(stored_category, dict) and stored_category:
-            return list(stored_category.keys())
-        return list(cls.get_default_presets().get(category, {}).keys())
-
-    def load_presets(self) -> Dict[str, Any]:
-        """Load the character store, filling any missing category from the built-in library.
-
-        An unreadable or malformed store degrades to the built-in library with a warning
-        instead of raising, so a damaged JSON file cannot stop the node from loading. The
-        damaged file is left untouched on disk for the user to repair.
-        """
-        try:
-            with open(self.presets_file, "r", encoding="utf-8") as stream:
-                presets = json.load(stream)
-        except FileNotFoundError:
-            presets = {}
-        except (OSError, ValueError) as exc:
-            print(f"[Apex Character Prompt] Cannot read {self.PRESET_FILE_NAME} ({exc}); "
-                  f"using the built-in library. The file was left unchanged.")
-            presets = {}
-        merged: Dict[str, Any] = dict(presets) if isinstance(presets, dict) else {}
-        for category, data in self.get_default_presets().items():
-            if not isinstance(merged.get(category), dict) or not merged[category]:
-                merged[category] = data
-        return merged
+    def load_presets(self):
+        return get_character_store().snapshot()["presets"]
 
     @staticmethod
     def get_default_presets() -> Dict[str, Any]:

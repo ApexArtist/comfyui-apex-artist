@@ -93,7 +93,8 @@ function loadSocketSource(node, item) {
     if (state.socketSrc === url) return true;
     state.socketSrc = url;
     state.socketImageLoaded = false;
-    state.pano = null;
+    state.pano = state.renderedPano = null;
+    state.frameKey = null;
     state.srcImg = null;
     state.error = "Loading panorama…";
     const token = state.loadToken = (state.loadToken || 0) + 1;
@@ -188,6 +189,8 @@ function renderLocalFrame(node) {
         state.rayKey = null;
     }
 
+    const frameKey = [w,h,...["fov","roll","yaw","pitch","exposure","output_width","output_height","lens_type"].map(name=>findWidget(node,name)?.value),state.sourceScale].join("|");
+    if (state.renderedPano === pano && state.frameKey === frameKey) return true;
     ensureRayMap(state, w, h, getWidgetValue(node, "fov", 90), getWidgetValue(node, "roll", 0),
         findWidget(node, "lens_type")?.value || "rectilinear", oh / ow);
     const gain = (state.sourceScale || 1) * 2 ** getWidgetValue(node, "exposure", 0);
@@ -244,6 +247,7 @@ function renderLocalFrame(node) {
         }
     }
     state.frameCtx.putImageData(state.frameData, 0, 0);
+    state.frameKey = frameKey; state.renderedPano = pano;
     return true;
 }
 
@@ -347,7 +351,8 @@ function addPreviewWidget(node) {
         state.sourceScale = Number(message?.hdri_source_scale?.[0]) || 1;
         state.socketSrc = null;
         state.loadToken = (state.loadToken || 0) + 1;
-        state.pano = state.srcImg = null;
+        state.pano = state.renderedPano = state.srcImg = null;
+        state.frameKey = null;
         state.socketImageLoaded = false;
         state.error = "Connect an IMAGE and run the workflow to preview";
         ensureSocketSource(node);
@@ -358,7 +363,7 @@ function addPreviewWidget(node) {
     node.onRemoved = function (...args) {
         node._hdriState.removed = true;
         clearTimeout(node._hdriState.refreshTimer);
-        node._hdriState.pano = node._hdriState.srcImg = null;
+        node._hdriState.pano = node._hdriState.renderedPano = node._hdriState.srcImg = null;
         return origRemoved?.apply(this, args);
     };
     let dragging = false;

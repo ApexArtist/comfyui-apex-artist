@@ -8,11 +8,9 @@
   "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
   "homepage": "https://github.com/ApexArtist/comfyui-apex-artist",
   "documentation": "https://github.com/ApexArtist/comfyui-apex-artist#readme",
-  "icon": "https://raw.githubusercontent.com/ApexArtist/comfyui-apex-artist/main/icon.png",
-  "banner": "https://raw.githubusercontent.com/ApexArtist/comfyui-apex-artist/main/banner.png",
   "tags": [
     "image-processing",
-    "vfx", 
+    "vfx",
     "professional",
     "blur",
     "sharpen",
@@ -21,12 +19,16 @@
     "layer-blending",
     "hdri",
     "panorama",
-    "ai-tools"
+    "video",
+    "timeline",
+    "ai-tools",
+    "audio"
   ],
-  "python_version": ">=3.8",
-  "comfyui_version": ">=0.1.0",
+  "python_version": ">=3.10",
+  "comfyui_version": ">=0.42.1",
   "dependencies": [
-    "opencv-python>=4.8.0"
+    "opencv-python>=4.8.0",
+    "aiofiles>=23.2.1"
   ],
   "install_type": "git",
   "author": {
@@ -40,73 +42,170 @@
       "display_name": "Apex Depth to Normal",
       "description": "Convert depth maps to normal maps for advanced lighting workflows",
       "category": "Apex Artist/Image/Composite",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
+      "input_types": [
+        "IMAGE"
+      ],
+      "output_types": [
+        "IMAGE",
+        "STRING"
+      ]
     },
     {
       "id": "ApexLayerBlend",
       "display_name": "Apex Layer Blend",
       "description": "Photoshop-style blending modes for advanced compositing",
       "category": "Apex Artist/Image/Composite",
-      "input_types": ["IMAGE", "IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
+      "input_types": [
+        "IMAGE",
+        "IMAGE"
+      ],
+      "output_types": [
+        "IMAGE",
+        "STRING"
+      ]
     },
     {
       "id": "ApexBlur",
       "display_name": "Apex Blur",
       "description": "Advanced blur effects with multiple algorithms",
       "category": "Apex Artist/Image/Filters",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
+      "input_types": [
+        "IMAGE"
+      ],
+      "output_types": [
+        "IMAGE",
+        "STRING"
+      ]
     },
     {
       "id": "ApexSharpen",
       "display_name": "Apex Sharpen",
       "description": "Professional sharpening with multiple algorithms",
       "category": "Apex Artist/Image/Filters",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "STRING"]
+      "input_types": [
+        "IMAGE"
+      ],
+      "output_types": [
+        "IMAGE",
+        "STRING"
+      ]
     },
     {
       "id": "ApexHDRIViewer",
       "display_name": "Apex HDRI Viewer",
       "description": "Render rectilinear or fisheye camera views from equirectangular HDRI/panorama images",
       "category": "Apex Artist/Image",
-      "input_types": ["IMAGE"],
-      "output_types": ["IMAGE", "IMAGE"]
+      "input_types": [
+        "IMAGE"
+      ],
+      "output_types": [
+        "IMAGE",
+        "IMAGE"
+      ]
     },
     {
       "id": "ApexPromptPreset",
       "display_name": "Apex Prompt",
       "description": "Professional prompt preset system with Environment, Lighting, Style, Color and Camera Lens categories, search, and dynamic management",
       "category": "Apex Artist/Text",
-      "input_types": ["STRING"],
-      "output_types": ["STRING", "STRING", "STRING", "STRING", "STRING", "STRING"]
+      "input_types": [
+        "STRING"
+      ],
+      "output_types": [
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING"
+      ]
     },
     {
       "id": "ApexLoraLoader",
       "display_name": "Apex LoRA Loader",
       "description": "Professional LoRA loader with interactive browser and thumbnail preview support",
       "category": "Apex Artist/Models",
-      "input_types": ["MODEL", "CLIP"],
-      "output_types": ["MODEL", "CLIP"]
+      "input_types": [
+        "MODEL",
+        "CLIP"
+      ],
+      "output_types": [
+        "MODEL",
+        "CLIP"
+      ]
     },
     {
       "id": "ApexCharacterPrompt",
       "display_name": "Apex Character Prompt",
       "description": "Character prompts from 12 preset categories plus free-text input",
       "category": "Apex Artist/Text",
-      "input_types": ["STRING"],
-      "output_types": ["STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING"]
+      "input_types": [
+        "STRING"
+      ],
+      "output_types": [
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING"
+      ]
     },
     {
       "id": "ApexJSON",
       "display_name": "Apex JSON Lookup",
       "description": "Look up text values in JSON data",
       "category": "Apex Artist/Text",
-      "input_types": ["STRING"],
-      "output_types": ["STRING"]
+      "input_types": [
+        "STRING"
+      ],
+      "output_types": [
+        "STRING"
+      ]
+    },
+    {
+      "id": "ApexTimelineEditor",
+      "display_name": "Apex Timeline Editor",
+      "description": "Persistently capture native video clips into autogrowing timeline layers",
+      "category": "Apex Artist/Video",
+      "input_types": [
+        "VIDEO",
+        "FLOAT",
+        "AUDIO"
+      ],
+      "output_types": [
+        "VIDEO",
+        "IMAGE",
+        "AUDIO",
+        "FLOAT",
+        "APEX_TIMELINE",
+        "FLOAT",
+        "INT"
+      ]
+    },
+    {
+      "id": "ApexAudio",
+      "display_name": "Apex Audio",
+      "description": "Load or connect audio, trim with waveform handles, adjust volume, preview and output selection metadata",
+      "category": "Apex Artist/Audio",
+      "input_types": [
+        "AUDIO"
+      ],
+      "output_types": [
+        "AUDIO",
+        "FLOAT",
+        "INT",
+        "INT",
+        "INT"
+      ]
     }
   ],
-   "version": "2.3.0"
+  "version": "2.4.0"
 }

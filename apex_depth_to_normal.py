@@ -6,7 +6,6 @@ Specialized for converting depth maps (DepthAnything, MiDaS, etc.) to high-quali
 
 import torch
 import torch.nn.functional as F
-import numpy as np
 from .apex_utils import gaussian_blur, validate_image_tensor
 
 class ApexDepthToNormal:
@@ -58,7 +57,13 @@ class ApexDepthToNormal:
         print("ApexDepthToNormal: Processing depth map")
         
         # Convert to grayscale if RGB
-        if depth_map.shape[-1] == 3:
+        validate_image_tensor(depth_map, "depth_map")
+        if depth_map.ndim == 3:
+            depth_map = depth_map.unsqueeze(0)
+        output_dtype = depth_map.dtype
+        if depth_map.dtype in (torch.float16, torch.bfloat16):
+            depth_map = depth_map.float()
+        if depth_map.shape[-1] >= 3:
             # Use luminance formula
             gray = 0.299 * depth_map[..., 0:1] + 0.587 * depth_map[..., 1:2] + 0.114 * depth_map[..., 2:3]
         else:
@@ -112,7 +117,7 @@ class ApexDepthToNormal:
             
         info = f"Depth to Normal | Strength: {strength:.1f} | Details: {enhance_details:.1f}{invert_status}"
         
-        return (normal_map, info)
+        return (normal_map.to(dtype=output_dtype), info)
     
     def _preprocess_depth(self, gray, enhance_details):
         """Specialized preprocessing for depth maps"""
@@ -125,7 +130,7 @@ class ApexDepthToNormal:
         # Apply adaptive histogram equalization if details enhancement is requested
         if enhance_details > 0:
             kernel_size = 15
-            kernel = torch.ones(1, 1, kernel_size, kernel_size, device=gray.device) / (kernel_size**2)
+            kernel = torch.ones(1, 1, kernel_size, kernel_size, device=gray.device, dtype=gray.dtype) / (kernel_size**2)
             
             padded_input = stretched.permute(0, 3, 1, 2)
             local_mean = F.conv2d(padded_input, kernel, padding=kernel_size//2)
@@ -152,13 +157,13 @@ class ApexDepthToNormal:
             [-1, 0, 1],
             [-2, 0, 2],
             [-1, 0, 1]
-        ], device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 4.0
+        ], device=device, dtype=image.dtype).unsqueeze(0).unsqueeze(0) / 4.0
         
         sobel_y = torch.tensor([
             [-1, -2, -1],
             [0, 0, 0],
             [1, 2, 1]
-        ], device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 4.0
+        ], device=device, dtype=image.dtype).unsqueeze(0).unsqueeze(0) / 4.0
         
         padding = 1
         strength_multiplier = 3.0  # Higher strength for depth maps

@@ -5,9 +5,7 @@ Supports various blur types for different artistic and technical needs
 """
 import torch
 import torch.nn.functional as F
-import numpy as np
 import math
-from functools import lru_cache
 from .apex_utils import gaussian_blur, validate_image_tensor, validate_radius, apply_mask as utils_apply_mask, calculate_luminance, create_gaussian_kernel_1d
 
 
@@ -96,6 +94,9 @@ class ApexBlur:
         try:
             # Validate inputs using apex_utils
             validate_image_tensor(image, "image")
+            output_dtype = image.dtype
+            if image.dtype in (torch.float16, torch.bfloat16):
+                image = image.float()
             radius = validate_radius(radius, min_val=0.5, max_val=100.0)
             
             # Set default values for optional parameters
@@ -152,19 +153,18 @@ class ApexBlur:
             elif blur_type in ["radial", "lens", "spin", "zoom"]:
                 blur_info += f" | Center: ({center_x:.2f}, {center_y:.2f})"
             
-            return (torch.clamp(blurred, 0, 1), blur_info)
+            return (torch.clamp(blurred, 0, 1).to(dtype=output_dtype), blur_info)
             
         except Exception as e:
             print(f"Blur error: {str(e)}")
-            return (image, f"Error: {str(e)}")
+            raise RuntimeError(f"{blur_type} blur failed: {e}") from e
 
     @staticmethod
-    @lru_cache(maxsize=32)
-    def _get_2d_kernel(kernel_size: int, sigma: float, device_str: str = "cpu"):
-        """Cached 2D Gaussian kernel creation to avoid recomputation"""
+    def _get_2d_kernel(kernel_size: int, sigma: float, device_str: str = "cpu", dtype=torch.float32):
+        """Build a Gaussian kernel on the image device and dtype."""
         device = torch.device(device_str)
-        x = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
-        y = torch.arange(kernel_size, device=device, dtype=torch.float32) - kernel_size // 2
+        x = torch.arange(kernel_size, device=device, dtype=dtype) - kernel_size // 2
+        y = torch.arange(kernel_size, device=device, dtype=dtype) - kernel_size // 2
         xx, yy = torch.meshgrid(x, y, indexing='ij')
         kernel_2d = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
         kernel_2d = kernel_2d / kernel_2d.sum()
@@ -203,7 +203,7 @@ class ApexBlur:
             kernel_size += 1
         
         # Create uniform 2D box kernel
-        kernel_2d = torch.ones(kernel_size, kernel_size, device=device)
+        kernel_2d = torch.ones(kernel_size, kernel_size, device=device, dtype=image.dtype)
         kernel_2d = kernel_2d / kernel_2d.sum()  # Normalize
         kernel_2d = kernel_2d.unsqueeze(0).unsqueeze(0)  # [1, 1, H, W]
         
@@ -233,7 +233,8 @@ class ApexBlur:
         
         # Create motion blur kernel more efficiently
         kernel_size = min(int(2 * radius + 1), 101)  # Cap size
-        kernel = torch.zeros(kernel_size, kernel_size, device=device)
+        kernel_size += 1 - kernel_size % 2
+        kernel = torch.zeros(kernel_size, kernel_size, device=device, dtype=image.dtype)
         
         center = kernel_size // 2
         steps = min(max(1, int(radius)), 20)  # Limit steps for performance
@@ -266,8 +267,8 @@ class ApexBlur:
         samples = min(max(int(radius // 2), 3), 8)  # Adaptive sampling
         
         # Pre-calculate coordinate grids
-        y_coords = torch.linspace(-1, 1, height, device=device)
-        x_coords = torch.linspace(-1, 1, width, device=device)
+        y_coords = torch.linspace(-1, 1, height, device=device, dtype=image.dtype)
+        x_coords = torch.linspace(-1, 1, width, device=device, dtype=image.dtype)
         yy, xx = torch.meshgrid(y_coords, x_coords, indexing='ij')
         
         # Adjust center
@@ -279,7 +280,7 @@ class ApexBlur:
         result = torch.zeros_like(image)
         
         # Batch process multiple scales
-        scales = torch.linspace(1.0, 1.0 + radius / 20.0, samples, device=device)
+        scales = torch.linspace(1.0, 1.0 + radius / 20.0, samples, device=device, dtype=image.dtype)
         
         # Pre-permute image once
         img_for_sampling = image.permute(0, 3, 1, 2)
@@ -320,6 +321,8 @@ class ApexBlur:
         device = image.device
         batch_size, height, width, channels = image.shape
         
+        depth = depth.to(device=device, dtype=image.dtype)
+
         # Ensure depth has correct shape [B, H, W, 1]
         if len(depth.shape) == 3:
             depth = depth.unsqueeze(-1)
@@ -344,68 +347,16 @@ class ApexBlur:
         # We'll invert so that near objects get less blur, far objects get more blur
         blur_amount = 1.0 - depth_normalized  # Far objects get more blur
         
-        # Scale by max radius
-        blur_amount = blur_amount * radius
-        
-        # For efficiency, we'll quantize depth into bins and apply different blur levels
-        num_bins = 8  # Number of depth bins for multi-layer blur
+        num_bins = 8
         result = torch.zeros_like(image)
-        
-        # Pre-permute image once for grouped convolution
-        img_permuted = image.permute(0, 3, 1, 2)
-        
         for i in range(num_bins):
-            bin_min = i / num_bins
-            bin_max = (i + 1) / num_bins
-            
-            # Create mask for this depth bin
-            bin_mask = ((blur_amount >= bin_min) & (blur_amount < bin_max)).float()
-            
-            # For the last bin, include the max value
-            if i == num_bins - 1:
-                bin_mask = ((blur_amount >= bin_min) & (blur_amount <= bin_max)).float()
-            
-            # Check if any pixels fall in this bin
-            if bin_mask.sum() > 0:
-                # Calculate average blur radius for this bin
-                bin_center = (bin_min + bin_max) / 2
-                bin_radius = bin_center * radius
-                
-                if bin_radius < 0.5:
-                    # No blur needed for this bin
-                    blurred_bin = image
-                else:
-                    # Calculate kernel parameters
-                    sigma = max(bin_radius * 0.5, 0.5)
-                    kernel_size = int(2 * math.ceil(2 * sigma) + 1)
-                    kernel_size = max(kernel_size, 3)
-                    kernel_size = min(kernel_size, 101)
-                    if kernel_size % 2 == 0:
-                        kernel_size += 1
-                    
-                    # Get or create cached kernel
-                    kernel_2d = self._get_2d_kernel(kernel_size, sigma, str(device))
-                    padding = kernel_size // 2
-                    
-                    # Apply blur using grouped convolution
-                    blurred_channels = []
-                    for c in range(channels):
-                        channel = img_permuted[:, c:c+1, :, :]
-                        blurred_channel = F.conv2d(channel, kernel_2d, padding=padding)
-                        blurred_channels.append(blurred_channel)
-                    blurred_bin = torch.cat(blurred_channels, dim=1).permute(0, 2, 3, 1)
-                
-                # Blend this bin into result
-                bin_mask_expanded = bin_mask.expand(-1, -1, -1, channels)
-                result += blurred_bin * bin_mask_expanded
-        
-        # Handle any remaining pixels (should be minimal)
-        remaining_mask = 1.0 - (blur_amount >= 0).float().sum(dim=0, keepdim=True).clamp(0, 1)
-        if remaining_mask.sum() > 0:
-            result += image * remaining_mask.unsqueeze(-1).expand(-1, -1, -1, channels)
-        
-        print(f"Depth Blur: radius={radius}, depth_bins={num_bins}, depth_range=[{depth_normalized.min():.3f}, {depth_normalized.max():.3f}]")
-        
+            lower, upper = i / num_bins, (i + 1) / num_bins
+            mask = (blur_amount >= lower) & ((blur_amount <= upper) if i == num_bins - 1 else (blur_amount < upper))
+            if mask.any():
+                bin_radius = (lower + upper) / 2 * radius
+                blurred = image if bin_radius < 0.5 else gaussian_blur(image, bin_radius)
+                result += blurred * mask.to(dtype=image.dtype)
+
         return torch.clamp(result, 0, 1)
 
     def _surface_blur(self, image, radius, edge_threshold):
@@ -432,8 +383,8 @@ class ApexBlur:
         batch_size, height, width, channels = image.shape
         
         # Create distance map from center
-        y_coords = torch.linspace(0, 1, height, device=device)
-        x_coords = torch.linspace(0, 1, width, device=device)
+        y_coords = torch.linspace(0, 1, height, device=device, dtype=image.dtype)
+        x_coords = torch.linspace(0, 1, width, device=device, dtype=image.dtype)
         yy, xx = torch.meshgrid(y_coords, x_coords, indexing='ij')
         
         # Calculate distance from focus point
@@ -453,7 +404,7 @@ class ApexBlur:
             blur_kernel_size += 1
         
         # Get or create cached kernel
-        kernel_2d = self._get_2d_kernel(blur_kernel_size, blur_sigma, str(device))
+        kernel_2d = self._get_2d_kernel(blur_kernel_size, blur_sigma, str(device), image.dtype)
         padding = blur_kernel_size // 2
         
         # Apply blur using grouped convolution
@@ -476,8 +427,8 @@ class ApexBlur:
         samples = min(max(int(radius // 3), 3), 6)
         
         # Pre-calculate coordinate grids
-        y_coords = torch.linspace(-1, 1, height, device=device)
-        x_coords = torch.linspace(-1, 1, width, device=device)
+        y_coords = torch.linspace(-1, 1, height, device=device, dtype=image.dtype)
+        x_coords = torch.linspace(-1, 1, width, device=device, dtype=image.dtype)
         yy, xx = torch.meshgrid(y_coords, x_coords, indexing='ij')
         
         # Adjust center
@@ -490,7 +441,7 @@ class ApexBlur:
         
         # Calculate rotation angles
         max_angle = radius * math.pi / 180  # Convert to radians
-        angles = torch.linspace(0, max_angle, samples, device=device)
+        angles = torch.linspace(0, max_angle, samples, device=device, dtype=image.dtype)
         
         # Pre-permute image once
         img_for_sampling = image.permute(0, 3, 1, 2)
@@ -527,8 +478,8 @@ class ApexBlur:
         result = torch.zeros_like(image)
         
         # Pre-calculate coordinate grids
-        y_coords = torch.linspace(-1, 1, height, device=device)
-        x_coords = torch.linspace(-1, 1, width, device=device)
+        y_coords = torch.linspace(-1, 1, height, device=device, dtype=image.dtype)
+        x_coords = torch.linspace(-1, 1, width, device=device, dtype=image.dtype)
         yy, xx = torch.meshgrid(y_coords, x_coords, indexing='ij')
         
         # Adjust center
@@ -536,7 +487,7 @@ class ApexBlur:
         center_y_adj = (center_y - 0.5) * 2
         
         # Calculate zoom factors
-        zoom_factors = torch.linspace(1.0, 1.0 + radius / 30.0, samples, device=device)
+        zoom_factors = torch.linspace(1.0, 1.0 + radius / 30.0, samples, device=device, dtype=image.dtype)
         
         # Pre-permute image once
         img_for_sampling = image.permute(0, 3, 1, 2)

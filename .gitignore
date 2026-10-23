@@ -38,4 +38,20 @@ custom-node-list.json
 # Cline AI assistant tool config
 .clineignore
 
-
+# Local environments, test caches and generated scratch files
+.venv/
+node_modules/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+/temp/
+/tmp/
+*.log
+*.tmp
+*.bak
+*.orig
+.env
+.env.*
+!.env.example

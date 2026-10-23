@@ -1,123 +1,93 @@
-"""
-Apex Character Prompt API Server
-Preset CRUD for the character preset library (character_presets.json).
+"""Character preset API with validated, revision-checked user storage."""
 
-Mirrors the route layout of apex_prompt_api.py but operates on the character store, so the
-character preset library stays fully isolated from the environment/lighting/style presets.
-"""
-
+import asyncio
+import copy
 import json
-import os
 
-import aiofiles
 from aiohttp import web
 from server import PromptServer
 
-from .apex_character_prompt import ApexCharacterPrompt
+from .apex_prompt_store import MAX_BYTES, PresetError, PresetConflict, PresetNotFound, get_character_store, validate_name
 
 
 class ApexCharacterPresetAPI:
     def __init__(self):
-        self.presets_file = os.path.join(
-            os.path.dirname(__file__), ApexCharacterPrompt.PRESET_FILE_NAME
-        )
         self.setup_routes()
 
-    async def _read_presets(self):
-        """Read the character preset store (empty dict when the file does not exist yet)."""
-        if os.path.exists(self.presets_file):
-            async with aiofiles.open(self.presets_file, "r", encoding="utf-8") as f:
-                content = await f.read()
-            return json.loads(content)
-        return {}
+    def change(self, revision, operation, payload, category=None, name=None):
+        store = get_character_store()
+        snapshot = store.snapshot()
+        if revision != snapshot["revision"]:
+            raise PresetConflict("Character presets changed. Reload the manager before saving.")
+        presets = copy.deepcopy(snapshot["presets"])
+        if operation == "replace":
+            presets = payload
+        else:
+            if category not in store.categories:
+                raise PresetError("Unknown character category.")
+            validate_name(name)
+            if operation == "save":
+                presets[category][name] = payload
+            else:
+                if name not in presets[category]:
+                    raise PresetNotFound("Character preset not found.")
+                del presets[category][name]
+        return store.mutate("replace", {"revision": revision, "presets": presets})
 
-    async def _write_presets(self, presets):
-        """Write the character preset store as pretty JSON."""
-        async with aiofiles.open(self.presets_file, "w", encoding="utf-8") as f:
-            await f.write(json.dumps(presets, indent=2, ensure_ascii=False))
+    async def read(self, category=None):
+        try:
+            snapshot = await asyncio.to_thread(get_character_store().snapshot)
+            if category is not None and category not in snapshot["presets"]:
+                raise PresetNotFound("Character category not found.")
+            data = snapshot["presets"] if category is None else snapshot["presets"][category]
+            return web.json_response(data, headers={"ETag": '"' + snapshot["revision"] + '"'})
+        except PresetError as exc:
+            return web.json_response({"error": str(exc)}, status=exc.status)
+
+    async def write(self, request, operation):
+        try:
+            payload = None
+            if operation != "delete":
+                raw = bytearray()
+                async for chunk in request.content.iter_chunked(65536):
+                    raw.extend(chunk)
+                    if len(raw) > MAX_BYTES:
+                        return web.json_response({"error": "Character presets exceed 4 MiB."}, status=413)
+                payload = json.loads(raw)
+            revision = request.headers.get("If-Match", "").strip('"')
+            snapshot = await asyncio.to_thread(self.change, revision, operation, payload,
+                                             request.match_info.get("category"), request.match_info.get("name"))
+            PromptServer.instance.send_sync("apex-character-presets-changed", {"revision": snapshot["revision"]})
+            return web.json_response({"status": "success"}, headers={"ETag": '"' + snapshot["revision"] + '"'})
+        except PresetError as exc:
+            return web.json_response({"error": str(exc)}, status=exc.status)
+        except (ValueError, UnicodeError) as exc:
+            return web.json_response({"error": "Invalid character preset JSON: " + str(exc)}, status=400)
+        except OSError:
+            return web.json_response({"error": "Cannot save character presets. Check user-folder permissions."}, status=500)
 
     def setup_routes(self):
-        """Setup API routes for character preset management."""
+        routes = PromptServer.instance.routes
 
-        @PromptServer.instance.routes.get("/apex/character_presets")
+        @routes.get("/apex/character_presets")
         async def get_presets(request):
-            """Get all character presets"""
-            try:
-                presets = await self._read_presets()
-                if not presets:
-                    presets = ApexCharacterPrompt.get_default_presets()
-                return web.json_response(presets)
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+            return await self.read()
 
-        @PromptServer.instance.routes.post("/apex/character_presets")
-        async def save_presets(request):
-            """Save all character presets"""
-            try:
-                presets = await request.json()
-                await self._write_presets(presets)
-                return web.json_response({"status": "success"})
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+        @routes.get("/apex/character_presets/{category}")
+        async def get_category(request):
+            return await self.read(request.match_info["category"])
 
-        @PromptServer.instance.routes.get("/apex/character_presets/{category}")
-        async def get_category_presets(request):
-            """Get presets for a specific character category"""
-            try:
-                category = request.match_info["category"]
-                presets = await self._read_presets()
-                if not presets:
-                    presets = ApexCharacterPrompt.get_default_presets()
-                return web.json_response(presets.get(category, {}))
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+        @routes.post("/apex/character_presets")
+        async def replace(request):
+            return await self.write(request, "replace")
 
-        @PromptServer.instance.routes.post("/apex/character_presets/{category}/{name}")
-        async def save_preset(request):
-            """Save a single character preset"""
-            try:
-                category = request.match_info["category"]
-                name = request.match_info["name"]
-                preset_data = await request.json()
+        @routes.post("/apex/character_presets/{category}/{name}")
+        async def save(request):
+            return await self.write(request, "save")
 
-                presets = await self._read_presets()
-                if not presets:
-                    presets = ApexCharacterPrompt.get_default_presets()
-
-                if category not in presets:
-                    presets[category] = {}
-                presets[category][name] = preset_data
-
-                await self._write_presets(presets)
-                return web.json_response({"status": "success"})
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
-
-        @PromptServer.instance.routes.delete("/apex/character_presets/{category}/{name}")
-        async def delete_preset(request):
-            """Delete a single character preset"""
-            try:
-                category = request.match_info["category"]
-                name = request.match_info["name"]
-
-                presets = await self._read_presets()
-                if not presets:
-                    return web.json_response({"error": "Character presets file not found"}, status=404)
-
-                if category in presets and name in presets[category]:
-                    del presets[category][name]
-
-                    # Remove the category when it becomes empty
-                    if not presets[category]:
-                        del presets[category]
-
-                    await self._write_presets(presets)
-                    return web.json_response({"status": "success"})
-
-                return web.json_response({"error": "Preset not found"}, status=404)
-            except Exception as e:
-                return web.json_response({"error": str(e)}, status=500)
+        @routes.delete("/apex/character_presets/{category}/{name}")
+        async def delete(request):
+            return await self.write(request, "delete")
 
 
-# Initialize the API
 api_instance = ApexCharacterPresetAPI()

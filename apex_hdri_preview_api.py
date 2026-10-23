@@ -4,6 +4,7 @@ Serves a browser-displayable PNG preview of the camera view rendered from an
 HDRI/equirectangular panorama. Rendering happens server-side so .hdr/.exr files
 (which browsers cannot decode) are supported too.
 """
+import asyncio
 import io
 import os
 
@@ -36,6 +37,11 @@ class ApexHDRIAPI:
         img.save(buf, format="PNG")
         return buf.getvalue()
 
+    def _render_preview(self, filepath, yaw, pitch, roll, fov, width, height, lens):
+        source = ApexHDRIViewer._load_hdri_tensor(filepath)
+        rendered = equirect_to_camera_view(source, yaw, pitch, roll, fov, width, height, lens)
+        return self._tensor_to_png_bytes(rendered)
+
     def setup_routes(self):
         """Setup API routes for HDRI camera-view preview serving."""
 
@@ -59,7 +65,6 @@ class ApexHDRIAPI:
                 if not os.path.exists(filepath):
                     return web.Response(status=404, text="File not found")
 
-                source = ApexHDRIViewer._load_hdri_tensor(filepath)
 
                 # Render size can be requested by the client to match the
                 # widget shape; clamped for performance.
@@ -71,10 +76,7 @@ class ApexHDRIAPI:
                 out_w = max(64, min(out_w, 1024))
                 out_h = max(64, min(out_h, 1024))
 
-                rendered = equirect_to_camera_view(
-                    source, yaw, pitch, roll, fov, out_w, out_h, lens
-                )
-                png = self._tensor_to_png_bytes(rendered)
+                png = await asyncio.to_thread(self._render_preview, filepath, yaw, pitch, roll, fov, out_w, out_h, lens)
                 return web.Response(
                     body=png,
                     content_type="image/png",
