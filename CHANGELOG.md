@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.5.0 - 2026-10-23
+
+### Added
+
+- Apex V1 Cut Window reads actual saved V1 joins and returns frame-aligned start, duration, cut position and join count. Use the same start for B-roll audio cropping and placement; edited joins are read on each execution.
+
+### Fixed
+
+- Timeline Export now queues all connected save/combine outputs instead of selecting only the first. Saved-timeline exports still bypass generation loops and preserve each output's encoding settings.
+
+### Validation
+
+- The 80-second music-video run completed with four 20-second main clips and three 5-second B-roll windows covering the joins at 20, 40 and 60 seconds. Both native Save Video nodes saved 80-second outputs; measured audio placement offset was 0 ms. The owner confirmed playback and sync. These runs used workflow routing through End Loop; that connection change is not a custom-node code change.
+- Passed: 13 Python regressions, including 5 cut-window tests; 4 frontend export tests; character preset synchronization; Python/JSON/TOML/YAML parsing; frontend syntax; all five version fields and twelve-node metadata consistency. Clean-install and unrelated-node browser smoke tests are not repeated for this release.
+
 ## 2.4.0 — 2026-10-23
 
 ### Added

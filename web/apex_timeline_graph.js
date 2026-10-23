@@ -110,5 +110,5 @@ export function timelineExportGraph(source, timeline, output, projectName) {
             link = graph[link[0]].inputs.output_value;
         node.inputs[key] = link;
     }
-    return ancestors(graph, [output]);
+    return ancestors(graph, Array.isArray(output) ? output : [output]);
 }

@@ -17,6 +17,7 @@ Image processing, prompt presets, audio selection and a video timeline editor in
 | Apex JSON Lookup | Read text values from JSON data |
 | Apex Audio | Load or connect audio, trim, adjust gain, preview and read metadata |
 | Apex Timeline Editor | Edit persistent video/audio tracks and output standard ComfyUI media |
+| Apex V1 Cut Window | Read actual main-track joins for B-roll audio crops and placement |
 
 ## Installation
 
@@ -55,7 +56,7 @@ Source files remain unchanged. No resampling or normalization is applied. Disabl
 
 ## Timeline editor
 
-The editor is embedded in the node. Resize it for more space. It outputs **VIDEO, IMAGE, AUDIO and FPS**, followed by project metadata. Connect VIDEO to native **Save Video**, or IMAGE/AUDIO/FPS to a video-combine node. IMAGE materializes frames only when connected; video-only exports keep frames on disk. Final saving uses the downstream node's encoding settings.
+The editor is embedded in the node. Resize it for more space. It outputs **VIDEO, IMAGE, AUDIO and FPS**, followed by project metadata. Connect VIDEO to native **Save Video**, or IMAGE/AUDIO/FPS to a video-combine node. IMAGE materializes frames only when connected; video-only exports keep frames on disk. Final saving uses the downstream node's encoding settings. **Export** queues every connected save/combine output using its own encoding settings and reads the saved timeline without regenerating clips. During clip generation, route save nodes through End Loop so they cannot escape the loop body.
 
 ### Capture and placement
 
@@ -64,6 +65,10 @@ The editor is embedded in the node. Resize it for more space. It outputs **VIDEO
 - **New Results Only** rejects identical media already captured on the same track. The target defaults to 180 seconds; overflow is retained in the review bin.
 - Native loop/math nodes can drive ordinary inputs. Connect a loop's `is_last` to `prepare_outputs` to assemble only its final iteration. Loops retain the editor's persistent project identity.
 - **+ Track** exposes its VIDEO socket. Connecting the last socket grows a matching lane/socket, up to sixteen tracks. Disconnecting keeps edits intact. V1 is permanent; other lanes have a small minus button with deletion confirmation and undo support.
+
+### B-roll cut windows
+
+**Apex V1 Cut Window** reads saved V1 clip starts from the named timeline and node ID. Generate the main-track clips first, then select a zero-based join index, B-roll duration and lead before the cut. Connect its start to both audio cropping and timeline placement, and use its duration to trim the generated clip. Windows align to project frames and stop at the end of V1. Each execution rereads the saved timeline so edited joins are reflected.
 
 ### Editing and playback
 

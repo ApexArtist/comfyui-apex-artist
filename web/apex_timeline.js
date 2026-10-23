@@ -641,9 +641,9 @@ function makeEditor(node) {
         if (busy || !project?.clip_count) return;
         try {
             const prompt = await app.graphToPrompt();
-            const saveId = timelineOutputIds(prompt.output, String(node.id))[0];
-            if (!saveId) throw new Error("Connect VIDEO to Save Video, or IMAGE / AUDIO / FPS to a Video Combine output.");
-            prompt.output = timelineExportGraph(prompt.output, String(node.id), saveId, project.name);
+            const saveIds = timelineOutputIds(prompt.output, String(node.id));
+            if (!saveIds.length) throw new Error("Connect VIDEO to Save Video, or IMAGE / AUDIO / FPS to a Video Combine output.");
+            prompt.output = timelineExportGraph(prompt.output, String(node.id), saveIds, project.name);
             const response = await api.queuePrompt(0, prompt);
             if (response.node_errors && Object.keys(response.node_errors).length) throw new Error(JSON.stringify(response.node_errors));
             error.textContent = "Export queued from the saved timeline.";

@@ -205,7 +205,26 @@
         "INT",
         "INT"
       ]
+    },
+    {
+      "id": "ApexTimelineCutWindow",
+      "display_name": "Apex V1 Cut Window",
+      "description": "Read actual V1 joins and return frame-aligned B-roll source and placement windows",
+      "category": "Apex Artist/Video",
+      "input_types": [
+        "STRING",
+        "STRING",
+        "INT",
+        "FLOAT",
+        "FLOAT"
+      ],
+      "output_types": [
+        "FLOAT",
+        "FLOAT",
+        "FLOAT",
+        "INT"
+      ]
     }
   ],
-  "version": "2.4.0"
+  "version": "2.5.0"
 }
