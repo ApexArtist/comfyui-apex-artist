@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.6.0 - 2026-11-03
 
 - Assemble timeline cuts on a constant frame grid with disk-backed FFmpeg segments, avoiding native list-remux timestamp gaps after trimmed B/C cuts. Mixed audio stays aligned; muted timelines stay silent.
 
@@ -9,6 +9,13 @@
 - Register Apex Audio Lyrics and Apex Optional Images for music-video workflows. Whisper controls use local files and keep prior widget positions.
 - Add independent timeline project Save/Open, grid/playhead snapping and the widget-width correction. Preserve the existing cut-window and multi-output export fixes.
 - Add portable registration, optional-input, lyric override, path, cut-window and snapshot regressions.
+
+### Validation
+
+- Passed 21 Python regressions, four frontend export tests and preset synchronization. All fourteen node registrations match metadata.
+- Sandbox music-video tests completed a 60-second first-frame baseline with all 16 clips and a separate 20-second restored PromptRelay test with singer, instrument and candid branches. The corrected baseline export passed 25 visible-interval and 75 boundary comparisons; the restored native export passed six interval and 17 boundary comparisons, with uniform 24 fps timestamps and aligned audio.
+- Native frontend loading and Whisper parameter serialization passed. Timeline sliders and the width callback passed an isolated mounted-editor check; full canvas interaction, clean installation, unrelated-node smoke tests and Manager installation were not repeated for this release.
+- Generated camera framing and band identities remain imperfect: the restored test widens too far and briefly duplicates a guitarist. No listening or exact lyric/lip-sync verification was performed. Whisper output remains an editable draft.
 
 ## 2.5.0 - 2026-10-23
 

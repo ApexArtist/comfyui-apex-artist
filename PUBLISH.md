@@ -1,8 +1,8 @@
 # Publishing Apex Artist
 
-## Release 2.5.0
+## Release 2.6.0
 
-**2.5.0 — 2026-10-23.** The owner authorized committing, tagging and pushing this release. See CHANGELOG.md for changes and validation limits. Confirm publication through the GitHub Action and registry; a pushed tag alone does not establish activation.
+**2.6.0 — 2026-11-03.** The owner requested the package version update and push on 2026-11-03, authorizing this release push and its registry publishing action. See CHANGELOG.md for changes and validation limits. Confirm publication through the GitHub Action and registry; a pushed tag alone does not establish activation.
 
 A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publish_action.yml` and publishes to the ComfyUI registry. Treat the release push as publication and obtain owner approval for each release.
 
@@ -22,10 +22,10 @@ A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publi
 After approval, commit the reviewed changes with a short, direct message, for example:
 
 ```sh
-git commit -m "Add timeline cut windows and fix multi-output export"
-git tag -a v2.5.0 -m "Release 2.5.0"
+git commit -m "Release Apex Artist 2.6.0"
+git tag -a v2.6.0 -m "Release 2.6.0"
 git push origin main
-git push origin v2.5.0
+git push origin v2.6.0
 ```
 
 Inspect the current branch and remote state before pushing. Push only the intended release tag. Do not force-push, replace an existing release tag or rebase unrelated work to bypass a rejection; inspect the cause first.
