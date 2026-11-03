@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Assemble timeline cuts on a constant frame grid with disk-backed FFmpeg segments, avoiding native list-remux timestamp gaps after trimmed B/C cuts. Mixed audio stays aligned; muted timelines stay silent.
+
+- Supply an explicit LTX 2.5 compatibility patch for separately installed PromptRelay, including Gemma 4 token alignment and scoped guide/mask cleanup.
+
 - Register Apex Audio Lyrics and Apex Optional Images for music-video workflows. Whisper controls use local files and keep prior widget positions.
 - Add independent timeline project Save/Open, grid/playhead snapping and the widget-width correction. Preserve the existing cut-window and multi-output export fixes.
 - Add portable registration, optional-input, lyric override, path, cut-window and snapshot regressions.

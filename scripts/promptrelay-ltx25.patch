@@ -1,0 +1,114 @@
+--- a/nodes.py
++++ b/nodes.py
+@@ -1,6 +1,7 @@
+ import logging
+ 
+ from comfy_api.latest import io
++from comfy.patcher_extension import CallbacksMP
+ 
+ from .prompt_relay import (
+     get_raw_tokenizer,
+@@ -82,12 +83,20 @@
+ 
+     raw_tokenizer = get_raw_tokenizer(clip)
+     full_prompt, token_ranges = map_token_indices(raw_tokenizer, global_prompt, locals_list)
++    tokens = clip.tokenize(full_prompt)
++    if "gemma4" in tokens:
++        native_ids = [item[0] for item in tokens["gemma4"][0] if item[0] != 0]
++        raw_ids = raw_tokenizer(full_prompt)["input_ids"]
++        prefix = len(native_ids) - len(raw_ids)
++        if prefix < 0 or native_ids[prefix:] != raw_ids:
++            raise ValueError("PromptRelay: Gemma 4 token ranges do not match native conditioning.")
++        token_ranges = [(start + prefix, end + prefix) for start, end in token_ranges]
+ 
+     log.info("[PromptRelay] Global: tokens [0:%d] (%d tokens)", token_ranges[0][0], token_ranges[0][0])
+     for i, (s, e) in enumerate(token_ranges):
+         log.info("[PromptRelay] Segment %d: tokens [%d:%d] (%d tokens)", i, s, e, e - s)
+ 
+-    conditioning = clip.encode_from_tokens_scheduled(clip.tokenize(full_prompt))
++    conditioning = clip.encode_from_tokens_scheduled(tokens)
+ 
+     effective_lengths = distribute_segment_lengths(len(locals_list), latent_frames, parsed_lengths)
+ 
+@@ -101,6 +110,7 @@
+ 
+     patched = model.clone()
+     apply_patches(patched, arch, mask_fn)
++    patched.add_callback_with_key(CallbacksMP.ON_CLEANUP, "promptrelay_mask", lambda _: mask_fn.clear_cache())
+ 
+     return patched, conditioning
+ 
+--- a/patches.py
++++ b/patches.py
+@@ -72,7 +72,7 @@
+     return override
+ 
+ 
+-def _make_ltx_mask_wrapper(underlying, mask_fn):
++def _make_ltx_mask_wrapper(underlying, mask_fn, stream):
+     """Wrap an existing LTX cross-attn forward (the default `CrossAttention.forward`
+     or another node's patch — e.g. KJNodes NAG), injecting PromptRelay's additive
+     mask via the `mask` kwarg the upstream signature already accepts.
+@@ -82,7 +82,8 @@
+     """
+     def wrapped(_self, x, context=None, mask=None, pe=None, k_pe=None, transformer_options={}):
+         if context is not None:
+-            pr_mask = mask_fn(x.shape[1], context.shape[1], x.dtype, x.device, transformer_options)
++            pr_mask = mask_fn(x.shape[1], context.shape[1], x.dtype, x.device,
++                              {**transformer_options, "promptrelay_stream": stream})
+             if pr_mask is not None:
+                 mask = pr_mask if mask is None else mask + pr_mask
+ 
+@@ -172,7 +173,7 @@
+                 key = f"diffusion_model.transformer_blocks.{idx}.{attr}.forward"
+                 # get_model_object returns the prior patch if present, else the default bound forward.
+                 underlying = model_clone.get_model_object(key)
+-                wrapper = _make_ltx_mask_wrapper(underlying, mask_fn)
++                wrapper = _make_ltx_mask_wrapper(underlying, mask_fn, "audio" if attr == "audio_attn2" else "video")
+                 model_clone.add_object_patch(key, types.MethodType(wrapper, module))
+         return
+ 
+--- a/prompt_relay.py
++++ b/prompt_relay.py
+@@ -60,16 +60,30 @@
+         video_tpf = int(grid_sizes[1]) * int(grid_sizes[2]) if grid_sizes is not None else fallback_tokens_per_frame
+         video_lq = latent_frames * video_tpf
+ 
++        stream = transformer_options.get("promptrelay_stream")
++        if stream == "audio" and all(seg.get("strength_audio", 1.0) == 0 for seg in q_token_idx):
++            return None
++
+         # Skip cross-modal attention — text keys are padded to a fixed length ≥ max_token_idx and != video_lq
+         if Lk == video_lq or Lk < max_token_idx:
+             return None
+ 
+-        mode = "video" if Lq == video_lq else "scaled"
+-
+-        key = (Lq, Lk, mode, device)
++        mode = "video" if stream == "video" or (stream is None and Lq == video_lq) else "scaled"
++
++        if mode == "video" and all(
++            seg.get("strength", 1.0) == 0
++            or seg["window"] >= max(seg["midpoint"], latent_frames - 1 - seg["midpoint"])
++            for seg in q_token_idx
++        ):
++            return None
++
++        key = (Lq, Lk, mode, device, dtype)
+         if key not in cache:
+             if mode == "video":
+                 cost = build_temporal_cost(q_token_idx, Lq, Lk, device, dtype, video_tpf)
++                # Appended image guides are references, not later video frames.
++                if Lq > video_lq:
++                    cost[video_lq:] = 0
+             else:
+                 cost = build_temporal_cost_scaled(q_token_idx, Lq, Lk, device, dtype, latent_frames)
+             log.info(
+@@ -80,6 +94,7 @@
+ 
+         return cache[key].to(dtype)
+ 
++    mask_fn.clear_cache = cache.clear
+     return mask_fn
+ 
+ 

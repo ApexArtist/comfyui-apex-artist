@@ -64,9 +64,21 @@ It uses the Transformers runtime provided by ComfyUI and local official Whisper 
 
 **Apex Optional Images** grows sockets as images are connected. Empty inputs return count 0 so a workflow can skip that optional track. **Apex V1 Cut Window** reads actual saved V1 joins; use its start and duration for both the audio crop and B-roll placement.
 
+## LTX 2.5 PromptRelay workflows
+
+PromptRelay remains a separate dependency: [kijai/ComfyUI-PromptRelay](https://github.com/kijai/ComfyUI-PromptRelay). For the LTX 2.5 global/local workflows, Apex supplies an explicit compatibility patch for Gemma 4 token alignment, appended guide masks and scoped mask cleanup.
+
+After installing PromptRelay from Git beside Apex, run with ComfyUI's Python:
+
+```sh
+python custom_nodes/comfyui-apex-artist/scripts/apply_promptrelay_ltx25.py --apply
+```
+
+Without `--apply`, the command only checks compatibility. It preserves already-applied changes and rejects different source before writing. Restart ComfyUI afterward. This helper does not install or download the dependency.
+
 ## Timeline editor
 
-The editor is embedded in the node. Resize it for more space. It outputs **VIDEO, IMAGE, AUDIO and FPS**, followed by project metadata. Connect VIDEO to native **Save Video**, or IMAGE/AUDIO/FPS to a video-combine node. IMAGE materializes frames only when connected; video-only exports keep frames on disk. Final saving uses the downstream node's encoding settings. **Export** queues every connected save/combine output using its own encoding settings and reads the saved timeline without regenerating clips. During clip generation, route save nodes through End Loop so they cannot escape the loop body.
+The editor is embedded in the node. Resize it for more space. It outputs **VIDEO, IMAGE, AUDIO and FPS**, followed by project metadata. Connect VIDEO to native **Save Video**, or IMAGE/AUDIO/FPS to a video-combine node. IMAGE materializes frames only when connected; video-only exports keep frames on disk. Final saving uses the downstream node's encoding settings. **Export** queues every connected save/combine output using its own encoding settings and reads the saved timeline without regenerating clips. Trimmed cuts are normalized into reusable disk-backed CFR segments before concatenation, so export timestamps follow the project frame grid without loading the whole film into RAM. During clip generation, route save nodes through End Loop so they cannot escape the loop body.
 
 ### Capture and placement
 
