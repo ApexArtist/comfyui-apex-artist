@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 2.6.2 - 2026-11-03
 
 - Let Apex Audio Lyrics download missing official Whisper Turbo files on first transcription. Add a download toggle, reuse complete local models without network access, repair partial processor assets and preserve previous widget positions.
+
+### Validation
+
+- Passed 26 Python regressions, eight frontend regressions, metadata/syntax checks and preset synchronization. Verified an official processor-file download and local loading; complete installed model files bypassed the downloader. Full model weights were not downloaded again.
+- No new music-video render, production restart or clean Manager installation was performed.
 
 ## 2.6.1 - 2026-11-03
 
