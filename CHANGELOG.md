@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Repair Apex Optional Images sockets after loading, cloning and connection changes. Keep one empty socket, restore numeric order past ten inputs and preserve connected image sources through native node APIs.
+- Add portable socket-repair regressions and verify growth to 17 images, reload, middle disconnection and source replacement in the actual frontend.
+
 ## 2.6.0 - 2026-11-03
 
 - Assemble timeline cuts on a constant frame grid with disk-backed FFmpeg segments, avoiding native list-remux timestamp gaps after trimmed B/C cuts. Mixed audio stays aligned; muted timelines stay silent.

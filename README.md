@@ -62,7 +62,7 @@ Source files remain unchanged. No resampling or normalization is applied. Disabl
 
 It uses the Transformers runtime provided by ComfyUI and local official Whisper weights/processor assets beneath the configured `audio_encoders` paths. The installed default is `whisper-large-v3-turbo`. This node never downloads models during execution.
 
-**Apex Optional Images** grows sockets as images are connected. Empty inputs return count 0 so a workflow can skip that optional track. **Apex V1 Cut Window** reads actual saved V1 joins; use its start and duration for both the audio crop and B-roll placement.
+**Apex Optional Images** grows sockets as images are connected. Empty inputs return count 0 so a workflow can skip that optional track. Saved socket order and the next empty input are repaired on reload, including groups with more than ten images. **Apex V1 Cut Window** reads actual saved V1 joins; use its start and duration for both the audio crop and B-roll placement.
 
 ## LTX 2.5 PromptRelay workflows
 

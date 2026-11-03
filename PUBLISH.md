@@ -14,7 +14,7 @@ A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publi
 - Confirm all fourteen registered nodes are described in metadata. Align the package version in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json` and `custom_nodes.json`; do not change `manifest_version`.
 - Review README, CHANGELOG, dependencies and minimum versions. Document any API changes and checks that remain unperformed.
 - Restart ComfyUI from the owner's CMD window and hard-refresh the browser. Smoke-test Audio trim/preview, Timeline capture/playback/export, preset saving, LoRA selection and HDRI preview. A clean installation and GPU-specific checks remain separate from CPU tests.
-- Run `node --test tests/test_timeline_export.mjs` for saved-timeline output selection.
+- Run `node --test tests/test_timeline_export.mjs tests/test_optional_images_inputs.mjs` for saved-timeline output selection.
 - Run `git diff --check`. Review the explicit staged file list with `git diff --cached --stat`; avoid staging unrelated changes.
 
 ## Commit and publish
