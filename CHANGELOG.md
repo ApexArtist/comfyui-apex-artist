@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Let Apex Audio Lyrics download missing official Whisper Turbo files on first transcription. Add a download toggle, reuse complete local models without network access, repair partial processor assets and preserve previous widget positions.
+
 ## 2.6.1 - 2026-11-03
 
 - Repair Apex Optional Images sockets after loading, cloning and connection changes. Keep one empty socket, restore numeric order past ten inputs and preserve connected image sources through native node APIs.

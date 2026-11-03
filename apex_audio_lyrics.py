@@ -4,8 +4,21 @@ from pathlib import Path
 
 import folder_paths
 from comfy_api.latest import io
+from huggingface_hub import snapshot_download
 
 DEFAULT_MODEL = 'whisper-large-v3-turbo'
+DOWNLOAD_FILES = ['model.safetensors', 'config.json', 'generation_config.json',
+                  'preprocessor_config.json', 'tokenizer_config.json', 'tokenizer.json',
+                  'special_tokens_map.json', 'added_tokens.json', 'normalizer.json',
+                  'vocab.json', 'merges.txt']
+
+
+def model_ready(directory):
+    required = ['model.safetensors', 'config.json', 'generation_config.json',
+                'preprocessor_config.json', 'tokenizer_config.json']
+    tokenizer = (directory / 'tokenizer.json').is_file() or all(
+        (directory / name).is_file() for name in ('vocab.json', 'merges.txt'))
+    return tokenizer and all((directory / name).is_file() for name in required)
 
 
 def installed_models():
@@ -24,18 +37,27 @@ def installed_models():
                 continue
             if config.get('model_type') == 'whisper':
                 names.add(child.name)
-    return sorted(names) or [DEFAULT_MODEL]
+    return sorted(names | {DEFAULT_MODEL})
 
 
-def model_directory(model_name=DEFAULT_MODEL):
+def model_directory(model_name=DEFAULT_MODEL, download_if_missing=False):
     if not model_name or model_name != model_name.rstrip(' .') or Path(model_name).name != model_name or '/' in model_name or '\\' in model_name:
         raise ValueError('Choose a local Whisper model from the model dropdown.')
     roots = folder_paths.get_folder_paths('audio_encoders')
-    for root in roots:
-        directory = Path(root) / model_name
-        if (directory / 'model.safetensors').is_file() and (directory / 'config.json').is_file():
+    candidates = [Path(root) / model_name for root in roots]
+    for directory in candidates:
+        if model_ready(directory):
             return directory
-    raise FileNotFoundError(f'Local Whisper model not found: models/audio_encoders/{model_name}. This node does not download files during a render.')
+    if download_if_missing and model_name == DEFAULT_MODEL:
+        directory = next((path for path in candidates if (path / 'model.safetensors').is_file()), candidates[0])
+        if not directory.resolve().is_relative_to(directory.parent.resolve()):
+            raise ValueError('Whisper download folder must stay inside audio_encoders.')
+        snapshot_download(repo_id='openai/' + DEFAULT_MODEL, local_dir=str(directory),
+                          allow_patterns=DOWNLOAD_FILES, token=False)
+        if model_ready(directory):
+            return directory
+    raise FileNotFoundError(f'Whisper model files are missing in models/audio_encoders/{model_name}. '
+                            'Enable Download missing model for whisper-large-v3-turbo, or install the selected model and processor files locally.')
 
 
 class ApexAudioLyrics(io.ComfyNode):
@@ -54,13 +76,15 @@ class ApexAudioLyrics(io.ComfyNode):
                 io.String.Input('corrected_lyrics', display_name='Corrected lyrics', optional=True, multiline=True, default='',
                                 tooltip='Optional reviewed lyrics. Nonempty text overrides transcription and skips loading Whisper.'),
                 io.Combo.Input('model_name', display_name='Whisper model', optional=True, options=models, default=DEFAULT_MODEL if DEFAULT_MODEL in models else models[0],
-                               tooltip='Installed Whisper folders under models/audio_encoders. No download occurs during execution.'),
+                               tooltip='Local Whisper folders under models/audio_encoders. Missing official whisper-large-v3-turbo files can download on first use.'),
                 io.Int.Input('beam_size', display_name='Beam size', optional=True, default=5, min=1, max=10, step=1,
                              tooltip='1 is fastest. Larger values compare more candidate transcriptions and take longer; default 5.'),
                 io.Boolean.Input('condition_on_previous_text', display_name='Previous segment text', optional=True, default=False,
                                  tooltip='Use preceding transcription as context for the next long-audio segment. Off reduces repetition or carryover; default off.'),
                 io.String.Input('initial_prompt', display_name='Vocabulary hint', optional=True, default='', multiline=False,
                                 tooltip='Optional names or unusual vocabulary to help recognition. This is a hint, not replacement lyrics.'),
+                io.Boolean.Input('download_if_missing', display_name='Download missing model', optional=True, default=True,
+                                 tooltip='Download official Whisper Turbo weights and processor files only when missing. Saves to the first configured audio_encoders folder; existing partial weights are reused. Requires internet on first use.'),
             ],
             outputs=[io.String.Output(display_name='lyrics', tooltip='Editable draft transcription for downstream text or C-roll planning.'),
                      io.String.Output(display_name='segments_json', tooltip='Approximate segment times in seconds relative to the supplied AUDIO selection.')],
@@ -68,7 +92,7 @@ class ApexAudioLyrics(io.ComfyNode):
 
     @classmethod
     def execute(cls, audio, language='auto', device='auto', corrected_lyrics='', model_name=DEFAULT_MODEL,
-                beam_size=5, condition_on_previous_text=False, initial_prompt=''):
+                beam_size=5, condition_on_previous_text=False, initial_prompt='', download_if_missing=True):
         if corrected_lyrics.strip():
             return io.NodeOutput(corrected_lyrics.strip(), json.dumps({'source':'user_corrected','segments':[]}))
         import torch
@@ -93,7 +117,7 @@ class ApexAudioLyrics(io.ComfyNode):
         duration = len(samples)/16000
         target = torch.device('cpu') if device=='cpu' else mm.get_torch_device()
         dtype = torch.float16 if target.type=='cuda' else torch.float32
-        directory = model_directory(model_name)
+        directory = model_directory(model_name, download_if_missing)
         model = None
         try:
             # Ask ComfyUI for only the memory this short-lived model needs.
