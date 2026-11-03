@@ -54,7 +54,7 @@ class MusicNodes(unittest.TestCase):
         self.assertFalse(schema['optional']['condition_on_previous_text'][1]['default'])
 
     def test_local_model_path_cannot_escape(self):
-        for name in ('../model', '..\\model', '/model'):
+        for name in ('../model', '..\\model', '/model', '.', '..', '.. ', '...'):
             with self.subTest(name=name), self.assertRaises(ValueError):
                 lyrics.model_directory(name)
 

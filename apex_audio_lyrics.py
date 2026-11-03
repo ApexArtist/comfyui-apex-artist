@@ -28,7 +28,7 @@ def installed_models():
 
 
 def model_directory(model_name=DEFAULT_MODEL):
-    if not model_name or Path(model_name).name != model_name or '/' in model_name or '\\' in model_name:
+    if not model_name or model_name != model_name.rstrip(' .') or Path(model_name).name != model_name or '/' in model_name or '\\' in model_name:
         raise ValueError('Choose a local Whisper model from the model dropdown.')
     roots = folder_paths.get_folder_paths('audio_encoders')
     for root in roots:
