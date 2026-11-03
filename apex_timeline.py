@@ -1044,6 +1044,55 @@ def composite_spans(project: dict, base_index: int) -> list:
     return spans
 
 
+def assemble_timeline(videos, complete_audio, project, store):
+    """Stream frame-aligned cuts to disk; native list remuxing can retain trim timestamp gaps."""
+    directory = store.project_dir(project["project_id"]) / "render_cache"
+    directory.mkdir(exist_ok=True)
+    fps = float(project.get("fps", 24))
+    segments = []
+    for video in videos:
+        source = Path(video.get_stream_source())
+        start, duration = video.get_active_trim_window()
+        count = round((duration or video.get_duration()) * fps)
+        stat = source.stat()
+        key = hashlib.sha256(f"cfr-1:{source}:{stat.st_size}:{stat.st_mtime_ns}:{start}:{count}:{fps}".encode()).hexdigest()
+        segment = directory / (key + ".mp4")
+        if not segment.exists():
+            temporary = directory / (uuid.uuid4().hex + ".mp4")
+            try:
+                _ffmpeg(["-ss", str(start), "-i", str(source), "-an", "-vf",
+                         f"fps={fps},trim=end_frame={count},setpts=N/({fps}*TB)",
+                         "-frames:v", str(count), "-r", str(fps), "-c:v", "libx264", "-crf", "18",
+                         "-preset", "fast", "-threads", "2", "-bf", "0", "-pix_fmt", "yuv420p", str(temporary)])
+                os.replace(temporary, segment)
+            finally:
+                temporary.unlink(missing_ok=True)
+        segments.append(segment)
+    token = uuid.uuid4().hex
+    manifest = directory / (token + ".txt")
+    audio_path = directory / (token + ".wav")
+    temporary = directory / (token + ".mp4")
+    try:
+        audio_key = "silent"
+        if complete_audio is not None:
+            write_audio(audio_path, complete_audio)
+            audio_key = _sha256(audio_path)
+        key = hashlib.sha256((":".join(p.stem for p in segments) + audio_key).encode()).hexdigest()
+        destination = directory / ("assembled-" + key + ".mp4")
+        if not destination.exists():
+            manifest.write_text("".join(f"file '{p.name}'\n" for p in segments), encoding="utf-8")
+            arguments = ["-f", "concat", "-safe", "1", "-i", str(manifest)]
+            if complete_audio is not None:
+                arguments += ["-i", str(audio_path), "-map", "0:v:0", "-map", "1:a:0", "-c:a", "aac"]
+            arguments += ["-c:v", "copy", "-movflags", "+faststart", str(temporary)]
+            _ffmpeg(arguments)
+            os.replace(temporary, destination)
+        return InputImpl.VideoFromFile(str(destination))
+    finally:
+        for path in (manifest, audio_path, temporary):
+            path.unlink(missing_ok=True)
+
+
 def timeline_video(project, store, track_index=0, composite=True, complete_audio=None):
     selected = next((item for item in project["tracks"] if int(item["index"]) == track_index), None)
     if composite and (not selected or not selected["clips"]):
@@ -1062,7 +1111,7 @@ def timeline_video(project, store, track_index=0, composite=True, complete_audio
             else:
                 path = render_fade_span(project, store, layers, start, duration, reference, _ffmpeg)
                 videos.append(InputImpl.VideoFromFile(str(path)))
-        return InputImpl.VideoFromList(videos, complete_audio, codec=Types.VideoCodec.H264)
+        return assemble_timeline(videos, complete_audio, project, store)
     if composite:
         spans = composite_spans(project, track_index)
         videos = []
@@ -1079,7 +1128,7 @@ def timeline_video(project, store, track_index=0, composite=True, complete_audio
                 continue
             video = InputImpl.VideoFromFile(str(store.render_asset_path(project, clip["asset_id"], reference)))
             videos.append(video.as_trimmed(source_in, duration, strict_duration=False))
-        return InputImpl.VideoFromList(videos, complete_audio, codec=Types.VideoCodec.H264)
+        return assemble_timeline(videos, complete_audio, project, store)
     videos = []
     for clip in selected["clips"]:
         asset = project["assets"].get(clip["asset_id"])
@@ -1092,7 +1141,7 @@ def timeline_video(project, store, track_index=0, composite=True, complete_audio
             if video is None:
                 raise ValueError(f"Timeline clip {clip['id']} has an invalid trim range.")
         videos.append(video)
-    return InputImpl.VideoFromList(videos, complete_audio, codec=Types.VideoCodec.H264)
+    return assemble_timeline(videos, complete_audio, project, store)
 
 
 def timeline_media(project, store, connected):
@@ -1109,9 +1158,6 @@ def timeline_media(project, store, connected):
     if connected.intersection({0, 1}):
         if not video_clips: raise ValueError("Add a video clip to use VIDEO or IMAGE. Audio-only edits can use AUDIO.")
         video = timeline_video(project, store, complete_audio=mixed)
-        if mixed is None:
-            # A fully muted edit must not fall back to embedded source sound.
-            video.complete_audio = {"waveform":torch.zeros((1, 1, round(TimelineStore.duration(project) * 48000))), "sample_rate":48000}
         if 1 in connected:
             components = video.get_components()
             images = components.images
