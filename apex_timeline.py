@@ -170,6 +170,78 @@ class TimelineStore:
             os.replace(temporary, destination)
         return project
 
+    def project_snapshot(self, project_id: str, project_name: str = "Apex Timeline") -> dict:
+        with self.project_lock(project_id):
+            project = self.load(project_id, project_name)
+            snapshot = {key: copy.deepcopy(project[key]) for key in (
+                "version", "name", "mode", "target_duration", "fps", "assets", "tracks",
+                "audio_tracks", "bin", "overflow_by_track", "removed_tracks") if key in project}
+            for key, asset in snapshot["assets"].items():
+                asset["source_path"] = str(self.source_path(project, project["assets"][key]).resolve())
+                asset.pop("filename", None)
+            return {"format": "apex-timeline-project", "version": 1, "project": snapshot}
+
+    def open_snapshot(self, document: dict, node_id: str) -> dict:
+        if not isinstance(document, dict) or document.get("format") != "apex-timeline-project" or document.get("version") != 1:
+            raise ValueError("Choose an Apex timeline project JSON file.")
+        saved = document.get("project")
+        if not isinstance(saved, dict) or saved.get("version") != PROJECT_VERSION:
+            raise ValueError("Unsupported timeline project version.")
+        name = str(saved.get("name", "Apex Timeline"))[:48] + " - Opened " + uuid.uuid4().hex[:12]
+        project = self._new_project(self.project_id(name, node_id), name, saved.get("mode", "Multi"), 0)
+        for key in ("target_duration", "fps", "assets", "tracks", "audio_tracks", "bin", "overflow_by_track", "removed_tracks"):
+            if key in saved:
+                project[key] = copy.deepcopy(saved[key])
+        if project["mode"] not in ("Single", "Multi") or not isinstance(project["assets"], dict):
+            raise ValueError("Invalid timeline project settings.")
+        def number(value, minimum=0):
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < minimum:
+                raise ValueError("Timeline project contains an invalid number.")
+            return value
+        number(project["target_duration"])
+        if not 1 <= number(project["fps"]) <= 240:
+            raise ValueError("Timeline FPS must be between 1 and 240.")
+        for key, asset in project["assets"].items():
+            if not isinstance(key, str) or not isinstance(asset, dict) or not isinstance(asset.get("source_path"), str):
+                raise ValueError("Timeline media needs an original source path.")
+            path = Path(asset["source_path"])
+            if not path.is_absolute() or path.resolve().suffix.lower() not in VIDEO_SUFFIXES | AUDIO_SUFFIXES:
+                raise ValueError("Timeline media needs a full video or audio source path.")
+            asset["source_path"] = str(path.resolve())
+            asset.pop("filename", None)
+            for field in ("duration", "width", "height", "frame_rate", "media_revision"):
+                if field in asset: number(asset[field])
+        clip_ids = set()
+        for kind in ("tracks", "audio_tracks"):
+            if not isinstance(project[kind], list):
+                raise ValueError("Invalid timeline tracks.")
+            indices = set()
+            for track in project[kind]:
+                if not isinstance(track, dict) or not isinstance(track.get("index"), int) or not 0 <= track["index"] < MAX_TRACKS or track["index"] in indices:
+                    raise ValueError("Invalid or repeated timeline track.")
+                indices.add(track["index"])
+                number(track.get("volume", 1))
+                if not isinstance(track.get("clips"), list):
+                    raise ValueError("Invalid timeline clips.")
+                for clip in track["clips"]:
+                    if not isinstance(clip, dict) or not isinstance(clip.get("id"), str) or clip["id"] in clip_ids or clip.get("asset_id") not in project["assets"]:
+                        raise ValueError("Invalid clip or missing media record.")
+                    clip_ids.add(clip["id"])
+                    if clip.get("track_index") != track["index"]:
+                        raise ValueError("Clip does not match its timeline track.")
+                    for field in ("start", "source_in", "fade_in", "fade_out", "volume"):
+                        number(clip.get(field, 1 if field == "volume" else 0))
+                    if number(clip.get("duration", 0)) == 0:
+                        raise ValueError("Timeline clips need a positive duration.")
+        if not isinstance(project["bin"], list) or any(key not in project["assets"] for key in project["bin"]):
+            raise ValueError("Invalid timeline media bin.")
+        if not isinstance(project["overflow_by_track"], dict) or any(not isinstance(items, list) or any(key not in project["assets"] for key in items) for items in project["overflow_by_track"].values()):
+            raise ValueError("Invalid timeline overflow media.")
+        if not isinstance(project.get("removed_tracks", []), list) or any(not isinstance(index, int) or not 0 <= index < MAX_TRACKS for index in project.get("removed_tracks", [])):
+            raise ValueError("Invalid removed timeline tracks.")
+        return self.save(project)
+
+
     @staticmethod
     def ensure_track(project: dict, track_index: int) -> dict:
         project["removed_tracks"] = [index for index in project.get("removed_tracks", []) if index != track_index]

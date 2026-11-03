@@ -9,7 +9,9 @@ import { addAudioWaveform, audioStyles } from "./apex_timeline_audio.js";
 
 import { createVideoThumbnails, thumbnailStyles } from "./apex_timeline_thumbnails.js";
 
-import { snapPlacement, snapTrim, addFadeHandles, createFadePreview, fadeStyles } from "./apex_timeline_fades.js";
+import { snapDragDelta, snapPlacement, snapTrim, addFadeHandles, createFadePreview, fadeStyles } from "./apex_timeline_fades.js";
+
+import { saveTimelineProject, openTimelineProject } from "./apex_timeline_projects.js";
 
 const nodes = new Set();
 
@@ -43,8 +45,10 @@ function projectQuery(node) {
     });
 }
 
-async function loadProject(node) {
-    return jsonResponse(await api.fetchApi(`/apex/timeline/project?${projectQuery(node)}`));
+async function loadProject(node, projectId = null) {
+    const query = projectQuery(node);
+    if (projectId) query.set("project_id",projectId);
+    return jsonResponse(await api.fetchApi(`/apex/timeline/project?${query}`));
 }
 
 async function editClip(node, project, clip, operation, changes = {}) {
@@ -100,7 +104,7 @@ function makeEditor(node) {
     let destroyed = false, visible = false, redrawFrame = null;
     let videoClips = [], hasVideoFades = false, playheadLines = [], waveformCleanups = [];
     let project = null, selectedId = null, scale = 18, playhead = 0, busy = false, dragging = false;
-    let fitView = false;
+    let fitView = false, openedProjectId = null;
     let previewClip = null, suppressClick = false;
     let cancelGesture = null;
     let snapEnabled = node.properties?.apex_timeline_snap !== false;
@@ -371,6 +375,7 @@ function makeEditor(node) {
                 let delta = snap(((event.clientX - origin.x) / origin.canvasScale + tracksHost.scrollLeft - origin.scroll) / scale);
                 moved ||= Math.abs(event.clientX - origin.x) > 3;
                 if (!moved) return;
+                if (snapEnabled) delta = snap(snapDragDelta(origin,delta,side,playhead,6/scale));
                 if (side === "left") {
                     delta = Math.max(-Math.min(origin.source_in || 0, origin.start), Math.min(delta, origin.duration - 1 / fps()));
                     next = { start: origin.start + delta, source_in: (origin.source_in || 0) + delta, duration: origin.duration - delta };
@@ -423,8 +428,8 @@ function makeEditor(node) {
         waveformCleanups = []; playheadLines = [];
         videoThumbnails.reset();
         snapButton.title = project.fade_support
-            ? "On: stop at clip edges. Off: overlap to crossfade; touching edges receive short fades."
-            : "On: stop at clip edges. Off: allow overlap. Restart ComfyUI to enable automatic fades.";
+            ? "On: snap to time grid, playhead and clip edges. Off: overlap to crossfade; touching edges receive short fades."
+            : "On: snap to time grid, playhead and clip edges. Off: allow overlap. Restart ComfyUI to enable automatic fades.";
         projectFps.value = project.fps || 24;
         zoom.value = scale; zoomLabel.textContent = `${Number(scale.toFixed(2))} px/s`;
         scrub.max = project.duration || 1; scrub.step = 1 / fps();
@@ -467,8 +472,9 @@ function makeEditor(node) {
         ruler.onpointerdown = event => beginScrub(event,ruler);
         tracksHost.append(el("div", { className: "apex-timeline-track apex-timeline-ruler-row" }, [
             el("div", { className: "apex-timeline-track-label", textContent: "TIME" }), ruler]));
-        const highest = syncTrackInputs(node, project.tracks, 1, project.removed_tracks || []) - 1;
-        addTrack.disabled = node.inputs.filter(input => videoTrackIndex(input) >= 0).length >= maxTracks;
+        const highest = openedProjectId ? Math.max(0,...project.tracks.map(track=>track.index))
+            : syncTrackInputs(node, project.tracks, 1, project.removed_tracks || []) - 1;
+        addTrack.disabled = (openedProjectId ? project.tracks.length : node.inputs.filter(input => videoTrackIndex(input) >= 0).length) >= maxTracks;
         const lanes = [];
         for (let index = highest; index >= 0; index--) {
             if (index > 0 && project.removed_tracks?.includes(index)) continue;
@@ -551,11 +557,13 @@ function makeEditor(node) {
         tracksHost.scrollLeft = scrollLeft;
     }
     async function refresh(replacement = null) {
-        if (replacement && replacement.name !== String(widgetValue(node, "project_name", "Apex Timeline"))) return;
         try {
+            const requestedId = openedProjectId;
             const requestedName = String(widgetValue(node, "project_name", "Apex Timeline"));
-            const loaded = replacement || await loadProject(node);
-            if (destroyed || loaded.name !== requestedName || requestedName !== String(widgetValue(node, "project_name", "Apex Timeline"))) return;
+            const loaded = replacement || await loadProject(node,requestedId);
+            if (destroyed || requestedId !== openedProjectId) return;
+            if (requestedId ? loaded.project_id !== requestedId
+                : loaded.name !== requestedName || requestedName !== String(widgetValue(node, "project_name", "Apex Timeline"))) return;
             if (project && loaded.project_id === project.project_id && loaded.revision < project.revision) return;
             if (previewClip) {
                 const before=project?.assets[previewClip.asset_id], after=loaded.assets[previewClip.asset_id];
@@ -568,6 +576,8 @@ function makeEditor(node) {
                 mixPlayer.load();
             }
             project = loaded;
+            workflowProject.hidden = !openedProjectId;
+            status.title = project.name;
             videoClips = [...project.tracks].sort((a,b)=>a.index-b.index).flatMap(track=>track.clips);
             hasVideoFades = videoClips.some(clip=>clip.fade_in || clip.fade_out);
             error.textContent = "";
@@ -594,6 +604,32 @@ function makeEditor(node) {
     const previewStop = button("■ Stop", () => { pausePlayback(); setPlayhead(0); }, transport);
     previewStop.className = "apex-timeline-stop";
     previewStop.setAttribute("aria-label", "Stop timeline");
+    button("Save Project", async () => {
+        if (busy || !project) return;
+        try {
+            await saveTimelineProject(api,project,{playhead,selectedId,scale,fitView,snapEnabled,
+                binVisible:!mediaBin.hidden,scrollLeft:tracksHost.scrollLeft,scrollTop:tracksHost.scrollTop});
+        } catch (exc) { error.textContent = exc.message; }
+    }).title = "Save this timeline and editor view as JSON. Media files stay in their original folders.";
+    const projectFile = el("input",{type:"file",accept:".json,application/json",hidden:true});
+    toolbar.append(projectFile);
+    projectFile.onchange = async () => {
+        const file=projectFile.files[0]; projectFile.value="";
+        if (!file || busy) return;
+        await mutate(async()=>{
+            const opened=await openTimelineProject(api,node.id,file), state=opened.editor;
+            openedProjectId=opened.project.project_id;
+            playhead=state.playhead; selectedId=state.selectedId; scale=state.scale; fitView=state.fitView;
+            snapEnabled=state.snapEnabled; mediaBin.hidden=!state.binVisible;
+            snapButton.textContent=snapEnabled?"SNAP ON":"SNAP OFF";
+            snapButton.setAttribute("aria-pressed",String(snapEnabled));
+            requestAnimationFrame(()=>{tracksHost.scrollLeft=state.scrollLeft;tracksHost.scrollTop=state.scrollTop;});
+            return opened.project;
+        });
+    };
+    button("Open Project",()=>{if(!busy)projectFile.click();}).title = "Open timeline JSON as a separate editable copy. Workflow inputs stay unchanged.";
+    const workflowProject = button("Workflow project",()=>{openedProjectId=null;selectedId=null;refresh();});
+    workflowProject.hidden=true;
     button("Reload", () => refresh());
     button("Clear video cache", () => mutate(() => post("cache/clear", {})));
     button("Clear", () => {
@@ -609,7 +645,8 @@ function makeEditor(node) {
     button("Media bin", () => { mediaBin.hidden = !mediaBin.hidden; });
     const addTrack = button("+ Track", () => mutate(() => {
         const index = Array.from({length:maxTracks}, (_, index) => index)
-            .find(index => !node.inputs.some(input => videoTrackIndex(input) === index));
+            .find(index => openedProjectId ? !project.tracks.some(track=>track.index===index)
+                : !node.inputs.some(input => videoTrackIndex(input) === index));
         return post("track/edit", {track_index:index, operation:"add"});
     }));
     button("+ Audio", () => mutate(()=>{
@@ -630,7 +667,7 @@ function makeEditor(node) {
     });
     snapButton.className = "apex-timeline-snap";
     snapButton.setAttribute("aria-pressed",String(snapEnabled));
-    snapButton.title = "On: stop at clip edges. Off: overlap to crossfade; touching edges receive short fades.";
+    snapButton.title = "On: snap to time grid, playhead and clip edges. Off: overlap to crossfade; touching edges receive short fades.";
     const zoomControls = el("div", {className:"apex-timeline-zoom"});
     const fitButton = button("Fit", () => { fitView = true; tracksHost.scrollLeft = 0; scheduleRender(); }, zoomControls);
     fitButton.title = "Fit the whole timeline to the window";
@@ -684,7 +721,7 @@ function makeEditor(node) {
             || document.querySelector(".apex-source-dialog,.apex-missing-menu")) return;
         checkingMedia=true;
         try {
-            const latest=await loadProject(node);
+            const latest=await loadProject(node,openedProjectId);
             if (latest.revision!==project.revision || Object.keys(latest.assets).some(key=>latest.assets[key].missing!==project.assets[key]?.missing)) await refresh(latest);
         } catch (exc) { status.textContent="Media check unavailable — use Reload to retry"; }
         finally { checkingMedia=false; }
@@ -716,7 +753,16 @@ function makeEditor(node) {
     });
     viewportObserver.observe(editor);
     document.addEventListener("visibilitychange",updateVisibility);
-    return { element: editor, refresh, renderTracks, destroy() {
+    return { element: editor, refresh, renderTracks, receiveProject(replacement) {
+        if (replacement.project_id !== openedProjectId) {
+            openedProjectId=null;
+            if (node.inputs.some(input=>input.name === "project_name" && input.link != null)) {
+                const name=node.widgets.find(widget=>widget.name === "project_name");
+                if (name) name.value=replacement.name;
+            }
+        }
+        return refresh(replacement);
+    }, destroy() {
         destroyed = true;
         clearInterval(mediaCheck);
         cancelAnimationFrame(redrawFrame);
@@ -833,11 +879,7 @@ app.registerExtension({
             const nodeId = String(event.detail?.node ?? "");
             for (const node of nodes) {
                 if (String(node.id) !== nodeId) continue;
-                if (node.inputs.some(input => input.name === "project_name" && input.link != null)) {
-                    const name = node.widgets.find(widget => widget.name === "project_name");
-                    if (name) name.value = event.detail.name;
-                }
-                node._apexTimeline?.refresh(event.detail).catch(console.error);
+                node._apexTimeline?.receiveProject(event.detail).catch(console.error);
             }
         });
     },
@@ -850,6 +892,8 @@ app.registerExtension({
             this._apexTimeline = makeEditor(this);
             this.addDOMWidget("timeline_editor", "ApexTimelineEditorWidget", this._apexTimeline.element, {
                 serialize: false, hideOnZoom: false, getMinHeight: () => 600,
+                // Properties-panel drawing must not leave its width on this canvas widget.
+                onDraw: widget => {widget.width = this.size[0];},
             });
             const projectName = this.widgets.find(widget => widget.name === "project_name");
             const changed = projectName.callback;

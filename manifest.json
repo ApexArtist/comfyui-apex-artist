@@ -224,6 +224,32 @@
         "FLOAT",
         "INT"
       ]
+    },
+    {
+      "id": "ApexAudioLyrics",
+      "display_name": "Apex Audio Lyrics",
+      "description": "Transcribe selected audio locally with editable Whisper controls",
+      "category": "Apex Artist/Audio",
+      "input_types": [
+        "AUDIO"
+      ],
+      "output_types": [
+        "STRING",
+        "STRING"
+      ]
+    },
+    {
+      "id": "ApexOptionalImages",
+      "display_name": "Apex Optional Images",
+      "description": "Autogrowing optional image inputs with batch and count outputs",
+      "category": "Apex Artist/Image",
+      "input_types": [
+        "IMAGE"
+      ],
+      "output_types": [
+        "IMAGE",
+        "INT"
+      ]
     }
   ],
   "version": "2.5.0"

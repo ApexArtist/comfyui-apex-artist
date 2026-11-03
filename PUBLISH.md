@@ -11,7 +11,7 @@ A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publi
 - Review `git status`, `git diff` and untracked runtime files. Include all Audio/Timeline Python and frontend modules, the portable regression test and release documentation.
 - Exclude Python/test caches, generated previews, temporary media, local credentials and build output. Preserve bundled `lens/` and `lens_previews/` assets. Never delete project media as repository cleanup.
 - Run `python -m unittest discover -s tests` and `python scripts/generate_character_presets.py --check` with the ComfyUI environment. Parse Python, JSON and TOML files and run `node --check` for each frontend module.
-- Confirm all twelve registered nodes are described in metadata. Align the package version in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json` and `custom_nodes.json`; do not change `manifest_version`.
+- Confirm all fourteen registered nodes are described in metadata. Align the package version in `__init__.py`, `pyproject.toml`, `comfyui.yaml`, `manifest.json` and `custom_nodes.json`; do not change `manifest_version`.
 - Review README, CHANGELOG, dependencies and minimum versions. Document any API changes and checks that remain unperformed.
 - Restart ComfyUI from the owner's CMD window and hard-refresh the browser. Smoke-test Audio trim/preview, Timeline capture/playback/export, preset saving, LoRA selection and HDRI preview. A clean installation and GPU-specific checks remain separate from CPU tests.
 - Run `node --test tests/test_timeline_export.mjs` for saved-timeline output selection.

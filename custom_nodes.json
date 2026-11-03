@@ -30,7 +30,9 @@
       "Apex JSON Lookup",
       "Apex Timeline Editor",
       "Apex Audio",
-      "Apex V1 Cut Window"
+      "Apex V1 Cut Window",
+      "Apex Audio Lyrics",
+      "Apex Optional Images"
     ],
     "install_type": "git",
     "files": [

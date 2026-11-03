@@ -12,6 +12,8 @@ from .apex_json_node import ApexJSON
 from .apex_timeline import ApexTimelineEditor
 from .apex_timeline_cut_window import ApexTimelineCutWindow
 from .apex_audio import ApexAudio
+from .apex_optional_images import ApexOptionalImages
+from .apex_audio_lyrics import ApexAudioLyrics
 
 # Import API servers to initialize routes
 try:
@@ -62,6 +64,8 @@ NODE_CLASS_MAPPINGS = {
     "ApexTimelineEditor": ApexTimelineEditor,
     "ApexTimelineCutWindow": ApexTimelineCutWindow,
     "ApexAudio": ApexAudio,
+    "ApexOptionalImages": ApexOptionalImages,
+    "ApexAudioLyrics": ApexAudioLyrics,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -77,6 +81,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexTimelineEditor": "Apex Timeline Editor",
     "ApexTimelineCutWindow": "Apex V1 Cut Window",
     "ApexAudio": "Apex Audio",
+    "ApexOptionalImages": "Apex Optional Images",
+    "ApexAudioLyrics": "Apex Audio Lyrics",
 }
 
 WEB_DIRECTORY = "./web"

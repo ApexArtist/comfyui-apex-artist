@@ -1,3 +1,18 @@
+export function snapDragDelta(origin, delta, side, playhead, threshold) {
+    const edges = side === 'left' ? [origin.start] : side === 'right'
+        ? [origin.start + origin.duration] : [origin.start, origin.start + origin.duration];
+    let nearest = threshold + 1e-9, snapped = delta;
+    for (const edge of edges) {
+        const time = edge + delta;
+        // Lane grid lines are spaced one second apart; keep the playhead on ties.
+        for (const target of [playhead, Math.round(time)]) {
+            const distance = Math.abs(time - target);
+            if (distance < nearest) {nearest = distance; snapped = target - edge;}
+        }
+    }
+    return snapped;
+}
+
 export function snapPlacement(origin, candidate, neighbours, threshold) {
     const next = {...candidate};
     let low = 0, high = Infinity;
@@ -113,7 +128,7 @@ export function createFadePreview(stage, urlFor) {
         const {video,source,playing} = record;
         if (video.readyState < 1) return;
         if (Math.abs(video.currentTime-source) > (playing ? .15 : .002)) video.currentTime = source;
-        if (playing) {if(video.paused && !video.seeking)video.play().catch(()=>{});}
+        if (playing) {if(video.paused && !video.seeking && !video.ended)video.play().catch(()=>{});}
         else if(!video.paused)video.pause();
     }
     function release(id,record) {

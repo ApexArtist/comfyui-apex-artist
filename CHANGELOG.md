@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Register Apex Audio Lyrics and Apex Optional Images for music-video workflows. Whisper controls use local files and keep prior widget positions.
+- Add independent timeline project Save/Open, grid/playhead snapping and the widget-width correction. Preserve the existing cut-window and multi-output export fixes.
+- Add portable registration, optional-input, lyric override, path, cut-window and snapshot regressions.
+
 ## 2.5.0 - 2026-10-23
 
 ### Added

@@ -15,6 +15,8 @@ Image processing, prompt presets, audio selection and a video timeline editor in
 | Apex Prompt | Environment, Lighting, Style, Color and Camera Lens presets |
 | Apex Character Prompt | Twelve character categories with separate and combined text outputs |
 | Apex JSON Lookup | Read text values from JSON data |
+| Apex Audio Lyrics | Local Whisper transcription with editable lyrics and decoding controls |
+| Apex Optional Images | Growing optional image sockets with batch and count outputs |
 | Apex Audio | Load or connect audio, trim, adjust gain, preview and read metadata |
 | Apex Timeline Editor | Edit persistent video/audio tracks and output standard ComfyUI media |
 | Apex V1 Cut Window | Read actual main-track joins for B-roll audio crops and placement |
@@ -54,6 +56,14 @@ Load/upload a file or connect standard `AUDIO`; a connection takes priority. Dra
 
 Source files remain unchanged. No resampling or normalization is applied. Disable Preview to skip waveform generation and connected-input preview encoding; connected previews become available after execution.
 
+## Audio lyrics and optional references
+
+**Apex Audio Lyrics** transcribes standard AUDIO locally. It exposes language, device, corrected lyrics, local Whisper model, beam size, previous-segment context and vocabulary hints. Defaults retain beam size 5 and previous-segment context off. Corrected lyrics bypass model loading. Outputs are draft text and approximate segment times relative to the input selection; sung words still need review.
+
+It uses the Transformers runtime provided by ComfyUI and local official Whisper weights/processor assets beneath the configured `audio_encoders` paths. The installed default is `whisper-large-v3-turbo`. This node never downloads models during execution.
+
+**Apex Optional Images** grows sockets as images are connected. Empty inputs return count 0 so a workflow can skip that optional track. **Apex V1 Cut Window** reads actual saved V1 joins; use its start and duration for both the audio crop and B-roll placement.
+
 ## Timeline editor
 
 The editor is embedded in the node. Resize it for more space. It outputs **VIDEO, IMAGE, AUDIO and FPS**, followed by project metadata. Connect VIDEO to native **Save Video**, or IMAGE/AUDIO/FPS to a video-combine node. IMAGE materializes frames only when connected; video-only exports keep frames on disk. Final saving uses the downstream node's encoding settings. **Export** queues every connected save/combine output using its own encoding settings and reads the saved timeline without regenerating clips. During clip generation, route save nodes through End Loop so they cannot escape the loop body.
@@ -78,7 +88,9 @@ Video audio receives linked audio placements. The optional master AUDIO input be
 
 Project FPS defaults to 24. Scrub the ruler/playhead; Space toggles playback, Left/Right steps frames and Home/End jumps to boundaries while the editor has focus. Text and numeric fields retain their normal keys. **Fit** sits beside zoom. Clip actions are before **Export**. Wheel input scrolls editing panels and reaches canvas zoom over the preview/background.
 
-Video/audio edge handles control fades. Zero duration means full opacity/gain. SNAP stops edits at clip boundaries; disabling SNAP allows overlap and automatic join fades. Preview preloads the next visible clip for hard cuts. Mixed sizes and frame rates are normalized during rendering, leaving linked originals unchanged.
+Video/audio edge handles control fades. Zero duration means full opacity/gain. SNAP aligns edits to the visible time grid, playhead and clip boundaries; disabling SNAP allows overlap and automatic join fades. Preview preloads the next visible clip for hard cuts. Mixed sizes and frame rates are normalized during rendering, leaving linked originals unchanged.
+
+**Save Project** exports timeline state as JSON with media links. **Open Project** opens a separate editable copy; the workflow-owned project remains unchanged. The editor width remains stable after using property-panel controls.
 
 ### Storage and export
 

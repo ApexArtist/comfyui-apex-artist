@@ -35,9 +35,32 @@ routes = PromptServer.instance.routes
 async def timeline_project(request):
     try:
         store, project_id, project_name = _project_identity(request)
+        if request.query.get("project_id"):
+            project_id = request.query["project_id"]
+            if not (await asyncio.to_thread(store.project_dir, project_id) / "project.json").is_file():
+                raise ValueError("Timeline project was not found.")
         project = await asyncio.to_thread(store.load, project_id, project_name)
         return web.json_response(project_summary(project))
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return web.json_response({"error": str(exc)}, status=400)
+
+
+@routes.get("/apex/timeline/project/save")
+async def timeline_project_save(request):
+    try:
+        snapshot = await asyncio.to_thread(get_timeline_store().project_snapshot, request.query["project_id"], request.query.get("project_name", "Apex Timeline"))
+        return web.json_response(snapshot)
+    except (KeyError, TypeError, ValueError, OSError) as exc:
+        return web.json_response({"error": str(exc)}, status=400)
+
+
+@routes.post("/apex/timeline/project/open")
+async def timeline_project_open(request):
+    try:
+        payload = await request.json()
+        project = await asyncio.to_thread(get_timeline_store().open_snapshot, payload["document"], str(payload["node_id"]))
+        return web.json_response(project_summary(project))
+    except (KeyError, TypeError, ValueError, OSError) as exc:
         return web.json_response({"error": str(exc)}, status=400)
 
 

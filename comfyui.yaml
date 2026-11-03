@@ -75,3 +75,13 @@ nodes:
     display_name: "Apex V1 Cut Window"
     description: "Read actual V1 joins and return frame-aligned B-roll source and placement windows"
     category: "Apex Artist/Video"
+
+  - id: "ApexAudioLyrics"
+    display_name: "Apex Audio Lyrics"
+    description: "Transcribe selected audio locally with editable Whisper controls"
+    category: "Apex Artist/Audio"
+
+  - id: "ApexOptionalImages"
+    display_name: "Apex Optional Images"
+    description: "Autogrowing optional image inputs with batch and count outputs"
+    category: "Apex Artist/Image"
