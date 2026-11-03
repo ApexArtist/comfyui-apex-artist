@@ -1,9 +1,13 @@
 # Changelog
 
-## Unreleased
+## 2.6.1 - 2026-11-03
 
 - Repair Apex Optional Images sockets after loading, cloning and connection changes. Keep one empty socket, restore numeric order past ten inputs and preserve connected image sources through native node APIs.
 - Add portable socket-repair regressions and verify growth to 17 images, reload, middle disconnection and source replacement in the actual frontend.
+
+### Validation
+
+- Passed 21 Python regressions, eight frontend regressions, preset synchronization and metadata/syntax checks. The real frontend grew to 17 images and preserved source order after reload, middle removal and replacement. No new GPU render was needed for this frontend-only fix.
 
 ## 2.6.0 - 2026-11-03
 
