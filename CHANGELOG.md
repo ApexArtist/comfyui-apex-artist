@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.6.3 - 2026-11-04
+
+- After a successful timeline capture in an uncached native loop, release completed upstream clip results that have no pending consumers. Preserve shared cache entries, carried values, explicitly cached iterations and standalone timelines. Keep the default ComfyUI cache mode, existing node sockets and workflow settings.
+
+### Validation
+
+- Reproduced retention of all 12 completed frame batches before the fix. With the fix and default RAM-pressure caching, only the current batch stays live and none remain after export. The real Apex timeline saves 12 ordered two-second test clips and exports 24 seconds at 24 fps. Shared preparation runs once.
+- Passed 34 Python regressions, eight frontend regressions and aligned metadata/syntax checks. Verified the same 12-clip export with aligned 24-second audio and identical decoded video pixels.
+- CPU memory/capture/export regressions are model-free; this release does not claim a full LTX song render or clean Manager installation.
+
 ## 2.6.2 - 2026-11-03
 
 - Let Apex Audio Lyrics download missing official Whisper Turbo files on first transcription. Add a download toggle, reuse complete local models without network access, repair partial processor assets and preserve previous widget positions.

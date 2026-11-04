@@ -118,6 +118,9 @@ Missing sources remain red with their edits intact. Right-click to locate one or
 
 **Export** queues the connected save path using saved placements, fades, mute and gain. It does not regenerate source clips or reload the original audio loader. **Clear video cache** removes regenerable MP4 cache files only while the ComfyUI queue is idle. Source media stays intact. Audio/waveform caches have count limits; video caches are cleared explicitly.
 
+Inside a native loop with **cache_iterations off**, a successful timeline capture releases completed upstream clip results once no pending node needs them. Shared cache entries, carried values and explicitly cached iterations are preserved. Normal ComfyUI caching stays enabled; no cleanup node or launch flag is needed. This prevents finished frame batches from accumulating between captures.
+
+
 ## LoRA and HDRI previews
 
 The LoRA browser lists all configured roots and generates 256×256 JPEG thumbnails. Changed source previews regenerate thumbnails; asynchronous results stay matched to the selected model. Duplicate relative names follow ComfyUI's earlier-root precedence. Keep original preview images if you need their full quality.

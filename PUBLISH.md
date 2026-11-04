@@ -1,8 +1,8 @@
 # Publishing Apex Artist
 
-## Release 2.6.2
+## Release 2.6.3
 
-**2.6.2 — 2026-11-03.** The owner explicitly authorized the version bump and release push. This node-only patch release adds first-use Whisper Turbo downloads; no shared workflow or private media is published. See CHANGELOG.md for validation limits. Confirm publication through the GitHub Action and Registry; a pushed tag alone does not establish activation.
+**2.6.3 — 2026-11-04.** Default-mode memory fix for timeline captures in uncached native loops. No shared workflow or personal media is included. See CHANGELOG.md for validation scope. Confirm the GitHub Action and Registry status separately from the source push.
 
 A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publish_action.yml` and publishes to the ComfyUI registry. Treat the release push as publication and obtain owner approval for each release.
 
@@ -22,10 +22,10 @@ A push to `main` that changes `pyproject.toml` triggers `.github/workflows/publi
 After approval, commit the reviewed changes with a short, direct message, for example:
 
 ```sh
-git commit -m "Release Apex Artist 2.6.2"
-git tag -a v2.6.2 -m "Release 2.6.2"
+git commit -m "Release Apex Artist 2.6.3"
+git tag -a v2.6.3 -m "Release 2.6.2"
 git push origin main
-git push origin v2.6.2
+git push origin v2.6.3
 ```
 
 Inspect the current branch and remote state before pushing. Push only the intended release tag. Do not force-push, replace an existing release tag or rebase unrelated work to bypass a rejection; inspect the cause first.

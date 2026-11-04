@@ -23,6 +23,7 @@ from comfy.audio import resample
 from comfy_api.latest import InputImpl, Types, io
 from comfy_execution.graph_utils import is_link
 from comfy_extras.nodes_audio import load as load_audio
+from .apex_loop_memory import release_captured_loop_outputs
 from .apex_timeline_fades import clamp_fades, clear_auto_fades, join_fades, available_start, fade_spans, fade_value, render_fade_span
 
 
@@ -940,7 +941,7 @@ class ApexTimelineEditor(io.ComfyNode):
                                  tooltip="Prepare VIDEO/IMAGE/AUDIO outputs. In a loop, connect is_last to assemble media only after the final capture."),
                 io.Audio.Input("audio", optional=True, tooltip="Capture audio as an editable clip on A1. Audio lanes mix independently."),
             ],
-            hidden=[io.Hidden.unique_id, io.Hidden.prompt, io.Hidden.dynprompt],
+            hidden=[io.Hidden.unique_id, io.Hidden.prompt, io.Hidden.dynprompt, io.Hidden.execution_list],
             outputs=[io.Video.Output("video", display_name="VIDEO"),
                      io.Image.Output("images", display_name="IMAGE"),
                      io.Audio.Output("audio", display_name="AUDIO"),
@@ -1003,6 +1004,8 @@ class ApexTimelineEditor(io.ComfyNode):
         connected = {value[1] for definition in definitions for value in definition["inputs"].values()
                      if is_link(value) and str(value[0]) == str(unique_id)} if prepare_outputs else set()
         video, images, audio_out, fps = timeline_media(project, store, connected)
+        if capture_policy != "Read Saved":
+            release_captured_loop_outputs(graph, cls.hidden.execution_list, unique_id)
         return io.NodeOutput(video, images, audio_out, fps, summary, summary["duration"], summary["clip_count"])
 
 
