@@ -2,7 +2,7 @@ id: comfyui-apex-artist
 publisher_id: apex
 name: "Apex Artist Professional VFX Tools"
 description: "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
-version: "2.6.3"
+version: "2.6.4"
 license: "MIT"
 repository: "https://github.com/ApexArtist/comfyui-apex-artist"
 homepage: "https://github.com/ApexArtist/comfyui-apex-artist"
@@ -25,6 +25,7 @@ comfyui_version: ">=0.42.1"
 dependencies:
   - "opencv-python>=4.8.0"
   - "aiofiles>=23.2.1"
+  - "jsonschema>=4.18"
 nodes:
   - id: "ApexLoraLoader"
     display_name: "Apex LoRA Loader"

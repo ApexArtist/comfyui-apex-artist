@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.6.4 - 2026-11-06
+
+- Add opt-in strict parsing, JSON Schema validation and JSON-safe scalar output to the existing Apex JSON Lookup node. Preserve the original input order, two-input calls, registrations and lenient defaults.
+- Accept complete fenced JSON without truncating nested objects. Strict handoffs fail clearly on malformed data, missing paths, duplicate keys, non-finite numbers and schema violations. Schema references remain local; no external retrieval is performed.
+- Declare the schema-validation dependency consistently in installation metadata. No new node type or production workflow/media is included in the package.
+
+### Validation
+
+- Passed 50 Python regressions plus aligned dependency/version/registration and syntax checks. Separate model-free workflow tests cover strict story/beat/script handoffs, JSON escaping, lazy resume checks and native loop expansion for 5- and 30-minute schedules. No generated film or language-model output was tested for this release.
+
 ## 2.6.3 - 2026-11-04
 
 - After a successful timeline capture in an uncached native loop, release completed upstream clip results that have no pending consumers. Preserve shared cache entries, carried values, explicitly cached iterations and standalone timelines. Keep the default ComfyUI cache mode, existing node sockets and workflow settings.

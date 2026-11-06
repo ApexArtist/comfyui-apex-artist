@@ -1,3 +1,4 @@
 # Extra dependencies; remaining runtime libraries are provided by ComfyUI.
 opencv-python>=4.8.0
 aiofiles>=23.2.1
+jsonschema>=4.18

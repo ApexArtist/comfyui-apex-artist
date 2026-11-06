@@ -14,7 +14,7 @@ Image processing, prompt presets, audio selection and a video timeline editor in
 | Apex LoRA Loader | Browse configured LoRA folders with thumbnail previews |
 | Apex Prompt | Environment, Lighting, Style, Color and Camera Lens presets |
 | Apex Character Prompt | Twelve character categories with separate and combined text outputs |
-| Apex JSON Lookup | Read text values from JSON data |
+| Apex JSON Lookup | Read JSON values; optional strict parsing, schema checks and JSON-safe output |
 | Apex Audio Lyrics | Local Whisper transcription with editable lyrics and decoding controls |
 | Apex Optional Images | Growing optional image sockets with batch and count outputs |
 | Apex Audio | Load or connect audio, trim, adjust gain, preview and read metadata |
@@ -24,6 +24,12 @@ Image processing, prompt presets, audio selection and a video timeline editor in
 ## Installation
 
 Requires **Python 3.10+**, **ComfyUI 0.42.1+**, and the dependencies in `requirements.txt`. Timeline rendering also needs FFmpeg available on PATH. PyTorch, PyAV, Pillow and the native audio/video APIs come from ComfyUI.
+
+### Strict JSON handoffs
+
+Apex JSON Lookup keeps its original `text` and dotted `key` inputs and its existing lenient defaults. Enable `strict` to stop on malformed JSON or a missing path instead of returning empty/partial text. A complete Markdown JSON fence is accepted. Strict mode rejects duplicate object keys and non-finite numbers.
+
+The optional `schema` validates the extracted value with JSON Schema 2020-12 and enables strict parsing. Local schema references work; external schema retrieval is disabled. Use `as_json` to output valid JSON scalars as well as objects/arrays, preserving quoted strings, backslashes, Unicode, booleans and null when assembling a subsequent JSON object. In strict/JSON-output mode, an empty key or `$` selects the whole document. Existing two-input workflows keep their previous empty-key and text-fallback behavior.
 
 Clone this repository into ComfyUI's `custom_nodes` folder:
 
