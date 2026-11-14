@@ -62,7 +62,8 @@ class ApexAudio(io.ComfyNode):
             ],
             outputs=[io.Audio.Output(display_name="AUDIO"), io.Float.Output(display_name="duration_seconds"),
                      io.Int.Output(display_name="sample_rate"), io.Int.Output(display_name="channels"),
-                     io.Int.Output(display_name="samples")],
+                     io.Int.Output(display_name="samples"),
+                     io.String.Output(display_name="filename", tooltip="Source audio filename without its extension. Empty when AUDIO is connected.")],
             is_output_node=True,
         )
 
@@ -78,8 +79,11 @@ class ApexAudio(io.ComfyNode):
     def execute(cls, audio_file=NO_FILE, start_seconds=0.0, duration_seconds=0.0,
                 volume_percent=100.0, preview=True, audio=None):
         from_file = audio is None
+        filename = ""
         if from_file:
-            waveform, rate = load(str(audio_path(audio_file)))
+            path = audio_path(audio_file)
+            filename = path.stem
+            waveform, rate = load(str(path))
             audio = {"waveform": waveform.unsqueeze(0), "sample_rate": rate}
         waveform, rate = audio["waveform"], audio["sample_rate"]
         total = waveform.shape[-1]
@@ -97,9 +101,9 @@ class ApexAudio(io.ComfyNode):
                                  "volume_percent": volume_percent}
             if from_file:
                 data["filename"] = audio_file
-                stat = audio_path(audio_file).stat()
+                stat = path.stat()
                 data["version"] = f"{stat.st_mtime_ns}-{stat.st_size}"
             else:
                 data["media"] = ui.PreviewAudio({**audio, "waveform": waveform[:1]}).as_dict()["audio"][0]
             display["apex_audio"] = [data]
-        return io.NodeOutput(output, (end - start) / rate, rate, waveform.shape[-2], end - start, ui=display)
+        return io.NodeOutput(output, (end - start) / rate, rate, waveform.shape[-2], end - start, filename, ui=display)

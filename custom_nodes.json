@@ -2,7 +2,7 @@
   "apex-artist-nodes": {
     "title": "Apex Artist Professional VFX Tools",
     "description": "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios",
-    "version": "2.6.4",
+    "version": "2.6.5",
     "author": "Apex Artist",
     "repository": "https://github.com/ApexArtist/comfyui-apex-artist",
     "tags": [
@@ -32,7 +32,9 @@
       "Apex Audio",
       "Apex V1 Cut Window",
       "Apex Audio Lyrics",
-      "Apex Optional Images"
+      "Apex Optional Images",
+      "Apex Memory Cleanup",
+      "Apex Music Video Plan"
     ],
     "install_type": "git",
     "files": [

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.6.5 - 2026-11-13
+
+- Append a filename output to Apex Audio for stable audio-derived project names. Existing output positions and connected-audio priority remain unchanged; connected audio returns an empty filename.
+- Add Apex Memory Cleanup as an explicit post-save boundary. Release completed outputs while preserving pending readers, shared preparation, carried values and explicitly cached iterations; model unloading remains optional and off by default.
+- Add Apex Music Video Plan with independent frame-aligned B/C-roll offsets and gaps, optional-reference checks, song-end trimming and clear validation errors before generation.
+- Bound cache-key ancestry for this plan's uncached native render loop. Preserve ordinary ComfyUI caching and fail clearly when its private cache layout is unsupported; no core files or launch flags are changed.
+- Correct legacy V1 cut-window handling for visible overlaps, gaps, cross-clip B-roll and zero-frame tails. Color timeline buttons by action and playback state.
+- Register both added nodes and align all five version declarations. No experimental H3 tiled upscale node, clear-on-start toggle, personal workflow or media is included in this release.
+
+### Validation
+
+- Passed 102 Python regressions, eight frontend regressions, syntax checks for 42 Python files, four JSON files, one TOML file and15 frontend modules, preset synchronization, and aligned five-file version/sixteen-node registration checks.
+- No new song/video generation, user-server restart or clean Manager installation was performed for this source release. Runtime behavior on other core versions and GPU configurations is not guaranteed by these checks.
+
+
 ## 2.6.4 - 2026-11-06
 
 - Add opt-in strict parsing, JSON Schema validation and JSON-safe scalar output to the existing Apex JSON Lookup node. Preserve the original input order, two-input calls, registrations and lenient defaults.

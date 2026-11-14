@@ -2,7 +2,7 @@ id: comfyui-apex-artist
 publisher_id: apex
 name: "Apex Artist Professional VFX Tools"
 description: "Professional VFX and post-production nodes for ComfyUI - Advanced image processing, film grading, layer blending, and cinematic effects for creators and studios"
-version: "2.6.4"
+version: "2.6.5"
 license: "MIT"
 repository: "https://github.com/ApexArtist/comfyui-apex-artist"
 homepage: "https://github.com/ApexArtist/comfyui-apex-artist"
@@ -86,3 +86,13 @@ nodes:
     display_name: "Apex Optional Images"
     description: "Autogrowing optional image inputs with batch and count outputs"
     category: "Apex Artist/Image"
+
+  - id: "ApexMemoryCleanup"
+    display_name: "Apex Memory Cleanup"
+    description: "Release completed clip cache and unused memory after saving, preserving pending readers and shared models"
+    category: "Apex Artist/Utilities"
+
+  - id: "ApexMusicVideoPlan"
+    display_name: "Apex Music Video Plan"
+    description: "Validate music-video timing before rendering, align durations to whole frames and count optional clip passes"
+    category: "Apex Artist/Video"

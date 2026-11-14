@@ -20,10 +20,17 @@ Image processing, prompt presets, audio selection and a video timeline editor in
 | Apex Audio | Load or connect audio, trim, adjust gain, preview and read metadata |
 | Apex Timeline Editor | Edit persistent video/audio tracks and output standard ComfyUI media |
 | Apex V1 Cut Window | Read actual main-track joins for B-roll audio crops and placement |
+| Apex Memory Cleanup | Release completed clip intermediates after saving, collect garbage and clear unused device memory |
 
 ## Installation
 
 Requires **Python 3.10+**, **ComfyUI 0.42.1+**, and the dependencies in `requirements.txt`. Timeline rendering also needs FFmpeg available on PATH. PyTorch, PyAV, Pillow and the native audio/video APIs come from ComfyUI.
+
+### Memory cleanup (development)
+
+Connect a save/capture result to **Apex Memory Cleanup**, then its **value** to End Loop. In an uncached native loop it releases completed loop outputs, including expanded internal nodes, after their known consumers finish. Shared nodes outside the loop and values needed by pending readers remain. Outside a loop it targets completed upstream intermediates and preserves model outputs. Explicit iteration caching is respected.
+
+Cache release, garbage collection and unused device-cache cleanup default on; model unloading defaults off. The report gives removed entry count and free device memory before/after; on CPU this is system memory. A memory change is not a measurement of bytes owned by removed entries. Use a file-backed VIDEO or small completion value as the trigger: an IMAGE/LATENT passed through remains live. It does not clear another extension's private caches, promise a fixed memory saving, or make one oversized render fit. Device cleanup uses ComfyUI's backend functions. The cache adapter is tested against the supported native cache classes; unsupported caches are reported without eviction. No extra dependency. Restart and refresh are required to register new nodes. This local addition is not a release.
 
 ### Strict JSON handoffs
 
@@ -135,7 +142,7 @@ The HDRI viewer uses source panorama metadata for its interactive preview. Conne
 
 ## Development and release
 
-Version **2.4.0** adds Apex Audio, Timeline Editor and node reliability fixes. See [CHANGELOG.md](CHANGELOG.md) for changes and validation limits, [PUBLISH.md](PUBLISH.md) for release steps, and [system patterns](memory-bank/systemPatterns.md) for architecture.
+Version **2.6.5** adds stable audio-derived filenames, explicit memory cleanup, independent music-video timing and scoped uncached-loop optimization. See [CHANGELOG.md](CHANGELOG.md) for changes and validation limits, [PUBLISH.md](PUBLISH.md) for release steps, and [system patterns](memory-bank/systemPatterns.md) for architecture.
 
 Run the portable CPU regressions with the ComfyUI Python environment:
 
@@ -147,3 +154,16 @@ python scripts/generate_character_presets.py --check
 Check each `web/*.js` with `node --check`. These checks do not replace a live ComfyUI smoke test or clean-install test. No GPU performance benchmark is claimed.
 
 MIT licensed; see [license.md](license.md). Issues and contributions are welcome on [GitHub](https://github.com/ApexArtist/comfyui-apex-artist/issues).
+
+## Music-video timing preflight
+
+**Apex Music Video Plan** checks durations, independent song-relative start offsets/gaps and optional reference counts before the render loop. B-roll and C-roll do not read singer cuts, other clips or saved timelines. Each optional lane uses its own start offset plus its index times (its own duration plus gap); its last window is trimmed at the song end. An offset at or beyond the song end skips that lane. Zero gaps are valid; negative offsets/gaps and zero-frame used durations are rejected. Use aligned song/singer durations together with the returned pass counts. Missing references disable their lane. Candid duration retains the workflow's 3–5 second range; it no longer depends on room around a singer or instrument edit.
+
+**Apex V1 Cut Window** reads visible V1 changes on the editor's frame grid. Upper tracks do not alter these cuts. Overlaps follow the editor's last-placement-wins order, zero-frame tails are ignored, and black gaps are not treated as picture-to-picture joins. B-roll can span multiple A-roll clips and is trimmed at the end of V1. Timing must leave at least one frame before and after the selected cut. Editing V1 during an automatically scheduled render can change the number of joins; regenerate the plan before resuming rather than assuming the original count still applies.
+
+Timing validation does not guarantee model VRAM requirements, third-party extension behavior or interruption recovery. Saved media and project files remain the recovery source.
+
+
+The plan also installs compact keys on this executor's output cache for expanded descendants of its own **uncached** native Start Loop. Native uncached iterations already cannot reuse results across prompts; shared preparation and ordinary nodes keep native input signatures. This avoids repeatedly flattening all previous iterations into each key before the first clip. It changes no core files or launch flags. Explicit iteration caching remains native. The adapter checks the current private cache layout and fails clearly on an unsupported layout instead of guessing. Native classic, LRU, RAM pressure and disabled caches have focused regressions. See the related open upstream [loop cache-key PR](https://github.com/Comfy-Org/ComfyUI/pull/16556); this scoped implementation does not include that PR's general cached-loop changes.
+
+For this fresh-generation music plan, leave **Cache Iterations off** as in the original workflow. The plan rejects an enabled or linked iteration-cache policy before video generation. Other workflows and their explicit cached loops keep native behavior; this is separate from ComfyUI's normal shared-model/preparation cache.

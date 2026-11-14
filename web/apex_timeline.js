@@ -127,8 +127,9 @@ function makeEditor(node) {
     let playing = false, playbackFrame = null, playbackToken = 0;
     let playbackStart = 0, playbackTime = 0, playbackAudio = false;
 
-    function button(text, action, parent = toolbar) {
+    function button(text, action, parent = toolbar, tone = "neutral") {
         const control = el("button", { textContent: text });
+        control.dataset.tone = tone;
         control.onclick = action;
         parent.append(control);
         return control;
@@ -455,11 +456,11 @@ function makeEditor(node) {
             button("Apply trim / position", () => mutate(() => editClip(node, project, selected, "update", {
                 start: Number(fields.start.value), source_in: Number(fields.source_in.value), duration: Number(fields.duration.value),
                 track_index: Number(fields.track_index.value) - 1, snap:snapEnabled,
-                auto_fade:!snapEnabled && project.fade_support })), selectionActions);
-            button("Split at playhead", () => mutate(() => editClip(node, project, selected, "split", { position: snap(playhead) })), selectionActions);
-            button("Duplicate", () => mutate(() => editClip(node, project, selected, "duplicate")), selectionActions);
-            if (selected.link_id) button("Unlink audio/video", () => mutate(() => editClip(node, project, selected, "unlink")), selectionActions);
-            button("Remove placement", () => mutate(() => editClip(node, project, selected, "delete")), selectionActions);
+                auto_fade:!snapEnabled && project.fade_support })), selectionActions, "positive");
+            button("Split at playhead", () => mutate(() => editClip(node, project, selected, "split", { position: snap(playhead) })), selectionActions, "edit");
+            button("Duplicate", () => mutate(() => editClip(node, project, selected, "duplicate")), selectionActions, "primary");
+            if (selected.link_id) button("Unlink audio/video", () => mutate(() => editClip(node, project, selected, "unlink")), selectionActions, "edit");
+            button("Remove placement", () => mutate(() => editClip(node, project, selected, "delete")), selectionActions, "danger");
         }
         tracksHost.replaceChildren();
         const width = Math.max(availableWidth, (project.duration + (fitView ? 0 : 10)) * scale);
@@ -595,13 +596,13 @@ function makeEditor(node) {
     const previewHome = button("|◀", () => seekBoundary(false), transportControls);
     previewHome.title = "Go to start (Home)";
     previewHome.setAttribute("aria-label", "Go to timeline start");
-    const previewPlay = button("▶ Play", () => playing ? pausePlayback() : startPlayback(), transportControls);
+    const previewPlay = button("▶ Play", () => playing ? pausePlayback() : startPlayback(), transportControls, "positive");
     previewPlay.className = "apex-timeline-play";
     playbackButton();
     const previewEnd = button("▶|", () => seekBoundary(true), transportControls);
     previewEnd.title = "Go to end (End)";
     previewEnd.setAttribute("aria-label", "Go to timeline end");
-    const previewStop = button("■ Stop", () => { pausePlayback(); setPlayhead(0); }, transport);
+    const previewStop = button("■ Stop", () => { pausePlayback(); setPlayhead(0); }, transport, "danger");
     previewStop.className = "apex-timeline-stop";
     previewStop.setAttribute("aria-label", "Stop timeline");
     button("Save Project", async () => {
@@ -610,7 +611,7 @@ function makeEditor(node) {
             await saveTimelineProject(api,project,{playhead,selectedId,scale,fitView,snapEnabled,
                 binVisible:!mediaBin.hidden,scrollLeft:tracksHost.scrollLeft,scrollTop:tracksHost.scrollTop});
         } catch (exc) { error.textContent = exc.message; }
-    }).title = "Save this timeline and editor view as JSON. Media files stay in their original folders.";
+    }, toolbar, "positive").title = "Save this timeline and editor view as JSON. Media files stay in their original folders.";
     const projectFile = el("input",{type:"file",accept:".json,application/json",hidden:true});
     toolbar.append(projectFile);
     projectFile.onchange = async () => {
@@ -627,20 +628,20 @@ function makeEditor(node) {
             return opened.project;
         });
     };
-    button("Open Project",()=>{if(!busy)projectFile.click();}).title = "Open timeline JSON as a separate editable copy. Workflow inputs stay unchanged.";
+    button("Open Project",()=>{if(!busy)projectFile.click();}, toolbar, "primary").title = "Open timeline JSON as a separate editable copy. Workflow inputs stay unchanged.";
     const workflowProject = button("Workflow project",()=>{openedProjectId=null;selectedId=null;refresh();});
     workflowProject.hidden=true;
     button("Reload", () => refresh());
-    button("Clear video cache", () => mutate(() => post("cache/clear", {})));
+    button("Clear video cache", () => mutate(() => post("cache/clear", {})), toolbar, "edit");
     button("Clear", () => {
         if (confirm("Remove all placements? Media files are kept and you can undo this.")) mutate(() => post("project/clear", {}));
-    });
+    }, toolbar, "danger");
     const undo = button("Undo", () => mutate(() => post("history", { operation: "undo" })));
     const redo = button("Redo", () => mutate(() => post("history", { operation: "redo" })));
     const importKind = el("select", {}, [el("option", {value:"video", textContent:"Video"}), el("option", {value:"audio", textContent:"Audio"})]);
     importKind.setAttribute("aria-label", "Import media lane");
     importKind.onchange = () => {importTrack.value = importKind.value === "audio" ? 1 : 2;};
-    button("Link clips", () => chooseSources(Number(importTrack.value)-1,snap(playhead),[],importKind.value));
+    button("Link clips", () => chooseSources(Number(importTrack.value)-1,snap(playhead),[],importKind.value), toolbar, "primary");
     toolbar.append(importKind, importTrack);
     button("Media bin", () => { mediaBin.hidden = !mediaBin.hidden; });
     const addTrack = button("+ Track", () => mutate(() => {
@@ -648,12 +649,12 @@ function makeEditor(node) {
             .find(index => openedProjectId ? !project.tracks.some(track=>track.index===index)
                 : !node.inputs.some(input => videoTrackIndex(input) === index));
         return post("track/edit", {track_index:index, operation:"add"});
-    }));
+    }), toolbar, "primary");
     button("+ Audio", () => mutate(()=>{
         const index = Array.from({length:maxTracks},(_,index)=>index).find(index=>index>0 && !project.audio_tracks.some(track=>track.index===index));
         if (index == null) throw new Error("The timeline already has 16 audio lanes.");
         return post("audio/track",{track_index:index,operation:"add"});
-    }));
+    }), toolbar, "primary");
     const projectFps = el("input", {type:"number", min:1, max:240, step:.001, value:24});
     projectFps.setAttribute("aria-label", "Project FPS");
     projectFps.onchange = () => mutate(()=>post("settings",{fps:Number(projectFps.value)}));
@@ -685,7 +686,7 @@ function makeEditor(node) {
             if (response.node_errors && Object.keys(response.node_errors).length) throw new Error(JSON.stringify(response.node_errors));
             error.textContent = "Export queued from the saved timeline.";
         } catch (exc) { error.textContent = exc.message; }
-    });
+    }, toolbar, "positive");
     scrub.oninput = () => setPlayhead(Number(scrub.value));
     zoom.oninput = () => { fitView = false; scale = Number(zoom.value); scheduleRender(); };
     editor.addEventListener("keydown", event => {
@@ -812,6 +813,15 @@ app.registerExtension({
             .apex-timeline-header h2 { margin:0 auto 0 0; font-size:17px; }
             .apex-timeline-editor button { color:#ddd; background:#303640; border:1px solid #59606b; border-radius:4px; padding:5px 9px; cursor:pointer; }
             .apex-timeline-editor button:hover { background:#424b59; }
+            .apex-timeline-editor button[data-tone] { color:var(--apex-button-text,#e3e8ef); background:var(--apex-button-bg,#303640); border-color:var(--apex-button-border,#59606b); }
+            .apex-timeline-editor button[data-tone]:enabled:hover { background:var(--apex-button-hover,#424b59); }
+            .apex-timeline-editor button[data-tone="primary"] { --apex-button-text:#e8f2ff; --apex-button-bg:#243e57; --apex-button-border:#507fa8; --apex-button-hover:#2e4f6c; }
+            .apex-timeline-editor button[data-tone="positive"] { --apex-button-text:#e7f6ee; --apex-button-bg:#213f35; --apex-button-border:#447d65; --apex-button-hover:#2b5141; }
+            .apex-timeline-editor button[data-tone="edit"], .apex-timeline-editor .apex-timeline-play[aria-pressed="true"] { --apex-button-text:#fff1d7; --apex-button-bg:#493b24; --apex-button-border:#947445; --apex-button-hover:#59482c; }
+            .apex-timeline-editor button[data-tone="danger"] { --apex-button-text:#ffe9ef; --apex-button-bg:#492a34; --apex-button-border:#985364; --apex-button-hover:#5a3440; }
+            .apex-timeline-editor .apex-timeline-snap[aria-pressed="true"] { --apex-button-text:#dff8fc; --apex-button-bg:#1c424b; --apex-button-border:#458b98; --apex-button-hover:#25535d; }
+            .apex-timeline-editor button[data-tone]:disabled { opacity:.45; cursor:not-allowed; }
+            .apex-timeline-editor button:focus-visible { outline:2px solid #b4d3f3; outline-offset:2px; }
             .apex-timeline-toolbar { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#20242a; border-block:1px solid #343a43; }
             .apex-timeline-toolbar label { display:flex; align-items:center; gap:8px; margin-left:auto; font-size:12px; }
             .apex-timeline-toolbar input { width:130px; }

@@ -205,7 +205,8 @@
         "FLOAT",
         "INT",
         "INT",
-        "INT"
+        "INT",
+        "STRING"
       ]
     },
     {
@@ -252,7 +253,41 @@
         "IMAGE",
         "INT"
       ]
+    },
+    {
+      "id": "ApexMemoryCleanup",
+      "display_name": "Apex Memory Cleanup",
+      "description": "Release completed clip cache and unused memory after saving, preserving pending readers and shared models",
+      "category": "Apex Artist/Utilities",
+      "input_types": [
+        "*"
+      ],
+      "output_types": [
+        "*",
+        "STRING",
+        "INT"
+      ]
+    },
+    {
+      "id": "ApexMusicVideoPlan",
+      "display_name": "Apex Music Video Plan",
+      "description": "Validate music-video timing before rendering, align durations to whole frames and count optional clip passes",
+      "category": "Apex Artist/Video",
+      "input_types": [
+        "FLOAT",
+        "BOOLEAN",
+        "INT"
+      ],
+      "output_types": [
+        "INT",
+        "INT",
+        "INT",
+        "INT",
+        "FLOAT",
+        "FLOAT",
+        "STRING"
+      ]
     }
   ],
-  "version": "2.6.4"
+  "version": "2.6.5"
 }
