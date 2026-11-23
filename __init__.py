@@ -1,4 +1,4 @@
-NODE_VERSION = "2.6.5"
+NODE_VERSION = "2.6.6"
 
 from .apex_depth_to_normal import ApexDepthToNormal
 from .apex_layer_blend import ApexLayerBlend
@@ -15,7 +15,8 @@ from .apex_audio import ApexAudio
 from .apex_optional_images import ApexOptionalImages
 from .apex_audio_lyrics import ApexAudioLyrics
 from .apex_memory_cleanup import ApexMemoryCleanup
-from .apex_music_video_plan import ApexMusicVideoPlan
+from .apex_music_video_plan import ApexMusicVideoCutawayBrief, ApexMusicVideoPlan, ApexMusicVideoShot
+from .apex_compare import ApexCompare
 
 # Import API servers to initialize routes
 try:
@@ -70,6 +71,9 @@ NODE_CLASS_MAPPINGS = {
     "ApexAudioLyrics": ApexAudioLyrics,
     "ApexMemoryCleanup": ApexMemoryCleanup,
     "ApexMusicVideoPlan": ApexMusicVideoPlan,
+    "ApexMusicVideoShot": ApexMusicVideoShot,
+    "ApexMusicVideoCutawayBrief": ApexMusicVideoCutawayBrief,
+    "ApexCompare": ApexCompare,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -89,6 +93,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ApexAudioLyrics": "Apex Audio Lyrics",
     "ApexMemoryCleanup": "Apex Memory Cleanup",
     "ApexMusicVideoPlan": "Apex Music Video Plan",
+    "ApexMusicVideoShot": "Apex Music Video Shot",
+    "ApexMusicVideoCutawayBrief": "Apex Music Video Cutaway Brief",
+    "ApexCompare": "Apex Compare",
 }
 
 WEB_DIRECTORY = "./web"

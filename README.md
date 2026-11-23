@@ -6,6 +6,9 @@ Image processing, prompt presets, audio selection and a video timeline editor in
 
 | Node | Purpose |
 | --- | --- |
+| Apex Compare | A/B wipe preview with clear left/right labels; outputs remain unchanged |
+| Apex Music Video Shot | Read a shot from a continuous sequential edit plan |
+| Apex Music Video Cutaway Brief | Select the planned B-roll or C-roll action for the current shot |
 | Apex Blur | Nine blur methods, including Gaussian, motion, lens and depth blur |
 | Apex Sharpen | Eight sharpening methods |
 | Apex Layer Blend | Layer compositing with 25+ blend modes |
@@ -142,7 +145,7 @@ The HDRI viewer uses source panorama metadata for its interactive preview. Conne
 
 ## Development and release
 
-Version **2.6.5** adds stable audio-derived filenames, explicit memory cleanup, independent music-video timing and scoped uncached-loop optimization. See [CHANGELOG.md](CHANGELOG.md) for changes and validation limits, [PUBLISH.md](PUBLISH.md) for release steps, and [system patterns](memory-bank/systemPatterns.md) for architecture.
+Version **2.6.6** adds sequential music-video planning, per-shot cutaway direction, and Apex Compare. See [CHANGELOG.md](CHANGELOG.md) for changes and validation limits, [PUBLISH.md](PUBLISH.md) for release steps, and [system patterns](memory-bank/systemPatterns.md) for architecture.
 
 Run the portable CPU regressions with the ComfyUI Python environment:
 
@@ -167,3 +170,9 @@ Timing validation does not guarantee model VRAM requirements, third-party extens
 The plan also installs compact keys on this executor's output cache for expanded descendants of its own **uncached** native Start Loop. Native uncached iterations already cannot reuse results across prompts; shared preparation and ordinary nodes keep native input signatures. This avoids repeatedly flattening all previous iterations into each key before the first clip. It changes no core files or launch flags. Explicit iteration caching remains native. The adapter checks the current private cache layout and fails clearly on an unsupported layout instead of guessing. Native classic, LRU, RAM pressure and disabled caches have focused regressions. See the related open upstream [loop cache-key PR](https://github.com/Comfy-Org/ComfyUI/pull/16556); this scoped implementation does not include that PR's general cached-loop changes.
 
 For this fresh-generation music plan, leave **Cache Iterations off** as in the original workflow. The plan rejects an enabled or linked iteration-cache policy before video generation. Other workflows and their explicit cached loops keep native behavior; this is separate from ComfyUI's normal shared-model/preparation cache.
+
+### Sequential music editing and comparison
+
+Apex Music Video Plan retains its layered default and existing outputs. The optional `layout=sequential_shuffle` schedules a single continuous edit: it opens with the singer by default, with optional B-roll, C-roll, or a seeded cutaway as the opener, then shuffles one of each enabled role per cycle, using `sequence_seed`. Offsets and gaps do not apply in this mode. Each duration must fit within 15 seconds; the last shot trims at the song end. Disabled roles generate no shots. Apex Music Video Shot reads each plan entry by index and returns its exact source/timeline start, duration and role. H3 may pad generation internally, so five visible seconds are not necessarily five generated seconds.
+
+Apex Compare accepts `A` and `B`, custom overlay labels and a zero-based preview frame. Drag the divider or use the keyboard-accessible slider; A is left and B right. It previews one frame per input at up to 2048 pixels on the long edge, preserving aspect ratio. Different dimensions use a fit view. Outputs are the untouched original image batches with no text burned in. Temporary previews use native ComfyUI storage and may expire; rerun the comparison then. The wipe position saves with node properties. Restart your existing ComfyUI manually and refresh to register new nodes.

@@ -287,7 +287,57 @@
         "FLOAT",
         "STRING"
       ]
+    },
+    {
+      "id": "ApexCompare",
+      "display_name": "Apex Compare",
+      "description": "Interactive A/B wipe preview with named overlays; original image batches pass through unchanged.",
+      "category": "Apex Artist/Image",
+      "input_types": [
+        "IMAGE",
+        "STRING",
+        "INT"
+      ],
+      "output_types": [
+        "IMAGE",
+        "IMAGE"
+      ]
+    },
+    {
+      "id": "ApexMusicVideoShot",
+      "display_name": "Apex Music Video Shot",
+      "description": "Read exact contiguous shot windows and roles from a shuffled sequential music-video plan.",
+      "category": "Apex Artist/Video",
+      "input_types": [
+        "STRING",
+        "INT"
+      ],
+      "output_types": [
+        "FLOAT",
+        "FLOAT",
+        "BOOLEAN",
+        "BOOLEAN",
+        "BOOLEAN",
+        "BOOLEAN",
+        "INT"
+      ]
+    },
+    {
+      "id": "ApexMusicVideoCutawayBrief",
+      "display_name": "Apex Music Video Cutaway Brief",
+      "description": "Select the planned candid or story action for the current music-video shot.",
+      "category": "Apex Artist/Video",
+      "input_types": [
+        "STRING",
+        "INT",
+        "STRING",
+        "STRING",
+        "STRING"
+      ],
+      "output_types": [
+        "STRING"
+      ]
     }
   ],
-  "version": "2.6.5"
+  "version": "2.6.6"
 }

@@ -98,4 +98,24 @@ class LoopKeyTests(unittest.TestCase):
   from comfy_execution.cache_provider import _contains_self_unequal
   self.assertTrue(_contains_self_unequal(key))
 
+ def test_scoped_key_uses_native_signature_container(self):
+  g=Graph();c=self.cache(RAMPressureCache,g)
+  mod.enable_uncached_music_loop_keys(g,types.SimpleNamespace(output_cache=c),'plan')
+  self.run_async(c.cache_key_set.add_keys(['expanded']))
+  scoped=c.cache_key_set.get_data_key('expanded')
+  native=c.cache_key_set.get_data_key('shared')
+  self.assertIs(type(scoped),type(native))
+ def test_ram_pressure_eviction_with_equal_priority_and_timestamp(self):
+  g=Graph();c=self.cache(RAMPressureCache,g)
+  mod.enable_uncached_music_loop_keys(g,types.SimpleNamespace(output_cache=c),'plan')
+  self.run_async(c.cache_key_set.add_keys(['expanded']))
+  for node_id in ('shared','expanded'):
+   c.set_local(node_id,types.SimpleNamespace(outputs=[7]))
+   key=c.cache_key_set.get_data_key(node_id)
+   c.timestamps[key]=1000.0
+   c.used_generation[key]=c.generation-1
+  with patch('comfy_execution.caching.virtual_memory_available',return_value=0):
+   self.assertGreater(c.ram_release(1),0)
+  self.assertEqual(c.cache,{})
+
 if __name__=='__main__':unittest.main()

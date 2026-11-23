@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.6.6 - 2026-11-23
+
+- Add sequential shuffled music-video planning, an optional opening role, and short-tail merging.
+- Add Apex Music Video Shot and Apex Music Video Cutaway Brief for per-shot timing and cutaway direction.
+- Fix scoped music-loop cache keys under RAM-pressure eviction.
+- Add Apex Compare, an interactive A/B wipe with editable overlays and original image outputs.
+
+Validation: 117 Python and 9 frontend tests passed. Live ComfyUI smoke testing and clean-install verification are pending.
+
 ## 2.6.5 - 2026-11-13
 
 - Append a filename output to Apex Audio for stable audio-derived project names. Existing output positions and connected-audio priority remain unchanged; connected audio returns an empty filename.

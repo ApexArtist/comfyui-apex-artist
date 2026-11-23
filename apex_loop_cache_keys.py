@@ -8,7 +8,7 @@ Ordinary nodes and explicitly cached loops keep native input signatures.
 import uuid
 import weakref
 
-from comfy_execution.caching import BasicCache, CacheKeySetInputSignature, NullCache
+from comfy_execution.caching import BasicCache, CacheKeySetInputSignature, NullCache, to_hashable
 from comfy_execution.graph_utils import is_link
 
 _scopes = weakref.WeakKeyDictionary()
@@ -33,8 +33,10 @@ class _UncachedMusicLoopKeys(CacheKeySetInputSignature):
             # NaN keeps external cache persistence disabled, as with native
             # uncached LoopIteration fingerprints. This key object is stable
             # within its key set, but never matches a different prompt.
-            return ("Apex uncached music loop", scope[0], node_id,
-                    dynprompt.get_node(node_id)["class_type"], float("nan"))
+            # Match the native signature container so RAM-pressure eviction can
+            # compare tied priorities/timestamps alongside ordinary node keys.
+            return to_hashable(("Apex uncached music loop", scope[0], node_id,
+                                dynprompt.get_node(node_id)["class_type"], float("nan")))
         return await super().get_node_signature(dynprompt, node_id)
 
 
